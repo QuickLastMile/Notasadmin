@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hub Personal — Centro de Control</title>
+<meta name="description" content="Centro de control diario: tareas, caja menor, novedades, proyectos y clientes.">
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
+<link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+
+<div id="app">
+  <!-- ══ Barra lateral ══════════════════════════════════════════ -->
+  <aside id="side">
+    <div class="brand">
+      <div class="brand-mark">HP</div>
+      <div class="brand-txt"><strong>Hub Personal</strong><span>Centro de control</span></div>
+    </div>
+    <nav id="nav"></nav>
+    <div class="side-foot">
+      <button onclick="toggleTheme()" id="themeBtn">🌙 Tema</button>
+      <button onclick="resetDemo()">↺ Demo</button>
+    </div>
+  </aside>
+
+  <!-- ══ Contenido ══════════════════════════════════════════════ -->
+  <main>
+    <div class="capture">
+      <button class="menu-btn" onclick="document.getElementById('side').classList.toggle('open')">☰</button>
+      <div class="capture-box">
+        <span class="capture-ico">⚡</span>
+        <input id="cap" autocomplete="off"
+               placeholder="Captura rápida:  t: llamar a Cafam mañana !alta  ·  g: 45000 taxi @Diebold  ·  n: falla en el dashboard">
+        <span class="capture-hint">Enter ↵</span>
+        <div class="preview" id="prev"></div>
+      </div>
+      <div class="hoy"><b id="hoyTxt"></b><span id="hoySub"></span></div>
+    </div>
+    <div class="wrap" id="view"></div>
+  </main>
+</div>
+
+<div class="mask" id="mask" onclick="if(event.target===this)closeModal()">
+  <div class="modal" id="modal"></div>
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- ══ Núcleo ═══════════════════════════════════════════════════ -->
+<script src="js/config.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/db.js"></script>
+<script src="js/seed.js"></script>
+<script src="js/store.js"></script>
+<script src="js/ui.js"></script>
+<script src="js/capture.js"></script>
+<script src="js/acciones.js"></script>
+
+<!-- ══ Vistas (una por módulo — se editan de forma independiente) ══ -->
+<script src="js/views/inicio.js"></script>
+<script src="js/views/tareas.js"></script>
+<script src="js/views/caja.js"></script>
+<script src="js/views/novedades.js"></script>
+<script src="js/views/proyectos.js"></script>
+<script src="js/views/clientes.js"></script>
+<script src="js/views/enlaces.js"></script>
+
+<!-- ══ Arranque ═════════════════════════════════════════════════ -->
+<script src="js/app.js"></script>
+</body>
+</html>

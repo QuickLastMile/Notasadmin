@@ -1,0 +1,9 @@
+node_modules/
+.DS_Store
+Thumbs.db
+*.log
+
+# Credenciales de Supabase — nunca al repo
+js/config.local.js
+.env
+.env.*
