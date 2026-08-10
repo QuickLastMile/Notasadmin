@@ -150,6 +150,22 @@ async function toggleRutina(id){
   render();
 }
 
+function modalRutina(){
+  openModal(formModal('Paso de la rutina diaria', `
+    <div><label>¿Qué revisas todos los días?</label>
+      <input id="ruT" placeholder="Ej. Revisar novedades de los coordinadores"></div>
+    <p style="font-size:11.5px;color:var(--text-2)">
+      Se marca cada día y se reinicia solo a la mañana siguiente.</p>`,
+    'guardarRutina()', 'Agregar'));
+}
+
+async function guardarRutina(){
+  const texto = $('#ruT').value.trim();
+  if(!texto){ toast('Escribe el paso'); return; }
+  await db.insert('rutina', { texto, orden: S.rutina.length + 1, hecho_el:null });
+  closeModal(); render(); toast('Paso agregado ✓');
+}
+
 /* ---- Genérico ------------------------------------------------------------ */
 async function borrar(tabla, id){
   if(!confirm('¿Eliminar este registro?')) return;

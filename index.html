@@ -8,7 +8,7 @@
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
 
 <!-- Sube ?v= en cada despliegue para que nadie quede con CSS/JS viejo en caché -->
-<link rel="stylesheet" href="css/styles.css?v=2">
+<link rel="stylesheet" href="css/styles.css?v=3">
 </head>
 <body>
 
@@ -22,7 +22,8 @@
     <nav id="nav"></nav>
     <div class="side-foot">
       <button onclick="toggleTheme()" id="themeBtn">🌙 Tema</button>
-      <button onclick="resetDemo()">↺ Demo</button>
+      <button onclick="cargarEjemplo()" title="Reemplaza todo por datos de ejemplo">◔ Ejemplo</button>
+      <button onclick="vaciarTodo()" title="Borra todos tus datos">🗑 Vaciar</button>
     </div>
   </aside>
 
@@ -49,26 +50,26 @@
 <div class="toast" id="toast"></div>
 
 <!-- ══ Núcleo ═══════════════════════════════════════════════════ -->
-<script src="js/config.js?v=2"></script>
-<script src="js/utils.js?v=2"></script>
-<script src="js/db.js?v=2"></script>
-<script src="js/seed.js?v=2"></script>
-<script src="js/store.js?v=2"></script>
-<script src="js/ui.js?v=2"></script>
-<script src="js/capture.js?v=2"></script>
-<script src="js/acciones.js?v=2"></script>
-<script src="js/acciones-caja.js?v=2"></script>
+<script src="js/config.js?v=3"></script>
+<script src="js/utils.js?v=3"></script>
+<script src="js/db.js?v=3"></script>
+<script src="js/seed.js?v=3"></script>
+<script src="js/store.js?v=3"></script>
+<script src="js/ui.js?v=3"></script>
+<script src="js/capture.js?v=3"></script>
+<script src="js/acciones.js?v=3"></script>
+<script src="js/acciones-caja.js?v=3"></script>
 
 <!-- ══ Vistas (una por módulo — se editan de forma independiente) ══ -->
-<script src="js/views/inicio.js?v=2"></script>
-<script src="js/views/tareas.js?v=2"></script>
-<script src="js/views/caja.js?v=2"></script>
-<script src="js/views/novedades.js?v=2"></script>
-<script src="js/views/proyectos.js?v=2"></script>
-<script src="js/views/clientes.js?v=2"></script>
-<script src="js/views/enlaces.js?v=2"></script>
+<script src="js/views/inicio.js?v=3"></script>
+<script src="js/views/tareas.js?v=3"></script>
+<script src="js/views/caja.js?v=3"></script>
+<script src="js/views/novedades.js?v=3"></script>
+<script src="js/views/proyectos.js?v=3"></script>
+<script src="js/views/clientes.js?v=3"></script>
+<script src="js/views/enlaces.js?v=3"></script>
 
 <!-- ══ Arranque ═════════════════════════════════════════════════ -->
-<script src="js/app.js?v=2"></script>
+<script src="js/app.js?v=3"></script>
 </body>
 </html>

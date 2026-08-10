@@ -28,6 +28,22 @@ function setFiltroCaja(f){ filtroCaja = f; render(); }
 
 /* ========================================================================== */
 function vCaja(){
+  // Sin período no hay dónde registrar: primero se abre uno.
+  if(!S.periodos.length) return `
+    ${pageHead('Caja menor',
+      'Pagos a mensajeros y gastos operativos: quién, a qué cuenta, con qué soporte y cuánto te devolvieron.', '')}
+    <div class="card" style="max-width:560px">
+      <div class="card-b" style="text-align:center;padding:34px 22px">
+        <div style="font-size:34px;opacity:.5;margin-bottom:10px">▤</div>
+        <h2 style="font-size:16px;margin-bottom:6px">Abre tu primer período de caja</h2>
+        <p style="color:var(--text-2);font-size:13px;margin-bottom:16px">
+          Un período es un mes de caja: se abre con la base que te asignaron,
+          recibe los pagos y se cierra cuando legalizas.
+        </p>
+        <button class="btn pri" onclick="modalPeriodo()">+ Abrir período</button>
+      </div>
+    </div>`;
+
   const pid = periodoSel || periodoActivo()?.id;
   const p   = per(pid);
   const a   = arqueo(pid);

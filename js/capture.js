@@ -112,7 +112,16 @@ function previewCap(){
 async function commitCap(){
   const p = parse($('#cap').value);
   if(!p){ toast('Escribe algo para capturar'); return; }
-  const cid = p.cliente_id || 'c5';
+
+  // Sin cliente indicado cae en el primero de la lista (o sin cliente si no hay ninguno)
+  const cid = p.cliente_id || S.clientes[0]?.id || null;
+
+  // Los movimientos de caja necesitan un período abierto donde caer
+  if((p.tipo === 'gasto' || p.tipo === 'ingreso') && !periodoActivo()){
+    toast('Primero abre un período de caja');
+    go('caja');
+    return;
+  }
 
   switch(p.tipo){
     case 'tarea':

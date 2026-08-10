@@ -3,6 +3,12 @@
    ========================================================================== */
 
 function vClientes(){
+  if(!S.clientes.length) return `
+    ${pageHead('Clientes', 'Ficha por cliente: qué le debes, cuánto has gastado y qué se dañó.', '')}
+    ${vacioCTA('◍', 'Empieza por tus clientes',
+      'Todo lo demás —tareas, pagos, novedades— se imputa a un cliente.',
+      '+ Nuevo cliente', 'modalCliente()')}`;
+
   return `
   ${pageHead('Clientes',
     'Ficha por cliente: qué le debes, cuánto has gastado y qué se dañó.',

@@ -27,6 +27,13 @@ function filaNovedad(n){
 }
 
 function vNovedades(){
+  if(!S.novedades.length) return `
+    ${pageHead('Novedades del día',
+      'Todo lo que se sale del guion queda registrado, con su acción y responsable.', '')}
+    ${vacioCTA('⚠', 'Sin novedades registradas',
+      'Cuando algo falle, regístralo aquí con su acción a tomar. Luego lo conviertes en tarea con un clic.',
+      '+ Registrar novedad', 'modalNovedad()')}`;
+
   const porFecha = (a, b) => b.fecha < a.fecha ? -1 : 1;
   const abiertas = S.novedades.filter(n => n.estado === 'abierta').sort(porFecha);
   const cerradas = S.novedades.filter(n => n.estado === 'cerrada').sort(porFecha);

@@ -228,19 +228,25 @@ async function aplicarReembolso(periodoId){
 
 /* ---- Períodos ------------------------------------------------------------ */
 function modalPeriodo(){
+  // El primer período es el mes actual; los siguientes, el mes que viene.
   const hoy = new Date();
-  const sig = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 1);
-  const fin = new Date(hoy.getFullYear(), hoy.getMonth() + 2, 0);
-  openModal(formModal('Abrir nuevo período', `
-    <div><label>Nombre</label><input id="peN" value="${nombreMes(sig)}"></div>
+  const salto = S.periodos.length ? 1 : 0;
+  const ini = new Date(hoy.getFullYear(), hoy.getMonth() + salto, 1);
+  const fin = new Date(hoy.getFullYear(), hoy.getMonth() + salto + 1, 0);
+  const primero = !S.periodos.length;
+
+  openModal(formModal(primero ? 'Abrir tu primer período' : 'Abrir nuevo período', `
+    <div><label>Nombre</label><input id="peN" value="${nombreMes(ini)}"></div>
     <div class="f2">
-      <div><label>Inicio</label><input type="date" id="peI" value="${dISO(sig)}"></div>
+      <div><label>Inicio</label><input type="date" id="peI" value="${dISO(ini)}"></div>
       <div><label>Fin</label><input type="date" id="peF" value="${dISO(fin)}"></div>
     </div>
     <div><label>Base asignada (COP)</label>
-      <input id="peB" type="number" value="1500000"></div>
+      <input id="peB" type="number" placeholder="1500000" value=""></div>
     <p style="font-size:11.5px;color:var(--text-2)">
-      Al abrir un período, el anterior se cierra y los movimientos nuevos caen aquí.</p>`,
+      ${primero
+        ? 'La base entra como primer movimiento del período. Déjala en blanco si aún no te la asignan.'
+        : 'Al abrir un período, el anterior se cierra y los movimientos nuevos caen aquí.'}</p>`,
     'guardarPeriodo()', 'Abrir período'));
 }
 
@@ -263,7 +269,7 @@ async function guardarPeriodo(){
   if(p.base_asignada > 0)
     await db.insert('caja', {
       tipo:'ingreso', monto:p.base_asignada, concepto:'Base asignada del período',
-      categoria:'Base', cliente_id:'c5', periodo_id:p.id, fecha:p.inicio,
+      categoria:'Base', cliente_id:S.clientes[0]?.id || null, periodo_id:p.id, fecha:p.inicio,
       metodo_pago:'Transferencia', comprobante_pago:'', observacion:'',
       beneficiario_id:null, factura_num:'',
       tiene_comprobante:true, tiene_factura:true,

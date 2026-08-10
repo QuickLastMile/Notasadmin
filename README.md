@@ -10,6 +10,18 @@ Pensado para mitigar las novedades del día a día: nada se queda en la memoria,
 
 Abre `index.html` en el navegador. No necesita servidor, ni instalación, ni internet.
 
+**La app arranca en blanco.** Inicio te muestra cuatro primeros pasos:
+
+1. **Crea tus clientes** — todo lo demás se imputa a uno.
+2. **Registra tus mensajeros y proveedores** — nombre, CC/NIT, banco y cuenta. Se guardan una vez y se reutilizan en cada pago.
+3. **Abre el período de caja del mes** — con la base asignada. Sin período no se pueden registrar pagos.
+4. **Arma tu rutina diaria** — lo que revisas sin falta cada día.
+
+Los datos viven en el navegador (`localStorage`), así que son tuyos y no salen del equipo. Botones en la barra lateral:
+
+- **◔ Ejemplo** — carga datos de muestra para ver cómo se comporta lleno.
+- **🗑 Vaciar** — borra todo y vuelve a dejarla en blanco (pide confirmación dos veces).
+
 ### ⚡ Captura rápida
 
 La barra de arriba es el corazón de la app. Tecla `/` la enfoca desde cualquier parte.
@@ -139,6 +151,7 @@ Settings → Pages → Branch `main` / carpeta `/ (root)` → Save.
 
 | Módulo | Estado |
 |---|---|
+| Arranque en blanco | ✅ La app inicia vacía, con primeros pasos guiados |
 | Caja menor | ✅ Completo: beneficiarios, cuentas, soportes, legalización, reembolso, períodos, topes, export |
 | Captura rápida | ✅ Funcionando |
 | Inicio (alertas, foco, rutina) | ✅ Funcionando |

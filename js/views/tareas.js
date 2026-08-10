@@ -15,6 +15,12 @@ const FILTROS_TAREA = {
 function setFiltroTarea(f){ fTarea = f; render(); }
 
 function vTareas(m){
+  if(!S.tareas.length) return `
+    ${pageHead('Tareas', 'Nada se pierde: captura arriba con <code>t:</code> y aparece aquí.', '')}
+    ${vacioCTA('✓', 'Sin tareas pendientes',
+      'Escribe en la barra de arriba "t: llamar al coordinador mañana !alta" y se crea sola.',
+      '+ Nueva tarea', 'modalTarea()')}`;
+
   const lista = S.tareas
     .filter(FILTROS_TAREA[fTarea])
     .sort((a, b) => (a.vence || '9999') < (b.vence || '9999') ? -1 : 1);

@@ -10,17 +10,29 @@ const COLECCIONES = ['clientes','beneficiarios','periodos','presupuestos','caja'
 /* ---- Persistencia -------------------------------------------------------- */
 const save = () => localStorage.setItem(CFG.storageKey, JSON.stringify(S));
 
+/** Estructura vacía: la app arranca en blanco, lista para tus datos reales. */
+const vacia = () => Object.fromEntries(COLECCIONES.map(k => [k, []]));
+
 function load(){
-  try{ S = JSON.parse(localStorage.getItem(CFG.storageKey)) || seed(); }
-  catch{ S = seed(); }
-  if(!S || !S.clientes) S = seed();
+  try{ S = JSON.parse(localStorage.getItem(CFG.storageKey)) || vacia(); }
+  catch{ S = vacia(); }
+  if(!S || typeof S !== 'object') S = vacia();
   for(const k of COLECCIONES) S[k] ||= [];   // tolera guardados de versiones viejas
   save();
 }
 
-function resetDemo(){
-  if(!confirm('Esto restaura los datos de ejemplo y borra lo que hayas agregado. ¿Continuar?')) return;
-  S = seed(); save(); render(); toast('Datos de ejemplo restaurados');
+/** ¿Está la app completamente vacía? (para mostrar el arranque guiado) */
+const sinDatos = () => COLECCIONES.every(k => !S[k].length);
+
+function cargarEjemplo(){
+  if(!sinDatos() && !confirm('Esto reemplaza TODO lo que tienes por datos de ejemplo. ¿Continuar?')) return;
+  S = seed(); save(); render(); toast('Datos de ejemplo cargados');
+}
+
+function vaciarTodo(){
+  if(!confirm('Esto borra todos tus datos y deja la app en blanco. No se puede deshacer.\n\n¿Continuar?')) return;
+  if(!confirm('Confirma otra vez: se borra TODO — clientes, mensajeros, caja, tareas y novedades.')) return;
+  S = vacia(); save(); render(); toast('Todo borrado — la app quedó en blanco');
 }
 
 /* ---- Búsquedas rápidas --------------------------------------------------- */

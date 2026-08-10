@@ -3,6 +3,12 @@
    ========================================================================== */
 
 function vProyectos(){
+  if(!S.proyectos.length) return `
+    ${pageHead('Proyectos', 'Un lugar para saber en qué va cada entregable y de quién es.', '')}
+    ${vacioCTA('▣', 'Aún no tienes proyectos',
+      'Un proyecto agrupa tareas y tiene cliente, avance y fecha de entrega.',
+      '+ Nuevo proyecto', 'modalProyecto()')}`;
+
   return `
   ${pageHead('Proyectos',
     'Un lugar para saber en qué va cada entregable y de quién es.',

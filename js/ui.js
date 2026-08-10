@@ -33,7 +33,7 @@ const cliTag = id => {
 };
 
 /** <option> de todos los clientes, con uno preseleccionado. */
-const optsCli = sel => S.clientes
+const optsCli = sel => `<option value="">— Sin cliente —</option>` + S.clientes
   .map(c => `<option value="${c.id}" ${sel === c.id ? 'selected' : ''}>${esc(c.nombre)}</option>`)
   .join('');
 
@@ -49,6 +49,17 @@ const colorNivel = n => n === 'alta'  ? 'var(--danger)'
 
 /** Bloque de "no hay nada aquí". */
 const vacio = (emoji, texto) => `<div class="empty"><span class="em">${emoji}</span>${esc(texto)}</div>`;
+
+/** Estado vacío grande, con botón para crear el primer registro. */
+const vacioCTA = (emoji, titulo, sub, btn, accion) => `
+  <div class="card" style="max-width:560px">
+    <div class="card-b" style="text-align:center;padding:34px 22px">
+      <div style="font-size:34px;opacity:.5;margin-bottom:10px">${emoji}</div>
+      <h2 style="font-size:16px;margin-bottom:6px">${esc(titulo)}</h2>
+      <p style="color:var(--text-2);font-size:13px;margin-bottom:16px">${esc(sub)}</p>
+      <button class="btn pri" onclick="${accion}">${esc(btn)}</button>
+    </div>
+  </div>`;
 
 /** Barra de progreso. */
 const barra = (porcentaje, color = 'var(--brand)') =>

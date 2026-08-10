@@ -3,6 +3,12 @@
    ========================================================================== */
 
 function vEnlaces(){
+  if(!S.dashboards.length) return `
+    ${pageHead('Dashboards y enlaces', 'Tu índice de accesos.', '')}
+    ${vacioCTA('◈', 'Sin enlaces guardados',
+      'Captura arriba con "l: https://... Nombre del dashboard" y queda en el índice.',
+      '⚡ Ir a capturar', "$('#cap').focus()")}`;
+
   return `
   ${pageHead('Dashboards y enlaces',
     'Tu índice de accesos. Captura con <code>l:</code> + la URL.',
