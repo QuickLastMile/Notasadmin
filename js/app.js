@@ -11,7 +11,7 @@ const MENU = [
   { id:'tareas',    ico:'✓', lbl:'Tareas',      vista:m => vTareas(m),    badge:m => m.vencidas.length },
   { id:'novedades', ico:'⚠', lbl:'Novedades',   vista:m => vNovedades(m), badge:m => m.novCriticas.length },
   { sec:'Gestión' },
-  { id:'caja',      ico:'▤', lbl:'Caja menor',  vista:m => vCaja(m),      badge:m => m.sinLegalizar.length },
+  { id:'caja',      ico:'▤', lbl:'Caja menor',  vista:m => vCaja(m),      badge:m => m.arqueo.sinLegalizar.length },
   { id:'proyectos', ico:'▣', lbl:'Proyectos',   vista:m => vProyectos(m) },
   { id:'clientes',  ico:'◍', lbl:'Clientes',    vista:m => vClientes(m) },
   { sec:'Recursos' },

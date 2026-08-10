@@ -34,6 +34,48 @@ Antes de pulsar Enter, un panel muestra exactamente lo que se va a crear.
 
 ---
 
+---
+
+## 💵 Caja menor
+
+No es una caja de gastos propios: es el registro de **pagos a mensajeros y proveedores**, con el rastro completo de cada peso.
+
+Cada movimiento guarda:
+
+| Campo | Para qué |
+|---|---|
+| Beneficiario | Mensajero o proveedor, con CC/NIT |
+| Cuenta de pago | Banco, tipo y número — se muestran al elegirlo, para verificar antes de transferir |
+| Método | Transferencia, Nequi, Daviplata, efectivo… |
+| N° comprobante | El de la transferencia o voucher |
+| N° factura | Factura del parqueadero o cuenta de cobro del mensajero |
+| Legalizado | Si ya pasó por contabilidad, y en qué fecha |
+| **Reembolsado** | **Lo que realmente te pagaron** |
+| **Pendiente** | **Lo que aún te deben** (monto − reembolsado, calculado) |
+| Observación | El "por qué" de lo que se salió de lo normal |
+
+### Períodos
+
+Un período = un mes de caja. Se abre con una base asignada, recibe los movimientos y se cierra. Al cerrar, la app avisa qué queda sin legalizar y sin reembolsar. El histórico queda consultable en la pestaña **Períodos**.
+
+### Reembolso
+
+El botón **💰 Reembolso** aplica el monto recibido a los gastos legalizados más antiguos que sigan pendientes (FIFO). No toca ir uno por uno. Si sobra plata sin asignar, te lo dice.
+
+La diferencia clave que muestra el arqueo:
+- **Cobrable** — legalizado y sin reembolsar: ya lo puedes exigir.
+- **Trabado** — sin legalizar: no te lo van a pagar hasta que lo legalices.
+
+### Presupuesto
+
+Topes por categoría. Cuando el gasto pasa el 80% avisa, y si lo excede sale como alerta roja en Inicio.
+
+### Exportar
+
+El botón **⬇ Excel** baja el período completo en CSV (con BOM, para que Excel en español respete las tildes), incluyendo datos bancarios, soportes y totales — listo para adjuntar a la legalización.
+
+---
+
 ## Estructura
 
 ```
@@ -42,20 +84,23 @@ css/styles.css          Todo el diseño (cambia los tokens de :root y cambia la 
 sql/supabase-schema.sql Esquema listo para pegar en Supabase (tablas + RLS + Storage)
 
 js/
-  config.js       Parámetros: clave de storage, tope de alerta de caja, credenciales
+  config.js       Parámetros: tope de alerta, categorías, bancos, credenciales
   utils.js        Helpers puros: fechas, dinero, escape de HTML, toast
   db.js           ⭐ CAPA DE DATOS — el único archivo que cambia al migrar a Supabase
   seed.js         Datos de ejemplo (desaparece al conectar la nube)
-  store.js        Estado global `S` + `metricas()`: la fuente de todas las alertas
+  store.js        Estado global `S`, `arqueo()` y `metricas()`: fuente de todas las alertas
   ui.js           Piezas visuales compartidas: modal, KPI, chips, fila de tarea
   capture.js      Parser de la captura rápida
-  acciones.js     Todo lo que modifica datos + los formularios modales
+  acciones.js     Cambios de datos + formularios (tareas, novedades, proyectos, clientes)
+  acciones-caja.js  Todo lo de caja: pagos, legalización, reembolso, períodos, export
   app.js          Menú, enrutado, tema, atajos, arranque
 
   views/          Una vista por módulo — se editan sin tocar las demás
     inicio.js  tareas.js  caja.js  novedades.js
     proyectos.js  clientes.js  enlaces.js
 ```
+
+> Los `<script>` llevan `?v=N`. **Súbelo en cada despliegue** o los navegadores seguirán con el JS viejo en caché.
 
 **Regla de oro:** las vistas solo dibujan. Cualquier cambio de datos pasa por `acciones.js`, que a su vez solo habla con `db.js`.
 
@@ -94,13 +139,15 @@ Settings → Pages → Branch `main` / carpeta `/ (root)` → Save.
 
 | Módulo | Estado |
 |---|---|
+| Caja menor | ✅ Completo: beneficiarios, cuentas, soportes, legalización, reembolso, períodos, topes, export |
 | Captura rápida | ✅ Funcionando |
 | Inicio (alertas, foco, rutina) | ✅ Funcionando |
-| Tareas | ✅ Funcionando |
-| Caja menor | ✅ Funcionando |
-| Novedades | ✅ Funcionando |
-| Proyectos | ✅ Vista de solo lectura — falta editar |
-| Clientes | ✅ Vista de solo lectura — falta editar |
+| Tareas | 🔧 Por revisar con el usuario |
+| Novedades | 🔧 Por revisar con el usuario |
+| Diseño general | 🔧 Por revisar con el usuario |
+| Menú / módulos | 🔧 Por revisar con el usuario |
+| Proyectos | ✅ Solo lectura — falta editar |
+| Clientes | ✅ Solo lectura — falta editar |
 | Dashboards | ✅ Funcionando |
 | Supabase | ⏳ Pendiente |
-| Fotos de soportes | ⏳ Pendiente (requiere Supabase Storage) |
+| Fotos de comprobantes | ⏳ Pendiente (requiere Supabase Storage) |

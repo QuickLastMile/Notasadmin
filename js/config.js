@@ -4,7 +4,7 @@
 
 const CFG = {
   // Clave de almacenamiento local (súbela de versión si cambias el modelo de datos)
-  storageKey: 'hub_personal_v1',
+  storageKey: 'hub_personal_v2',
   themeKey:   'hub_theme',
 
   // Caja menor
@@ -31,7 +31,19 @@ const EST_PROYECTO = {
   hecho:     { l:'Entregado', c:'o' }
 };
 
+/* ---- Caja menor ---------------------------------------------------------- */
 const CATEGORIAS_CAJA = [
-  'Transporte','Alimentación','Papelería','Insumos',
-  'Servicios','Mensajería','Base','Otros'
+  'Pago mensajero','Parqueadero','Combustible','Transporte',
+  'Peajes','Alimentación','Papelería','Insumos','Servicios','Base','Otros'
 ];
+
+const METODOS_PAGO = ['Transferencia','Nequi','Daviplata','Efectivo','Bancolombia a la mano'];
+
+const TIPOS_DOC = ['CC','NIT','CE','PPT'];
+
+const BANCOS = [
+  'Bancolombia','Davivienda','Nequi','Daviplata','BBVA','Banco de Bogotá',
+  'Banco Agrario','Colpatria','AV Villas','Falabella','Efectivo','Otro'
+];
+
+const TIPOS_CUENTA = ['Ahorros','Corriente','Depósito electrónico'];

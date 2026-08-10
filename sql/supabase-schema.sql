@@ -4,7 +4,7 @@
 -- ============================================================================
 
 -- ---------------------------------------------------------------------------
--- 1. TABLAS
+-- 1. CATÁLOGOS
 -- ---------------------------------------------------------------------------
 
 create table if not exists clientes (
@@ -16,6 +16,95 @@ create table if not exists clientes (
   activo      boolean default true,
   created_at  timestamptz default now()
 );
+
+-- Mensajeros y proveedores a quienes se les paga
+create table if not exists beneficiarios (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null references auth.users(id) on delete cascade default auth.uid(),
+  nombre      text not null,
+  tipo_doc    text default 'CC' check (tipo_doc in ('CC','NIT','CE','PPT')),
+  documento   text,
+  banco       text,
+  tipo_cuenta text default 'Ahorros',
+  cuenta      text,
+  telefono    text,
+  rol         text default 'Mensajero',
+  activo      boolean default true,
+  created_at  timestamptz default now()
+);
+
+-- ---------------------------------------------------------------------------
+-- 2. CAJA MENOR
+-- ---------------------------------------------------------------------------
+
+-- Un período = un mes de caja: se abre con una base y se cierra al legalizar
+create table if not exists periodos (
+  id                 uuid primary key default gen_random_uuid(),
+  user_id            uuid not null references auth.users(id) on delete cascade default auth.uid(),
+  nombre             text not null,
+  inicio             date not null,
+  fin                date not null,
+  base_asignada      numeric(14,2) default 0,
+  estado             text default 'abierto' check (estado in ('abierto','cerrado')),
+  cerrado_el         date,
+  reembolso_recibido numeric(14,2) default 0,
+  created_at         timestamptz default now()
+);
+
+-- Solo un período abierto a la vez por usuario
+create unique index if not exists ux_periodo_abierto
+  on periodos (user_id) where estado = 'abierto';
+
+create table if not exists caja (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null references auth.users(id) on delete cascade default auth.uid(),
+  periodo_id  uuid references periodos(id) on delete set null,
+
+  tipo        text not null check (tipo in ('ingreso','gasto')),
+  fecha       date not null default current_date,
+  concepto    text not null,
+  categoria   text default 'Otros',
+  monto       numeric(14,2) not null check (monto >= 0),
+  cliente_id  uuid references clientes(id) on delete set null,
+
+  -- A quién se le pagó y a qué cuenta
+  beneficiario_id uuid references beneficiarios(id) on delete set null,
+  metodo_pago     text default 'Transferencia',
+
+  -- Soportes
+  comprobante_pago  text,             -- N° de la transferencia / voucher
+  comprobante_url   text,             -- foto del soporte (Storage)
+  factura_num       text,             -- N° factura o cuenta de cobro
+  factura_url       text,             -- foto de la factura (Storage)
+  tiene_comprobante boolean default false,
+  tiene_factura     boolean default false,
+
+  -- Legalización y reembolso
+  legalizado    boolean default false,
+  legalizado_el date,
+  reembolsado   numeric(14,2) default 0 check (reembolsado >= 0),
+
+  observacion text,
+  created_at  timestamptz default now(),
+  updated_at  timestamptz default now(),
+
+  -- No puedes haber recibido más de lo que gastaste
+  constraint reembolso_no_supera_monto check (reembolsado <= monto)
+);
+
+-- Topes de gasto por categoría y período
+create table if not exists presupuestos (
+  id         uuid primary key default gen_random_uuid(),
+  user_id    uuid not null references auth.users(id) on delete cascade default auth.uid(),
+  categoria  text not null,
+  tope       numeric(14,2) not null default 0,
+  created_at timestamptz default now(),
+  unique (user_id, categoria)
+);
+
+-- ---------------------------------------------------------------------------
+-- 3. RESTO DE MÓDULOS
+-- ---------------------------------------------------------------------------
 
 create table if not exists proyectos (
   id          uuid primary key default gen_random_uuid(),
@@ -44,35 +133,19 @@ create table if not exists tareas (
   updated_at  timestamptz default now()
 );
 
-create table if not exists caja (
-  id          uuid primary key default gen_random_uuid(),
-  user_id     uuid not null references auth.users(id) on delete cascade default auth.uid(),
-  tipo        text not null check (tipo in ('ingreso','gasto')),
-  monto       numeric(14,2) not null check (monto >= 0),
-  concepto    text not null,
-  categoria   text default 'Otros',
-  cliente_id  uuid references clientes(id) on delete set null,
-  fecha       date not null default current_date,
-  legalizado  boolean default false,
-  soporte     boolean default false,
-  soporte_url text,                    -- ruta en Storage (foto del recibo)
-  created_at  timestamptz default now(),
-  updated_at  timestamptz default now()
-);
-
 create table if not exists novedades (
-  id          uuid primary key default gen_random_uuid(),
-  user_id     uuid not null references auth.users(id) on delete cascade default auth.uid(),
-  fecha       date not null default current_date,
-  titulo      text not null,
-  detalle     text,
-  cliente_id  uuid references clientes(id) on delete set null,
-  criticidad  text default 'media' check (criticidad in ('alta','media','baja')),
-  estado      text default 'abierta' check (estado in ('abierta','cerrada')),
-  accion      text,
-  evidencia_url text,                  -- ruta en Storage
-  created_at  timestamptz default now(),
-  updated_at  timestamptz default now()
+  id            uuid primary key default gen_random_uuid(),
+  user_id       uuid not null references auth.users(id) on delete cascade default auth.uid(),
+  fecha         date not null default current_date,
+  titulo        text not null,
+  detalle       text,
+  cliente_id    uuid references clientes(id) on delete set null,
+  criticidad    text default 'media' check (criticidad in ('alta','media','baja')),
+  estado        text default 'abierta' check (estado in ('abierta','cerrada')),
+  accion        text,
+  evidencia_url text,
+  created_at    timestamptz default now(),
+  updated_at    timestamptz default now()
 );
 
 create table if not exists dashboards (
@@ -84,7 +157,6 @@ create table if not exists dashboards (
   created_at  timestamptz default now()
 );
 
--- Checklist diario: la plantilla vive aquí, el "hecho" se marca por fecha
 create table if not exists rutina (
   id          uuid primary key default gen_random_uuid(),
   user_id     uuid not null references auth.users(id) on delete cascade default auth.uid(),
@@ -95,14 +167,15 @@ create table if not exists rutina (
 );
 
 -- ---------------------------------------------------------------------------
--- 2. ROW LEVEL SECURITY  (cada quien ve solo lo suyo)
+-- 4. ROW LEVEL SECURITY  (cada quien ve solo lo suyo)
 --    Sin esto, la anon key expuesta en GitHub Pages sería un problema.
 -- ---------------------------------------------------------------------------
 
 do $$
 declare t text;
 begin
-  foreach t in array array['clientes','proyectos','tareas','caja','novedades','dashboards','rutina']
+  foreach t in array array['clientes','beneficiarios','periodos','caja','presupuestos',
+                           'proyectos','tareas','novedades','dashboards','rutina']
   loop
     execute format('alter table %I enable row level security', t);
     execute format('drop policy if exists "solo_dueno" on %I', t);
@@ -116,22 +189,23 @@ begin
 end $$;
 
 -- ---------------------------------------------------------------------------
--- 3. ÍNDICES  (lo que la app consulta a diario)
+-- 5. ÍNDICES
 -- ---------------------------------------------------------------------------
 
-create index if not exists ix_tareas_pend  on tareas (user_id, estado, vence);
-create index if not exists ix_caja_fecha   on caja   (user_id, fecha desc);
-create index if not exists ix_nov_abiertas on novedades (user_id, estado, fecha desc);
-create index if not exists ix_proy_cliente on proyectos (user_id, cliente_id);
+create index if not exists ix_caja_periodo   on caja (user_id, periodo_id, fecha desc);
+create index if not exists ix_caja_pendiente on caja (user_id, legalizado, reembolsado);
+create index if not exists ix_caja_benef     on caja (user_id, beneficiario_id);
+create index if not exists ix_tareas_pend    on tareas (user_id, estado, vence);
+create index if not exists ix_nov_abiertas   on novedades (user_id, estado, fecha desc);
+create index if not exists ix_proy_cliente   on proyectos (user_id, cliente_id);
 
--- Búsqueda en español sobre tareas y novedades
 create index if not exists ix_tareas_fts on tareas
   using gin (to_tsvector('spanish', coalesce(titulo,'') || ' ' || coalesce(notas,'')));
 create index if not exists ix_nov_fts on novedades
   using gin (to_tsvector('spanish', coalesce(titulo,'') || ' ' || coalesce(detalle,'')));
 
 -- ---------------------------------------------------------------------------
--- 4. updated_at automático
+-- 6. updated_at automático
 -- ---------------------------------------------------------------------------
 
 create or replace function touch_updated_at() returns trigger as $$
@@ -140,7 +214,7 @@ begin new.updated_at = now(); return new; end $$ language plpgsql;
 do $$
 declare t text;
 begin
-  foreach t in array array['proyectos','tareas','caja','novedades']
+  foreach t in array array['caja','proyectos','tareas','novedades']
   loop
     execute format('drop trigger if exists trg_touch on %I', t);
     execute format('create trigger trg_touch before update on %I
@@ -149,23 +223,34 @@ begin
 end $$;
 
 -- ---------------------------------------------------------------------------
--- 5. VISTA DE ARQUEO DE CAJA MENOR  (la app puede leerla directo)
+-- 7. VISTA DE ARQUEO POR PERÍODO
+--    Es exactamente lo que calcula arqueo() en js/store.js
 -- ---------------------------------------------------------------------------
 
-create or replace view v_arqueo_caja as
+create or replace view v_arqueo as
 select
-  user_id,
-  sum(monto) filter (where tipo = 'ingreso')                        as base_recibida,
-  sum(monto) filter (where tipo = 'gasto')                          as total_gastado,
-  sum(case when tipo = 'ingreso' then monto else -monto end)        as saldo,
-  sum(monto) filter (where tipo = 'gasto' and not legalizado)       as sin_legalizar,
-  count(*)   filter (where tipo = 'gasto' and not soporte)          as sin_soporte
-from caja
-group by user_id;
+  c.user_id,
+  c.periodo_id,
+  p.nombre as periodo,
+  p.estado,
+  sum(c.monto) filter (where c.tipo = 'ingreso')                              as base,
+  sum(c.monto) filter (where c.tipo = 'gasto')                                as gastado,
+  sum(case when c.tipo = 'ingreso' then c.monto else -c.monto end)            as saldo,
+  sum(c.reembolsado) filter (where c.tipo = 'gasto')                          as reembolsado,
+  sum(c.monto - c.reembolsado) filter (where c.tipo = 'gasto')                as pendiente,
+  -- Cobrable: legalizado y sin reembolsar. Trabado: aún sin legalizar.
+  sum(c.monto - c.reembolsado) filter (where c.tipo = 'gasto' and c.legalizado)       as cobrable,
+  sum(c.monto - c.reembolsado) filter (where c.tipo = 'gasto' and not c.legalizado)   as trabado,
+  count(*) filter (where c.tipo = 'gasto' and not c.legalizado)                       as n_sin_legalizar,
+  count(*) filter (where c.tipo = 'gasto'
+                     and (not c.tiene_comprobante or not c.tiene_factura))            as n_sin_soporte
+from caja c
+join periodos p on p.id = c.periodo_id
+group by c.user_id, c.periodo_id, p.nombre, p.estado;
 
 -- ---------------------------------------------------------------------------
--- 6. STORAGE  (fotos de recibos y evidencias)
---    Crea el bucket y deja que cada usuario solo toque su carpeta /{uid}/...
+-- 8. STORAGE  (fotos de comprobantes y facturas)
+--    Cada usuario solo toca su carpeta /{uid}/...
 -- ---------------------------------------------------------------------------
 
 insert into storage.buckets (id, name, public)
@@ -179,7 +264,7 @@ create policy "soportes_propios" on storage.objects
   with check (bucket_id = 'soportes' and (storage.foldername(name))[1] = auth.uid()::text);
 
 -- ---------------------------------------------------------------------------
--- 7. DATOS INICIALES (opcional — ejecuta ya autenticado)
+-- 9. DATOS INICIALES (opcional — ejecuta ya autenticado)
 -- ---------------------------------------------------------------------------
 
 -- insert into clientes (nombre, contacto, color) values
@@ -189,9 +274,12 @@ create policy "soportes_propios" on storage.objects
 --   ('Lab. Inv. Hormonal','Dirección L.I.H','#d97706'),
 --   ('Interno','—','#8a95a3');
 
+-- insert into presupuestos (categoria, tope) values
+--   ('Pago mensajero', 900000), ('Parqueadero', 250000), ('Combustible', 200000);
+
 -- insert into rutina (texto, orden) values
 --   ('Revisar novedades reportadas por coordinadores', 1),
 --   ('Verificar que los dashboards carguen bien', 2),
---   ('Registrar gastos de caja menor del día', 3),
+--   ('Registrar pagos y gastos de caja del día', 3),
 --   ('Revisar correos y bandeja de solicitudes', 4),
 --   ('Planear las 3 tareas clave de mañana', 5);

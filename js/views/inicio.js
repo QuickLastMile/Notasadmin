@@ -16,15 +16,29 @@ function alertasDelDia(m){
       titulo:`${m.novCriticas.length} novedad${m.novCriticas.length > 1 ? 'es' : ''} crítica${m.novCriticas.length > 1 ? 's' : ''} sin cerrar`,
       sub: m.novCriticas[0].titulo, ir:'novedades' });
 
-  if(m.sinLegalizar.length)
-    a.push({ tono:'w', ico:'🧾',
-      titulo:`${m.sinLegalizar.length} gastos sin legalizar`,
-      sub:`${cop(m.montoSinLeg)} pendientes de soporte`, ir:'caja' });
+  const q = m.arqueo;
 
-  if(m.pctUsado >= CFG.topeAlertaCaja)
+  if(q.sinLegalizar.length)
+    a.push({ tono:'w', ico:'🧾',
+      titulo:`${q.sinLegalizar.length} movimientos sin legalizar`,
+      sub:`${cop(q.montoSinLeg)} · ${q.sinSoporte.length} sin comprobante o factura`, ir:'caja' });
+
+  if(q.cobrable > 0)
+    a.push({ tono:'w', ico:'💰',
+      titulo:`${cop(q.cobrable)} listos para cobrar`,
+      sub:`Ya legalizados y sin reembolsar${q.trabado > 0 ? ` · otros ${cop(q.trabado)} trabados sin legalizar` : ''}`,
+      ir:'caja' });
+
+  if(q.pctUsado >= CFG.topeAlertaCaja)
     a.push({ tono:'w', ico:'💸',
-      titulo:`Caja menor al ${Math.round(m.pctUsado * 100)}%`,
-      sub:`Quedan ${cop(m.saldo)} — considera pedir reembolso`, ir:'caja' });
+      titulo:`Caja menor al ${Math.round(q.pctUsado * 100)}%`,
+      sub:`Quedan ${cop(q.saldo)} de la base — considera pedir reembolso`, ir:'caja' });
+
+  if(m.presupuestosExcedidos.length)
+    a.push({ tono:'d', ico:'🎯',
+      titulo:`${m.presupuestosExcedidos.length} categoría${m.presupuestosExcedidos.length > 1 ? 's' : ''} sobre el tope`,
+      sub: m.presupuestosExcedidos.map(p => `${p.categoria}: ${cop(p.gastado)} de ${cop(p.tope)}`).join(' · '),
+      ir:'caja' });
 
   if(m.proyRiesgo.length)
     a.push({ tono:'w', ico:'📁',
@@ -53,8 +67,11 @@ function vInicio(m){
 
   <div class="grid g4" style="margin-bottom:14px">
     ${kpi('Vencidas', m.vencidas.length, `${m.hoy.length} vencen hoy`, m.vencidas.length ? 'd' : 'o')}
-    ${kpi('Saldo caja menor', cop(m.saldo), `${Math.round(m.pctUsado * 100)}% de la base usado`,
-          m.pctUsado >= CFG.topeAlertaCaja ? 'w' : 'p')}
+    ${kpi('Saldo caja menor', cop(m.arqueo.saldo),
+          `${Math.round(m.arqueo.pctUsado * 100)}% de la base usado`,
+          m.arqueo.pctUsado >= CFG.topeAlertaCaja ? 'w' : 'p')}
+    ${kpi('Te deben', cop(m.arqueo.pendiente),
+          `${cop(m.arqueo.cobrable)} ya cobrables`, m.arqueo.pendiente > 0 ? 'w' : 'o')}
     ${kpi('Novedades abiertas', m.novAbiertas.length, `${m.novCriticas.length} críticas`,
           m.novCriticas.length ? 'd' : 'o')}
     ${kpi('Proyectos activos', m.proyActivos.length, `${m.proyRiesgo.length} en riesgo`)}

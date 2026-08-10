@@ -48,49 +48,7 @@ async function guardarTarea(){
   closeModal(); render(); toast('Tarea creada ✓');
 }
 
-/* ---- Caja menor ---------------------------------------------------------- */
-async function toggleLeg(id){
-  const g = S.caja.find(x => x.id === id);
-  await db.update('caja', id, { legalizado: !g.legalizado });
-  render();
-}
-
-function modalCaja(tipo){
-  const catDefault = tipo === 'ingreso' ? 'Base' : 'Transporte';
-  const cats = CATEGORIAS_CAJA
-    .map(c => `<option ${c === catDefault ? 'selected' : ''}>${c}</option>`).join('');
-
-  openModal(formModal(tipo === 'gasto' ? 'Registrar gasto' : 'Registrar ingreso', `
-    <div><label>Concepto</label><input id="gC" placeholder="Ej. Taxi a bodega"></div>
-    <div class="f2">
-      <div><label>Monto (COP)</label><input id="gM" type="number" placeholder="45000"></div>
-      <div><label>Fecha</label><input type="date" id="gF" value="${hoyISO()}"></div>
-    </div>
-    <div class="f2">
-      <div><label>Categoría</label><select id="gK">${cats}</select></div>
-      <div><label>Cliente</label><select id="gCl">${optsCli('c5')}</select></div>
-    </div>
-    ${tipo === 'gasto' ? `
-    <div class="f-check">
-      <label><input type="checkbox" id="gS"> Tengo el soporte 📎</label>
-      <label><input type="checkbox" id="gL"> Ya legalizado</label>
-    </div>` : ''}`, `guardarCaja('${tipo}')`));
-}
-
-async function guardarCaja(tipo){
-  const monto = +$('#gM').value;
-  if(!monto){ toast('Escribe el monto'); return; }
-  await db.insert('caja', {
-    tipo, monto,
-    concepto:  $('#gC').value.trim() || 'Sin concepto',
-    categoria: $('#gK').value,
-    cliente_id:$('#gCl').value,
-    fecha:     $('#gF').value,
-    legalizado: tipo === 'ingreso' ? true : $('#gL').checked,
-    soporte:    tipo === 'ingreso' ? true : $('#gS').checked
-  });
-  closeModal(); render(); toast('Movimiento registrado ✓');
-}
+/* ---- Caja menor: está en js/acciones-caja.js ------------------------------ */
 
 /* ---- Novedades ----------------------------------------------------------- */
 async function cerrarNovedad(id){

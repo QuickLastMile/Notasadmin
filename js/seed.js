@@ -7,6 +7,37 @@
 function seed(){
   const t = masDias;   // t(-3) = hace 3 días, t(5) = en 5 días
 
+  /* ---- Períodos de caja (mes anterior cerrado, mes actual abierto) ------- */
+  const hoy = new Date();
+  const iniMes  = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
+  const finMes  = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 0);
+  const iniPrev = new Date(hoy.getFullYear(), hoy.getMonth() - 1, 1);
+  const finPrev = new Date(hoy.getFullYear(), hoy.getMonth(), 0);
+
+  const periodos = [
+    { id:'per0', nombre: nombreMes(iniPrev), inicio: dISO(iniPrev), fin: dISO(finPrev),
+      base_asignada: 1500000, estado:'cerrado', cerrado_el: dISO(finPrev), reembolso_recibido: 1420000 },
+    { id:'per1', nombre: nombreMes(iniMes),  inicio: dISO(iniMes),  fin: dISO(finMes),
+      base_asignada: 1500000, estado:'abierto', cerrado_el:null, reembolso_recibido: 0 }
+  ];
+
+  /* ---- Mensajeros y proveedores ----------------------------------------- */
+  const beneficiarios = [
+    { id:'b1', nombre:'Jhon Alexander Ruiz',  tipo_doc:'CC',  documento:'1013456789',
+      banco:'Bancolombia', tipo_cuenta:'Ahorros', cuenta:'91234567890',
+      telefono:'3105558877', rol:'Mensajero', activo:true },
+    { id:'b2', nombre:'Leidy Carolina Moreno', tipo_doc:'CC', documento:'52987654',
+      banco:'Nequi', tipo_cuenta:'Depósito electrónico', cuenta:'3128889900',
+      telefono:'3128889900', rol:'Mensajero', activo:true },
+    { id:'b3', nombre:'Andrés Felipe Gómez',  tipo_doc:'CC',  documento:'80112233',
+      banco:'Davivienda', tipo_cuenta:'Ahorros', cuenta:'0087654321',
+      telefono:'3013334455', rol:'Mensajero', activo:true },
+    { id:'b4', nombre:'Parqueadero El Dorado S.A.S', tipo_doc:'NIT', documento:'901234567-1',
+      banco:'Bancolombia', tipo_cuenta:'Corriente', cuenta:'55512345678',
+      telefono:'6014445566', rol:'Proveedor', activo:true }
+  ];
+
+  /* ---- Clientes ---------------------------------------------------------- */
   const clientes = [
     {id:'c1', nombre:'Cafam',              color:'#2563eb', contacto:'Coord. Logística',   activo:true},
     {id:'c2', nombre:'Diebold Nixdorf',    color:'#7c3aed', contacto:'Gestión Operativa',  activo:true},
@@ -15,6 +46,82 @@ function seed(){
     {id:'c5', nombre:'Interno',            color:'#8a95a3', contacto:'—',                  activo:true}
   ];
 
+  /* ---- Presupuestos por categoría ---------------------------------------- */
+  const presupuestos = [
+    { id:'pr1', categoria:'Pago mensajero', tope:900000 },
+    { id:'pr2', categoria:'Parqueadero',    tope:250000 },
+    { id:'pr3', categoria:'Combustible',    tope:200000 }
+  ];
+
+  /* ---- Movimientos de caja ----------------------------------------------- */
+  const G = (o) => Object.assign({
+    tipo:'gasto', periodo_id:'per1', categoria:'Otros', cliente_id:'c5',
+    beneficiario_id:null, metodo_pago:'Transferencia',
+    comprobante_pago:'', factura_num:'',
+    tiene_comprobante:false, tiene_factura:false,
+    legalizado:false, legalizado_el:null,
+    reembolsado:0, observacion:''
+  }, o);
+
+  const caja = [
+    G({ id:'g0', tipo:'ingreso', monto:1500000, concepto:'Base asignada del mes',
+        categoria:'Base', fecha:t(-20), metodo_pago:'Transferencia',
+        tiene_comprobante:true, comprobante_pago:'TRF-889012',
+        legalizado:true, legalizado_el:t(-20), reembolsado:0 }),
+
+    G({ id:'g1', monto:180000, concepto:'Pago recorrido semana 1', categoria:'Pago mensajero',
+        cliente_id:'c1', fecha:t(-14), beneficiario_id:'b1',
+        metodo_pago:'Transferencia', comprobante_pago:'TRF-445120', tiene_comprobante:true,
+        factura_num:'CE-1201', tiene_factura:true,
+        legalizado:true, legalizado_el:t(-11), reembolsado:180000,
+        observacion:'Recorrido completo, sin novedad' }),
+
+    G({ id:'g2', monto:165000, concepto:'Pago recorrido semana 1', categoria:'Pago mensajero',
+        cliente_id:'c3', fecha:t(-14), beneficiario_id:'b2',
+        metodo_pago:'Nequi', comprobante_pago:'NQ-778113', tiene_comprobante:true,
+        factura_num:'CE-1202', tiene_factura:true,
+        legalizado:true, legalizado_el:t(-11), reembolsado:165000 }),
+
+    G({ id:'g3', monto:96000, concepto:'Parqueadero mensual moto 3', categoria:'Parqueadero',
+        cliente_id:'c1', fecha:t(-9), beneficiario_id:'b4',
+        metodo_pago:'Transferencia', comprobante_pago:'TRF-449900', tiene_comprobante:true,
+        factura_num:'FE-30514', tiene_factura:true,
+        legalizado:true, legalizado_el:t(-7), reembolsado:96000 }),
+
+    G({ id:'g4', monto:190000, concepto:'Pago recorrido semana 2', categoria:'Pago mensajero',
+        cliente_id:'c1', fecha:t(-7), beneficiario_id:'b3',
+        metodo_pago:'Transferencia', comprobante_pago:'TRF-451003', tiene_comprobante:true,
+        factura_num:'', tiene_factura:false,
+        legalizado:false, reembolsado:0,
+        observacion:'Falta que entregue la cuenta de cobro' }),
+
+    G({ id:'g5', monto:72000, concepto:'Combustible ruta norte', categoria:'Combustible',
+        cliente_id:'c3', fecha:t(-5), beneficiario_id:'b2',
+        metodo_pago:'Efectivo', tiene_comprobante:false,
+        factura_num:'POS-88231', tiene_factura:true,
+        legalizado:true, legalizado_el:t(-3), reembolsado:40000,
+        observacion:'Solo reembolsaron parcial, revisar con contabilidad' }),
+
+    G({ id:'g6', monto:96000, concepto:'Parqueadero mensual moto 5', categoria:'Parqueadero',
+        cliente_id:'c1', fecha:t(-3), beneficiario_id:'b4',
+        metodo_pago:'Transferencia', comprobante_pago:'TRF-452871', tiene_comprobante:true,
+        factura_num:'', tiene_factura:false,
+        legalizado:false, reembolsado:0,
+        observacion:'Pendiente factura del parqueadero' }),
+
+    G({ id:'g7', monto:54000, concepto:'Recarga celular equipo', categoria:'Servicios',
+        cliente_id:'c5', fecha:t(-1),
+        metodo_pago:'Daviplata', comprobante_pago:'DV-11290', tiene_comprobante:true,
+        legalizado:false, reembolsado:0 }),
+
+    G({ id:'g8', monto:26000, concepto:'Transporte urgente documentos', categoria:'Transporte',
+        cliente_id:'c2', fecha:t(0), beneficiario_id:'b1',
+        metodo_pago:'Efectivo', tiene_comprobante:false, tiene_factura:false,
+        legalizado:false, reembolsado:0,
+        observacion:'Sin soporte todavía' })
+  ];
+
+  /* ---- Resto de módulos --------------------------------------------------- */
   const proyectos = [
     {id:'p1', nombre:'Dashboard Institucional',    cliente_id:'c1', estado:'en_curso',  avance:75,  vence:t(12)},
     {id:'p2', nombre:'App Biológicos (mensajero)', cliente_id:'c1', estado:'en_curso',  avance:90,  vence:t(5)},
@@ -36,16 +143,6 @@ function seed(){
     {id:'t9', titulo:'Subir cambios del dash L.I.H',                cliente_id:'c4', proyecto_id:'p5', prioridad:'baja',  estado:'hecho',     vence:t(-3)}
   ];
 
-  const caja = [
-    {id:'g1', tipo:'ingreso', monto:600000, concepto:'Base asignada del mes',      categoria:'Base',         cliente_id:'c5', fecha:t(-20), legalizado:true,  soporte:true},
-    {id:'g2', tipo:'gasto',   monto:48000,  concepto:'Taxi a bodega Cafam',        categoria:'Transporte',   cliente_id:'c1', fecha:t(-9),  legalizado:true,  soporte:true},
-    {id:'g3', tipo:'gasto',   monto:125000, concepto:'Papelería e impresiones',    categoria:'Papelería',    cliente_id:'c5', fecha:t(-7),  legalizado:true,  soporte:true},
-    {id:'g4', tipo:'gasto',   monto:32000,  concepto:'Refrigerio visita cliente',  categoria:'Alimentación', cliente_id:'c2', fecha:t(-4),  legalizado:false, soporte:false},
-    {id:'g5', tipo:'gasto',   monto:89000,  concepto:'Domicilio insumos neveras',  categoria:'Insumos',      cliente_id:'c1', fecha:t(-3),  legalizado:false, soporte:true},
-    {id:'g6', tipo:'gasto',   monto:26000,  concepto:'Transporte mensajero',       categoria:'Transporte',   cliente_id:'c3', fecha:t(-1),  legalizado:false, soporte:false},
-    {id:'g7', tipo:'gasto',   monto:54000,  concepto:'Recarga celular equipo',     categoria:'Servicios',    cliente_id:'c5', fecha:t(0),   legalizado:false, soporte:true}
-  ];
-
   const novedades = [
     {id:'n1', fecha:t(0),  titulo:'Sheet de ausencias no actualiza', detalle:'Los coordinadores reportan datos viejos en la app de consulta.', cliente_id:'c1', criticidad:'alta',  estado:'abierta', accion:'Revisar permisos del gid publicado'},
     {id:'n2', fecha:t(0),  titulo:'Moto 3 sin preoperacional',      detalle:'El mensajero no registró el HSQ de hoy.',                        cliente_id:'c1', criticidad:'media', estado:'abierta', accion:'Llamar al coordinador de zona'},
@@ -54,20 +151,21 @@ function seed(){
   ];
 
   const dashboards = [
-    {id:'d1', nombre:'Centro de Dashboards', url:'https://quicklastmile.github.io/CentroDashs/',          cliente_id:'c5'},
-    {id:'d2', nombre:'DashboardCafam',       url:'https://quicklastmile.github.io/',                      cliente_id:'c1'},
-    {id:'d3', nombre:'Consulta Ausencias',   url:'https://quicklastmile.github.io/consulta-ausencias/',   cliente_id:'c1'},
-    {id:'d4', nombre:'DASH L.I.H',           url:'#',                                                     cliente_id:'c4'},
-    {id:'d5', nombre:'Gestión HSQ Motos',    url:'https://quicklastmile.github.io/Gesti-nHSQ/',           cliente_id:'c1'}
+    {id:'d1', nombre:'Centro de Dashboards', url:'https://quicklastmile.github.io/CentroDashs/',        cliente_id:'c5'},
+    {id:'d2', nombre:'DashboardCafam',       url:'https://quicklastmile.github.io/',                    cliente_id:'c1'},
+    {id:'d3', nombre:'Consulta Ausencias',   url:'https://quicklastmile.github.io/consulta-ausencias/', cliente_id:'c1'},
+    {id:'d4', nombre:'DASH L.I.H',           url:'#',                                                   cliente_id:'c4'},
+    {id:'d5', nombre:'Gestión HSQ Motos',    url:'https://quicklastmile.github.io/Gesti-nHSQ/',         cliente_id:'c1'}
   ];
 
   const rutina = [
     {id:'r1', texto:'Revisar novedades reportadas por coordinadores', orden:1, hecho_el:null},
     {id:'r2', texto:'Verificar que los dashboards carguen bien',      orden:2, hecho_el:null},
-    {id:'r3', texto:'Registrar gastos de caja menor del día',         orden:3, hecho_el:null},
+    {id:'r3', texto:'Registrar pagos y gastos de caja del día',       orden:3, hecho_el:null},
     {id:'r4', texto:'Revisar correos y bandeja de solicitudes',       orden:4, hecho_el:null},
     {id:'r5', texto:'Planear las 3 tareas clave de mañana',           orden:5, hecho_el:null}
   ];
 
-  return { clientes, proyectos, tareas, caja, novedades, dashboards, rutina };
+  return { clientes, beneficiarios, periodos, presupuestos, caja,
+           proyectos, tareas, novedades, dashboards, rutina };
 }

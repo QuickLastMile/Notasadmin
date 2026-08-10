@@ -35,6 +35,19 @@ function fechaTxt(iso){
   return new Date(iso + 'T00:00:00').toLocaleDateString('es-CO', {day:'numeric', month:'short'});
 }
 
+/** "Agosto 2026" a partir de un Date. */
+const nombreMes = d => d.toLocaleDateString('es-CO', { month:'long', year:'numeric' })
+  .replace(/^\w/, c => c.toUpperCase());
+
+const MESES_CORTOS = ['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+
+/** "12 ago 26" — fecha corta absoluta, para tablas contables. */
+function fechaCorta(iso){
+  if(!iso) return '—';
+  const d = new Date(iso + 'T00:00:00');
+  return `${String(d.getDate()).padStart(2,'0')} ${MESES_CORTOS[d.getMonth()]} ${String(d.getFullYear()).slice(2)}`;
+}
+
 /* ---- Feedback ------------------------------------------------------------ */
 function toast(msg){
   const t = $('#toast');

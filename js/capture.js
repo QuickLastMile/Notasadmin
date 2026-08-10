@@ -121,9 +121,18 @@ async function commitCap(){
       break;
     case 'gasto':
     case 'ingreso':
-      await db.insert('caja', { tipo:p.tipo, monto:p.monto, concepto:p.texto || 'Sin concepto',
-        categoria:'Otros', cliente_id:cid, fecha:hoyISO(),
-        legalizado:false, soporte:false });
+      // Captura mínima: entra al período abierto y queda por completar
+      // (beneficiario, cuenta y soportes se agregan luego con el lápiz)
+      await db.insert('caja', {
+        tipo:p.tipo, monto:p.monto, concepto:p.texto || 'Sin concepto',
+        categoria: p.tipo === 'ingreso' ? 'Base' : 'Otros',
+        cliente_id:cid, periodo_id: periodoActivo()?.id, fecha:hoyISO(),
+        beneficiario_id:null, metodo_pago:'Efectivo',
+        comprobante_pago:'', factura_num:'',
+        tiene_comprobante: p.tipo === 'ingreso', tiene_factura: p.tipo === 'ingreso',
+        legalizado: p.tipo === 'ingreso', legalizado_el: p.tipo === 'ingreso' ? hoyISO() : null,
+        reembolsado:0, observacion:''
+      });
       break;
     case 'novedad':
       await db.insert('novedades', { fecha:hoyISO(), titulo:p.texto, detalle:'',

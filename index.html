@@ -6,7 +6,9 @@
 <title>Hub Personal — Centro de Control</title>
 <meta name="description" content="Centro de control diario: tareas, caja menor, novedades, proyectos y clientes.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎯</text></svg>">
-<link rel="stylesheet" href="css/styles.css">
+
+<!-- Sube ?v= en cada despliegue para que nadie quede con CSS/JS viejo en caché -->
+<link rel="stylesheet" href="css/styles.css?v=2">
 </head>
 <body>
 
@@ -47,25 +49,26 @@
 <div class="toast" id="toast"></div>
 
 <!-- ══ Núcleo ═══════════════════════════════════════════════════ -->
-<script src="js/config.js"></script>
-<script src="js/utils.js"></script>
-<script src="js/db.js"></script>
-<script src="js/seed.js"></script>
-<script src="js/store.js"></script>
-<script src="js/ui.js"></script>
-<script src="js/capture.js"></script>
-<script src="js/acciones.js"></script>
+<script src="js/config.js?v=2"></script>
+<script src="js/utils.js?v=2"></script>
+<script src="js/db.js?v=2"></script>
+<script src="js/seed.js?v=2"></script>
+<script src="js/store.js?v=2"></script>
+<script src="js/ui.js?v=2"></script>
+<script src="js/capture.js?v=2"></script>
+<script src="js/acciones.js?v=2"></script>
+<script src="js/acciones-caja.js?v=2"></script>
 
 <!-- ══ Vistas (una por módulo — se editan de forma independiente) ══ -->
-<script src="js/views/inicio.js"></script>
-<script src="js/views/tareas.js"></script>
-<script src="js/views/caja.js"></script>
-<script src="js/views/novedades.js"></script>
-<script src="js/views/proyectos.js"></script>
-<script src="js/views/clientes.js"></script>
-<script src="js/views/enlaces.js"></script>
+<script src="js/views/inicio.js?v=2"></script>
+<script src="js/views/tareas.js?v=2"></script>
+<script src="js/views/caja.js?v=2"></script>
+<script src="js/views/novedades.js?v=2"></script>
+<script src="js/views/proyectos.js?v=2"></script>
+<script src="js/views/clientes.js?v=2"></script>
+<script src="js/views/enlaces.js?v=2"></script>
 
 <!-- ══ Arranque ═════════════════════════════════════════════════ -->
-<script src="js/app.js"></script>
+<script src="js/app.js?v=2"></script>
 </body>
 </html>
