@@ -1,48 +1,56 @@
 /* ============================================================
-   HUB PERSONAL — Hoja de estilos
-   Base cromática: CABERNET. Diseño pensado primero para celular.
+   NEXA — Centro de Gestión · Hoja de estilos
+   Base cromática: GRANATE. Diseño pensado primero para celular.
    Cambiar los tokens de :root reestiliza la app completa.
    ============================================================ */
 
-/* ---- 1. Tokens de diseño ---------------------------------- */
+/* ---- 1. Tokens de diseño ----------------------------------
+   Paleta: granate #800000 · cacao #633A2C · oro viejo #B8860B · crema #E0D6B8
+   El cabernet anterior (#6E2142) llevaba azul dentro y por eso leía morado.
+   Este granate no tiene nada de azul: es el mismo rojo del logo.
+   Modo claro → manda la crema.   Modo oscuro → manda el granate profundo.
+   ------------------------------------------------------------ */
 :root{
-  /* Neutros con temple cálido de vino, no grises fríos */
-  --bg:#FAF6F7; --surface:#FFFFFF; --surface-2:#F4EEF1; --border:#EBE0E5;
-  --text:#1E1219; --text-2:#6B5A63; --text-3:#9C8992;
+  /* Neutros derivados de la crema, no grises */
+  --bg:#F4EDE1; --surface:#FCF9F3; --surface-2:#EBE2D1; --border:#DDD2BC;
+  --text:#2B1710; --text-2:#6A5343; --text-3:#9B8570;
 
-  /* Cabernet: el color de la marca. Manda en navegación y acciones. */
-  --brand:#6E2142; --brand-2:#52182F; --brand-3:#8C3358;
-  --brand-soft:#F8E9EF; --brand-line:#E7CDD8;
+  /* Granate: manda en navegación y acciones */
+  --brand:#800000; --brand-2:#5C0000; --brand-3:#9E3226;
+  --brand-soft:#F3E2D9; --brand-line:#E2CCBF;
 
-  /* Semánticos: brillantes y saturados, para que no se confundan
-     con el cabernet, que es oscuro y apagado. */
-  --ok:#1B7A52;     --ok-soft:#E2F3EA;
-  --warn:#B06A00;   --warn-soft:#FDF0D9;
-  --danger:#D6342B; --danger-soft:#FCE9E7;
-  --purple:#6B3D93; --purple-soft:#F0E8F8;
+  /* Semánticos. El granate es oscuro y apagado; estos van más vivos
+     para que una alerta no se confunda con un botón. */
+  --ok:#3F6B4A;     --ok-soft:#E5EDE0;
+  --warn:#B8860B;   --warn-soft:#F8EDCF;   /* oro viejo, de la paleta */
+  --danger:#CE3B26; --danger-soft:#F9E1DB;
+  --purple:#633A2C; --purple-soft:#EEE2D9;  /* cacao: reemplazó al morado */
 
   --radius:16px; --radius-sm:11px;
-  --shadow:0 1px 2px rgba(64,20,38,.05), 0 6px 20px rgba(64,20,38,.06);
-  --shadow-lg:0 12px 40px rgba(50,15,30,.16);
+  /* Sombras más tenues: eran parte de la sobrecarga visual */
+  --shadow:0 1px 2px rgba(70,35,20,.04), 0 5px 16px rgba(70,35,20,.05);
+  --shadow-lg:0 12px 36px rgba(50,22,12,.14);
   --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
 
   --tabbar-h:62px;
 }
 
 :root[data-theme="dark"]{
-  --bg:#150B10; --surface:#1F1017; --surface-2:#2A1620; --border:#3A2430;
-  --text:#F5EAEF; --text-2:#B9A3AE; --text-3:#8A737E;
+  --bg:#160C0A; --surface:#221310; --surface-2:#2F1A15; --border:#3F2620;
+  --text:#F0E5D4; --text-2:#BFA792; --text-3:#8C7361;
 
-  --brand:#E0759C; --brand-2:#EE93B3; --brand-3:#C4557F;
-  --brand-soft:#3A1428; --brand-line:#4C1D34;
+  /* Sobre fondo oscuro el #800000 no se lee: se aclara hacia la crema
+     manteniendo el mismo tono, sin virar a rosa */
+  --brand:#C1786A; --brand-2:#D48E80; --brand-3:#A45D50;
+  --brand-soft:#38201B; --brand-line:#4A2C25;
 
-  --ok:#4CC38A;     --ok-soft:#0F2A1E;
-  --warn:#E3A008;   --warn-soft:#2E2208;
-  --danger:#FF6B5E; --danger-soft:#33150F;
-  --purple:#B98BE8; --purple-soft:#251A33;
+  --ok:#7FAE84;     --ok-soft:#17281A;
+  --warn:#D9A441;   --warn-soft:#2E2410;
+  --danger:#E4705F; --danger-soft:#331813;
+  --purple:#B08A72; --purple-soft:#2A1D16;
 
-  --shadow:0 1px 2px rgba(0,0,0,.4), 0 6px 20px rgba(0,0,0,.3);
-  --shadow-lg:0 16px 44px rgba(0,0,0,.55);
+  --shadow:0 1px 2px rgba(0,0,0,.36), 0 5px 16px rgba(0,0,0,.26);
+  --shadow-lg:0 16px 40px rgba(0,0,0,.5);
 }
 
 /* ---- 2. Base ---------------------------------------------- */
@@ -117,14 +125,14 @@ nav{padding:12px 10px;flex:1;overflow-y:auto;overflow-x:hidden}
   transition:background .14s,color .14s;font-weight:500;white-space:nowrap;overflow:hidden}
 .nav-item:hover{background:var(--surface-2);color:var(--text)}
 .nav-item.active{background:var(--brand);color:#fff;font-weight:600;
-  box-shadow:0 3px 12px rgba(110,33,66,.26)}
-:root[data-theme="dark"] .nav-item.active{color:#1A0A12;box-shadow:none}
+  box-shadow:0 3px 10px rgba(128,0,0,.22)}
+:root[data-theme="dark"] .nav-item.active{color:#1B0D09;box-shadow:none}
 .nav-item .ico{width:20px;height:20px;flex-shrink:0;display:grid;place-items:center}
 .nav-item .ico svg{width:19px;height:19px}
 .nav-item .badge{margin-left:auto;background:var(--danger);color:#fff;font-size:10px;
   font-weight:700;padding:1px 6px;border-radius:20px;min-width:19px;text-align:center}
 .nav-item.active .badge{background:rgba(255,255,255,.25)}
-:root[data-theme="dark"] .nav-item.active .badge{background:rgba(0,0,0,.22);color:#1A0A12}
+:root[data-theme="dark"] .nav-item.active .badge{background:rgba(0,0,0,.22);color:#1B0D09}
 
 .side-foot{padding:11px;border-top:1px solid var(--border);display:flex;gap:6px}
 .side-foot button{flex:1;display:flex;align-items:center;justify-content:center;gap:7px;
@@ -225,10 +233,10 @@ h1{font-size:23px;letter-spacing:-.5px;font-weight:700}
   transition:.14s;text-decoration:none;display:inline-block;white-space:nowrap}
 .btn:hover{background:var(--surface-2);color:var(--text);border-color:var(--brand-line)}
 .btn.pri{background:var(--brand);border-color:var(--brand);color:#fff;
-  box-shadow:0 3px 12px rgba(110,33,66,.26)}
+  box-shadow:0 3px 10px rgba(128,0,0,.22)}
 .btn.pri:hover{background:var(--brand-2);color:#fff}
-:root[data-theme="dark"] .btn.pri{color:#1A0A12;box-shadow:none}
-:root[data-theme="dark"] .btn.pri:hover{background:var(--brand-2);color:#1A0A12}
+:root[data-theme="dark"] .btn.pri{color:#1B0D09;box-shadow:none}
+:root[data-theme="dark"] .btn.pri:hover{background:var(--brand-2);color:#1B0D09}
 .btn.sm{padding:5px 10px;font-size:11.5px;border-radius:9px}
 .btn.dgr{color:var(--danger);border-color:transparent}
 .btn.dgr:hover{background:var(--danger-soft);border-color:transparent}
@@ -277,7 +285,7 @@ tbody tr:hover{background:var(--surface-2)}
 .alert .a-txt small{display:block;color:var(--text-2);font-size:11.5px;margin-top:2px}
 
 /* ---- 10. Modal, hoja inferior y toast --------------------- */
-.mask{position:fixed;inset:0;background:rgba(30,10,20,.55);backdrop-filter:blur(4px);
+.mask{position:fixed;inset:0;background:rgba(28,12,8,.55);backdrop-filter:blur(4px);
   z-index:100;display:none;align-items:flex-start;justify-content:center;
   padding:56px 18px;overflow-y:auto}
 .mask.on{display:flex}
@@ -325,7 +333,7 @@ tbody tr:hover{background:var(--surface-2)}
 .login-bg{
   position:fixed;inset:0;display:flex;padding:22px;
   overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
-  background:linear-gradient(150deg,#2A0C1A 0%,#5B1B36 42%,#8C3358 78%,#3D1224 100%);
+  background:linear-gradient(155deg,#1C0908 0%,#4E1108 38%,#800000 72%,#2A0D07 100%);
 }
 /* Manchas de luz difusas, como el fondo de la referencia.
    Van en `fixed` para que no se muevan al desplazar ni alarguen el scroll. */
@@ -333,8 +341,8 @@ tbody tr:hover{background:var(--surface-2)}
   content:"";position:fixed;border-radius:50%;filter:blur(90px);opacity:.55;
   pointer-events:none;z-index:0
 }
-.login-bg::before{width:440px;height:440px;background:#C4557F;top:-120px;right:-100px}
-.login-bg::after{width:520px;height:520px;background:#3B0F24;bottom:-180px;left:-140px;opacity:.75}
+.login-bg::before{width:440px;height:440px;background:#B8860B;top:-130px;right:-110px;opacity:.34}
+.login-bg::after{width:520px;height:520px;background:#633A2C;bottom:-190px;left:-150px;opacity:.55}
 
 .glass{
   /* `margin:auto` centra cuando cabe, y deja desplazar cuando no.
@@ -346,7 +354,7 @@ tbody tr:hover{background:var(--surface-2)}
   -webkit-backdrop-filter:blur(26px) saturate(150%);
   border:1px solid rgba(255,255,255,.22);
   border-radius:26px;padding:32px 28px 28px;
-  box-shadow:0 22px 60px rgba(20,5,12,.5), inset 0 1px 0 rgba(255,255,255,.28);
+  box-shadow:0 22px 60px rgba(18,7,4,.5), inset 0 1px 0 rgba(255,255,255,.28);
   color:#fff
 }
 
@@ -384,12 +392,12 @@ tbody tr:hover{background:var(--surface-2)}
 
 .glass-btn{
   width:100%;margin-top:20px;padding:14px;border-radius:14px;
-  font-size:15px;font-weight:650;color:#4A1128;
-  background:linear-gradient(135deg,rgba(255,255,255,.95),rgba(255,225,235,.86));
+  font-size:15px;font-weight:650;color:#5C0000;
+  background:linear-gradient(135deg,rgba(255,252,246,.96),rgba(224,214,184,.88));
   border:1px solid rgba(255,255,255,.5);
-  box-shadow:0 8px 24px rgba(20,5,12,.32);transition:.18s
+  box-shadow:0 8px 24px rgba(18,7,4,.32);transition:.18s
 }
-.glass-btn:hover{transform:translateY(-1px);box-shadow:0 12px 30px rgba(20,5,12,.4)}
+.glass-btn:hover{transform:translateY(-1px);box-shadow:0 12px 30px rgba(18,7,4,.4)}
 .glass-btn:active{transform:translateY(0)}
 .glass-btn:disabled{opacity:.6;cursor:default;transform:none}
 
@@ -404,9 +412,9 @@ tbody tr:hover{background:var(--surface-2)}
 /* Botón de Google y separador, en la pantalla de acceso */
 .google-btn{
   width:100%;display:flex;align-items:center;justify-content:center;gap:11px;
-  padding:13px;border-radius:14px;font-size:14.5px;font-weight:600;color:#2A1119;
+  padding:13px;border-radius:14px;font-size:14.5px;font-weight:600;color:#2B1710;
   background:rgba(255,255,255,.94);border:1px solid rgba(255,255,255,.5);
-  box-shadow:0 6px 20px rgba(20,5,12,.26);transition:.18s
+  box-shadow:0 6px 20px rgba(18,7,4,.26);transition:.18s
 }
 .google-btn:hover{background:#fff;transform:translateY(-1px)}
 .sep-o{display:flex;align-items:center;gap:12px;margin:20px 0 18px;
@@ -437,7 +445,7 @@ tbody tr:hover{background:var(--surface-2)}
 
 /* Visor a pantalla completa */
 .visor{
-  position:fixed;inset:0;z-index:300;background:rgba(12,4,8,.92);
+  position:fixed;inset:0;z-index:300;background:rgba(14,7,4,.93);
   backdrop-filter:blur(8px);display:flex;flex-direction:column;
   padding:0 0 env(safe-area-inset-bottom)
 }
@@ -564,7 +572,7 @@ tbody tr:hover{background:var(--surface-2)}
 .seg button{padding:6px 13px;border-radius:8px;font-size:12.5px;font-weight:600;
   color:var(--text-2);transition:.13s;white-space:nowrap}
 .seg button.on{background:var(--brand);color:#fff}
-:root[data-theme="dark"] .seg button.on{color:#1A0A12}
+:root[data-theme="dark"] .seg button.on{color:#1B0D09}
 
 .colores{display:flex;gap:7px;flex-shrink:0}
 .color{width:26px;height:26px;border-radius:50%;border:2px solid transparent;
@@ -599,7 +607,7 @@ tbody tr:hover{background:var(--surface-2)}
 .pop-item.peligro:hover{background:var(--danger-soft)}
 
 /* ---- Panel lateral (drawer) ------------------------------- */
-.drawer-mask{position:fixed;inset:0;background:rgba(30,10,20,.5);backdrop-filter:blur(3px);
+.drawer-mask{position:fixed;inset:0;background:rgba(28,12,8,.5);backdrop-filter:blur(3px);
   z-index:120;display:none}
 .drawer-mask.on{display:block}
 .drawer{position:fixed;top:0;right:0;bottom:0;width:min(468px,100vw);z-index:121;
@@ -703,7 +711,7 @@ tbody tr:hover{background:var(--surface-2)}
 }
 
 /* Hoja inferior "Más" */
-.sheet-mask{position:fixed;inset:0;background:rgba(30,10,20,.5);backdrop-filter:blur(4px);
+.sheet-mask{position:fixed;inset:0;background:rgba(28,12,8,.5);backdrop-filter:blur(4px);
   z-index:110;display:none}
 .sheet-mask.on{display:block}
 .sheet{

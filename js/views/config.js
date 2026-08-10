@@ -320,12 +320,13 @@ apariencia(){
       ${control}
     </div>`;
 
+  // Todos salen de la paleta de la marca: nada de morados
   const ACENTOS = [
-    ['', 'Cabernet', '#6E2142'],
-    ['#7B2D5E', 'Ciruela', '#7B2D5E'],
-    ['#9B2C3A', 'Granate', '#9B2C3A'],
-    ['#5B2A6E', 'Berenjena', '#5B2A6E'],
-    ['#1F5F52', 'Bosque', '#1F5F52']
+    ['',        'Granate',   '#800000'],
+    ['#633A2C', 'Cacao',     '#633A2C'],
+    ['#9E3226', 'Terracota', '#9E3226'],
+    ['#B8860B', 'Oro viejo', '#B8860B'],
+    ['#4A5D4E', 'Salvia',    '#4A5D4E']
   ];
 
   return `
