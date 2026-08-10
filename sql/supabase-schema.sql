@@ -171,6 +171,9 @@ create table if not exists rutina (
 --    Sin esto, la anon key expuesta en GitHub Pages sería un problema.
 -- ---------------------------------------------------------------------------
 
+-- El RLS filtra fila por fila, pero antes hace falta el GRANT: sin él,
+-- PostgREST responde 401 "permission denied" incluso con sesión válida.
+-- Son dos capas distintas y hacen falta las dos.
 do $$
 declare t text;
 begin
@@ -185,8 +188,18 @@ begin
         using (auth.uid() = user_id)
         with check (auth.uid() = user_id)
     $f$, t);
+    -- Solo a authenticated: sin sesión no se toca nada
+    execute format('grant select, insert, update, delete on %I to authenticated', t);
   end loop;
 end $$;
+
+grant usage on schema public to anon, authenticated;
+
+-- Que las tablas nuevas hereden los permisos sin tener que acordarse
+alter default privileges in schema public
+  grant select, insert, update, delete on tables to authenticated;
+alter default privileges in schema public
+  grant usage, select on sequences to authenticated;
 
 -- ---------------------------------------------------------------------------
 -- 5. ÍNDICES
@@ -227,7 +240,9 @@ end $$;
 --    Es exactamente lo que calcula arqueo() en js/store.js
 -- ---------------------------------------------------------------------------
 
-create or replace view v_arqueo as
+-- security_invoker: sin esto, en Postgres 15+ la vista corre con los permisos
+-- de su DUEÑO y se salta el RLS — mostraría el arqueo de cualquier usuario.
+create or replace view v_arqueo with (security_invoker = true) as
 select
   c.user_id,
   c.periodo_id,
@@ -247,6 +262,8 @@ select
 from caja c
 join periodos p on p.id = c.periodo_id
 group by c.user_id, c.periodo_id, p.nombre, p.estado;
+
+grant select on v_arqueo to authenticated;
 
 -- ---------------------------------------------------------------------------
 -- 8. STORAGE  (fotos de comprobantes y facturas)
