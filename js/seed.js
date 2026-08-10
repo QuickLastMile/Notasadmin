@@ -168,6 +168,28 @@ function seed(){
     {id:'r5', texto:'Planear las 3 tareas clave de mañana',           orden:5, hecho_el:null}
   ];
 
-  return { clientes, beneficiarios, periodos, presupuestos, caja,
-           proyectos, tareas, novedades, dashboards, rutina };
+  /* ---- Banco de preguntas ------------------------------------------------ */
+  const preguntas = [
+    { id:'q1', texto:'¿El mensajero realizó correctamente la entrega?', tipo:'sino',
+      opciones:[], proyecto_id:'p2', categoria:'Entregas', orden:1,
+      obligatoria:true, activa:true },
+    { id:'q2', texto:'¿En qué estado recibió la nevera portátil?', tipo:'unica',
+      opciones:['Buena','Con daño leve','Con daño grave','No aplica'],
+      proyecto_id:'p2', categoria:'Vehículos', orden:2, obligatoria:true, activa:true },
+    { id:'q3', texto:'Kilometraje de la moto al iniciar el recorrido', tipo:'numero',
+      opciones:[], proyecto_id:null, categoria:'Vehículos', orden:3,
+      obligatoria:false, activa:true },
+    { id:'q4', texto:'Foto del comprobante de entrega', tipo:'archivo',
+      opciones:[], proyecto_id:'p1', categoria:'Entregas', orden:4,
+      obligatoria:true, activa:true },
+    { id:'q5', texto:'¿Qué novedades se presentaron en la ruta?', tipo:'multiple',
+      opciones:['Trancón','Cliente ausente','Dirección errada','Daño mecánico','Ninguna'],
+      proyecto_id:null, categoria:'Operación', orden:5, obligatoria:false, activa:true },
+    { id:'q6', texto:'Hora de finalización del recorrido', tipo:'hora',
+      opciones:[], proyecto_id:null, categoria:'Operación', orden:6,
+      obligatoria:false, activa:false }
+  ];
+
+  return { clientes, beneficiarios, periodos, presupuestos, caja, preguntas,
+           proyectos, tareas, novedades, dashboards, rutina, listas: [] };
 }

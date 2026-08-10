@@ -24,6 +24,78 @@ function formModal(titulo, cuerpo, onGuardar, textoBoton = 'Guardar'){
     </div>`;
 }
 
+/* ---- Panel lateral (drawer) ---------------------------------------------
+   Para formularios largos: entra desde el borde y deja ver el contexto detrás.
+   -------------------------------------------------------------------------- */
+function openDrawer(html){
+  let d = $('#drawer');
+  if(!d){
+    document.body.insertAdjacentHTML('beforeend',
+      `<div class="drawer-mask" id="drawerMask" onclick="cerrarDrawer()"></div>
+       <div class="drawer" id="drawer"></div>`);
+    d = $('#drawer');
+  }
+  d.innerHTML = html;
+  $('#drawerMask').classList.add('on');
+  requestAnimationFrame(() => d.classList.add('on'));
+  setTimeout(() => d.querySelector('input,textarea,select')?.focus(), 260);
+}
+
+function cerrarDrawer(){
+  $('#drawer')?.classList.remove('on');
+  $('#drawerMask')?.classList.remove('on');
+}
+
+/* ---- Confirmación de acciones destructivas ------------------------------- */
+let _accionPeligro = null;
+
+/** Diálogo propio, en vez de confirm(): permite explicar la consecuencia. */
+function confirmarPeligro(titulo, detalle, alConfirmar, textoBoton = 'Eliminar'){
+  _accionPeligro = alConfirmar;
+  openModal(`
+    <div class="modal-h"><h3>${esc(titulo)}</h3>
+      <button class="btn sm" onclick="closeModal()">✕</button></div>
+    <div class="modal-b">
+      <p style="font-size:13.5px;color:var(--text-2);white-space:pre-line">${esc(detalle)}</p>
+    </div>
+    <div class="modal-f">
+      <button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn peligro" onclick="ejecutarPeligro()">${esc(textoBoton)}</button>
+    </div>`);
+}
+
+async function ejecutarPeligro(){
+  const fn = _accionPeligro;
+  _accionPeligro = null;
+  closeModal();
+  if(fn) await fn();
+}
+
+/* ---- Menú de acciones (⋮) ------------------------------------------------ */
+/** @param acciones  [[etiqueta, llamada, 'peligro'?], …] */
+function menuAcciones(acciones){
+  const items = acciones.map(([l, fn, tono]) =>
+    `<button class="pop-item ${tono || ''}" onclick="cerrarPop();${fn}">${esc(l)}</button>`).join('');
+  return `<div class="pop-wrap">
+    <button class="pop-btn" onclick="abrirPop(this)" aria-label="Acciones">⋮</button>
+    <div class="pop">${items}</div>
+  </div>`;
+}
+
+function abrirPop(btn){
+  const pop = btn.nextElementSibling;
+  const yaAbierto = pop.classList.contains('on');
+  cerrarPop();
+  if(!yaAbierto){
+    pop.classList.add('on');
+    // Si no cabe abajo, se abre hacia arriba
+    const r = pop.getBoundingClientRect();
+    if(r.bottom > innerHeight - 8) pop.classList.add('arriba');
+  }
+}
+const cerrarPop = () => $$('.pop.on').forEach(p => p.classList.remove('on', 'arriba'));
+document.addEventListener('click', e => { if(!e.target.closest('.pop-wrap')) cerrarPop(); });
+
 /* ---- Fragmentos comunes -------------------------------------------------- */
 
 /** Punto de color del cliente + su nombre. */

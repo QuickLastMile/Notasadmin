@@ -5,7 +5,7 @@
 let S = null;   // estado global
 
 const COLECCIONES = ['clientes','beneficiarios','periodos','presupuestos','caja',
-                     'proyectos','tareas','novedades','dashboards','rutina','listas'];
+                     'proyectos','tareas','novedades','dashboards','rutina','listas','preguntas'];
 
 /* ---- Persistencia -------------------------------------------------------- */
 const save = () => localStorage.setItem(CFG.storageKey, JSON.stringify(S));
@@ -13,11 +13,17 @@ const save = () => localStorage.setItem(CFG.storageKey, JSON.stringify(S));
 /** Estructura vacía: la app arranca en blanco, lista para tus datos reales. */
 const vacia = () => Object.fromEntries(COLECCIONES.map(k => [k, []]));
 
+/** Garantiza que existan todas las colecciones, venga de donde venga el objeto.
+    Sin esto, un guardado viejo o un seed incompleto rompen las vistas. */
+function normalizar(obj){
+  const o = (obj && typeof obj === 'object') ? obj : vacia();
+  for(const k of COLECCIONES) if(!Array.isArray(o[k])) o[k] = [];
+  return o;
+}
+
 function load(){
-  try{ S = JSON.parse(localStorage.getItem(CFG.storageKey)) || vacia(); }
+  try{ S = normalizar(JSON.parse(localStorage.getItem(CFG.storageKey))); }
   catch{ S = vacia(); }
-  if(!S || typeof S !== 'object') S = vacia();
-  for(const k of COLECCIONES) S[k] ||= [];   // tolera guardados de versiones viejas
   save();
 }
 
@@ -28,7 +34,7 @@ function cargarEjemplo(){
   // Los ids del seed son 'c1', 'p1'… y Supabase espera uuid: solo aplica en local
   if(NUBE){ toast('Los datos de ejemplo solo están en modo local'); return; }
   if(!sinDatos() && !confirm('Esto reemplaza TODO lo que tienes por datos de ejemplo. ¿Continuar?')) return;
-  S = seed(); save(); render(); toast('Datos de ejemplo cargados');
+  S = normalizar(seed()); save(); render(); toast('Datos de ejemplo cargados');
 }
 
 async function vaciarTodo(){

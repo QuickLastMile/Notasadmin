@@ -148,13 +148,13 @@ const mostrarErrorLogin = msg => {
 
 /* ---- Pantalla de acceso — vidrio esmerilado sobre cabernet ---------------- */
 
-const cabecera = `
+const cabecera = () => `
   <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px">
-    <div class="brand-mark" style="width:44px;height:44px;font-size:17px;border-radius:14px">HP</div>
+    <div class="glass-logo">${logoNexa(30,'lg')}</div>
     <div>
-      <strong style="font-size:17px;display:block;letter-spacing:-.3px">Hub Personal</strong>
-      <span style="font-size:10.5px;color:rgba(255,255,255,.6);
-            text-transform:uppercase;letter-spacing:1px">Centro de control</span>
+      <strong style="font-size:19px;display:block;letter-spacing:.5px">NEXA</strong>
+      <span style="font-size:10px;color:rgba(255,255,255,.6);
+            text-transform:uppercase;letter-spacing:2px">Centro de Gestión</span>
     </div>
   </div>`;
 
@@ -172,7 +172,7 @@ const BTN_GOOGLE = `
 
 function pantalla(html){
   document.body.innerHTML = `
-    <div class="login-bg"><div class="glass" id="loginCard">${cabecera}${html}</div></div>
+    <div class="login-bg"><div class="glass" id="loginCard">${cabecera()}${html}</div></div>
     <div class="toast" id="toast"></div>`;
 }
 
@@ -293,6 +293,8 @@ async function cargarNube(){
     else S[tabla] = r.data || [];
   });
 
+  S = normalizar(S);
+
   // Orden estable: lo más nuevo primero donde importa
   S.rutina.sort((a, b) => (a.orden || 0) - (b.orden || 0));
   S.periodos.sort((a, b) => a.inicio < b.inicio ? -1 : 1);
@@ -338,7 +340,7 @@ function mostrarFaltaEsquema(faltantes){
 async function vaciarNube(){
   // En orden inverso a las dependencias, para no chocar con las llaves foráneas
   const orden = ['caja','tareas','novedades','dashboards','rutina','presupuestos',
-                 'listas','periodos','proyectos','beneficiarios','clientes'];
+                 'listas','preguntas','periodos','proyectos','beneficiarios','clientes'];
   for(const t of orden){
     const { error } = await sb.from(t).delete().neq('id', '00000000-0000-0000-0000-000000000000');
     if(error) console.error(`Error vaciando ${t}:`, error.message);

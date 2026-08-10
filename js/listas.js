@@ -51,7 +51,27 @@ const LISTAS = {
     nombre:'Prioridades de tarea', icono:'✓',
     ayuda:'Cuidado al cambiarlas: "alta" es la que dispara las alertas.',
     def:['alta','media','baja']
+  },
+  categoria: {
+    nombre:'Categorías generales', icono:'🏷',
+    ayuda:'Agrupan preguntas y campos personalizados.',
+    def:['Operación','Seguridad','Vehículos','Entregas','Administrativo','Calidad']
   }
+};
+
+/* ---- Tipos de respuesta de una pregunta ----------------------------------
+   Fijos: el formulario se dibuja distinto según el tipo, así que no se
+   pueden inventar valores nuevos sin código que sepa pintarlos.
+   -------------------------------------------------------------------------- */
+const TIPOS_RESPUESTA = {
+  texto:    { l:'Texto',              ico:'📝', opciones:false },
+  numero:   { l:'Número',             ico:'#',  opciones:false },
+  sino:     { l:'Sí / No',            ico:'✓',  opciones:false },
+  unica:    { l:'Selección única',    ico:'◉',  opciones:true  },
+  multiple: { l:'Selección múltiple', ico:'☑',  opciones:true  },
+  fecha:    { l:'Fecha',              ico:'📅', opciones:false },
+  hora:     { l:'Hora',               ico:'🕐', opciones:false },
+  archivo:  { l:'Archivo / imagen',   ico:'📎', opciones:false }
 };
 
 /** Valores activos de una lista. Cae en los de fábrica si está vacía. */
