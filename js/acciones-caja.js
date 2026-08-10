@@ -242,7 +242,7 @@ function modalPeriodo(){
       <div><label>Fin</label><input type="date" id="peF" value="${dISO(fin)}"></div>
     </div>
     <div><label>Base asignada (COP)</label>
-      <input id="peB" type="number" placeholder="1500000" value=""></div>
+      <input id="peB" type="number" placeholder="1000000" value=""></div>
     <p style="font-size:11.5px;color:var(--text-2)">
       ${primero
         ? 'La base entra como primer movimiento del período. Déjala en blanco si aún no te la asignan.'
