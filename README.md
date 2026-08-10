@@ -124,18 +124,36 @@ js/
 
 ---
 
-## Migrar a Supabase
+## Conectar Supabase
 
-1. Crea el proyecto en [supabase.com](https://supabase.com) (plan gratuito alcanza de sobra).
-2. SQL Editor → pega `sql/supabase-schema.sql` → Run.
-3. Llena `CFG.supabase` en `js/config.js` con la URL y la **anon key**.
-4. Agrega en `index.html`, antes de `js/db.js`:
-   ```html
-   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-   ```
-5. Reemplaza el cuerpo de los 4 métodos de `js/db.js` por lo que está comentado dentro.
+La integración **ya está escrita**. La app mira `CFG.supabase` en `js/config.js` y decide sola:
 
-Ningún otro archivo se toca.
+| `CFG.supabase` | Modo | Qué pasa |
+|---|---|---|
+| Vacío | **Local** | `localStorage`. Sin cuenta, sin internet, solo este equipo. |
+| Con credenciales | **Nube** | Supabase + acceso por correo. Los datos te siguen al celular. |
+
+Pasos:
+
+1. Crea el proyecto en [supabase.com](https://supabase.com) (el plan gratuito alcanza de sobra).
+2. **SQL Editor** → pega `sql/supabase-schema.sql` → **Run**.
+3. **Settings → API** → copia *Project URL* y *anon public*.
+4. Pégalos en `CFG.supabase` dentro de `js/config.js`.
+5. **Authentication → URL Configuration** → agrega tu URL de Pages
+   (`https://quicklastmile.github.io/Notasadmin/`) en *Redirect URLs*, o el enlace
+   del correo no te va a devolver a la app.
+6. Sube `?v=N` en `index.html` y despliega.
+
+No hay que tocar ningún otro archivo.
+
+> La **anon key** es pública por diseño: puede ir al repo sin problema. Quien protege
+> los datos es **RLS** (`auth.uid() = user_id`), activo en todas las tablas del esquema.
+> La clave **`service_role` nunca** va al frontend — salta el RLS y expone toda la base.
+
+### Cómo se entra
+
+Acceso por **enlace mágico**: escribes tu correo, te llega un enlace, lo abres y quedas
+adentro. No hay contraseñas que recordar ni que guardar en ningún lado.
 
 > La **anon key** es pública por diseño: puede ir al repo sin problema. Quien protege los datos es **RLS** (`auth.uid() = user_id`), que ya viene activo en todas las tablas del esquema. La clave `service_role` **nunca** va al frontend.
 
@@ -162,5 +180,5 @@ Settings → Pages → Branch `main` / carpeta `/ (root)` → Save.
 | Proyectos | ✅ Solo lectura — falta editar |
 | Clientes | ✅ Solo lectura — falta editar |
 | Dashboards | ✅ Funcionando |
-| Supabase | ⏳ Pendiente |
+| Supabase | 🔌 Integración escrita y probada — falta pegar las credenciales |
 | Fotos de comprobantes | ⏳ Pendiente (requiere Supabase Storage) |

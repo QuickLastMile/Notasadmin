@@ -25,14 +25,20 @@ function load(){
 const sinDatos = () => COLECCIONES.every(k => !S[k].length);
 
 function cargarEjemplo(){
+  // Los ids del seed son 'c1', 'p1'… y Supabase espera uuid: solo aplica en local
+  if(NUBE){ toast('Los datos de ejemplo solo están en modo local'); return; }
   if(!sinDatos() && !confirm('Esto reemplaza TODO lo que tienes por datos de ejemplo. ¿Continuar?')) return;
   S = seed(); save(); render(); toast('Datos de ejemplo cargados');
 }
 
-function vaciarTodo(){
+async function vaciarTodo(){
   if(!confirm('Esto borra todos tus datos y deja la app en blanco. No se puede deshacer.\n\n¿Continuar?')) return;
   if(!confirm('Confirma otra vez: se borra TODO — clientes, mensajeros, caja, tareas y novedades.')) return;
-  S = vacia(); save(); render(); toast('Todo borrado — la app quedó en blanco');
+
+  if(NUBE) await vaciarNube();
+  else { S = vacia(); save(); }
+
+  render(); toast('Todo borrado — la app quedó en blanco');
 }
 
 /* ---- Búsquedas rápidas --------------------------------------------------- */

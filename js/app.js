@@ -85,9 +85,35 @@ function initAtajos(){
   });
 }
 
+/* ---- Pie de la barra lateral: cambia según el modo ------------------------ */
+function renderPieLateral(){
+  const pie = $('.side-foot');
+  if(!pie) return;
+
+  if(NUBE){
+    pie.innerHTML = `
+      <button onclick="toggleTheme()" id="themeBtn">🌙 Tema</button>
+      <button onclick="salir()" title="${esc(usuario?.email || '')}">⎋ Salir</button>`;
+  }
+  // En modo local se quedan los botones de Ejemplo y Vaciar que trae el HTML
+}
+
 /* ---- Arranque ------------------------------------------------------------ */
-load();
-initTema();
-initFecha();
-initAtajos();
-render();
+async function iniciar(){
+  initTema();
+  initFecha();
+  initAtajos();
+
+  if(NUBE){
+    // Sin sesión no hay datos que mostrar: primero el acceso por correo
+    if(!await sesionActual()){ mostrarLogin(); return; }
+    await cargarNube();
+  } else {
+    load();
+  }
+
+  renderPieLateral();
+  render();
+}
+
+iniciar();
