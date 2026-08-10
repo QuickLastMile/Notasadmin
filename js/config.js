@@ -10,10 +10,12 @@ const CFG = {
   // Caja menor
   topeAlertaCaja: 0.75,   // avisa cuando hayas gastado este % de la base
 
-  // Supabase — se llena cuando conectemos la nube
+  // Supabase. La anon key es pública por diseño: quien protege los datos es
+  // el RLS del esquema (auth.uid() = user_id), no el secreto de esta llave.
+  // La clave service_role NUNCA va aquí — salta el RLS.
   supabase: {
-    url:     '',          // https://xxxxx.supabase.co
-    anonKey: ''           // clave anónima (pública: la seguridad la da RLS)
+    url:     'https://jxfyiqisrnexjocqwicx.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4ZnlpcWlzcm5leGpvY3F3aWN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYzNzQ0NjIsImV4cCI6MjEwMTk1MDQ2Mn0.odI73fI-lS1hjiNwA4lF3-EmH2KcfVZukyiXX6jfn38'
   }
 };
 

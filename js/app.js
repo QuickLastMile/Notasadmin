@@ -107,7 +107,8 @@ async function iniciar(){
   if(NUBE){
     // Sin sesión no hay datos que mostrar: primero el acceso por correo
     if(!await sesionActual()){ mostrarLogin(); return; }
-    await cargarNube();
+    // cargarNube devuelve false si faltan tablas: ya pintó su propia pantalla
+    if(!await cargarNube()) return;
   } else {
     load();
   }

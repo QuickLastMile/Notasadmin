@@ -114,6 +114,14 @@ async function cargarNube(){
     COLECCIONES.map(t => sb.from(t).select('*'))
   );
 
+  // Si faltan tablas es que no se corrió sql/supabase-schema.sql.
+  // Mejor decirlo que mostrar una app vacía sin explicación.
+  const faltantes = resultados
+    .map((r, i) => (r.error?.code === 'PGRST205' || /does not exist|schema cache/i.test(r.error?.message || ''))
+                    ? COLECCIONES[i] : null)
+    .filter(Boolean);
+  if(faltantes.length){ mostrarFaltaEsquema(faltantes); return false; }
+
   S = {};
   resultados.forEach((r, i) => {
     const tabla = COLECCIONES[i];
@@ -124,6 +132,42 @@ async function cargarNube(){
   // Orden estable: lo más nuevo primero donde importa
   S.rutina.sort((a, b) => (a.orden || 0) - (b.orden || 0));
   S.periodos.sort((a, b) => a.inicio < b.inicio ? -1 : 1);
+  return true;
+}
+
+/** Pantalla de "falta correr el esquema", con los pasos exactos. */
+function mostrarFaltaEsquema(faltantes){
+  const proyecto = CFG.supabase.url.replace('https://', '').split('.')[0];
+  document.body.innerHTML = `
+  <div style="min-height:100vh;display:grid;place-items:center;padding:24px;background:var(--bg)">
+    <div class="card" style="max-width:560px;width:100%">
+      <div class="card-b" style="padding:28px 24px">
+        <div style="font-size:34px;margin-bottom:10px">🗄️</div>
+        <h2 style="font-size:17px;margin-bottom:6px">Falta crear las tablas en Supabase</h2>
+        <p style="color:var(--text-2);font-size:13px;margin-bottom:18px">
+          El proyecto responde bien, pero la base todavía está vacía.
+          Faltan ${faltantes.length} tablas: <code>${faltantes.join('</code>, <code>')}</code>
+        </p>
+
+        <div style="display:grid;gap:12px;font-size:13px">
+          <div><strong>1.</strong> Abre
+            <a href="https://supabase.com/dashboard/project/${proyecto}/sql/new"
+               target="_blank" rel="noopener" style="color:var(--brand)">el SQL Editor de tu proyecto ↗</a></div>
+          <div><strong>2.</strong> Pega todo el contenido de <code>sql/supabase-schema.sql</code></div>
+          <div><strong>3.</strong> Pulsa <strong>Run</strong></div>
+          <div><strong>4.</strong> Vuelve aquí y recarga</div>
+        </div>
+
+        <button class="btn pri" onclick="location.reload()"
+                style="width:100%;margin-top:20px;padding:10px">Ya lo hice — recargar</button>
+
+        <p style="color:var(--text-3);font-size:11.5px;margin-top:14px;text-align:center">
+          Mientras tanto tus datos locales siguen intactos en este navegador.
+        </p>
+      </div>
+    </div>
+  </div>
+  <div class="toast" id="toast"></div>`;
 }
 
 /** Borra todo lo del usuario en la nube (lo llama vaciarTodo en modo nube). */
