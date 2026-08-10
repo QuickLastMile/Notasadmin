@@ -267,27 +267,50 @@ tbody tr:hover{background:var(--surface-2)}
 /* ============================================================
    12. PANTALLA DE ACCESO — vidrio esmerilado sobre cabernet
    ============================================================ */
+/* Contenedor con scroll propio: si la tarjeta no cabe a lo alto, se puede
+   desplazar. Con `place-items:center` en un contenedor fijo, el sobrante
+   quedaba fuera de alcance y no se veían los enlaces de abajo. */
 .login-bg{
-  position:fixed;inset:0;display:grid;place-items:center;padding:22px;overflow:hidden;
+  position:fixed;inset:0;display:flex;padding:22px;
+  overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;
   background:linear-gradient(150deg,#2A0C1A 0%,#5B1B36 42%,#8C3358 78%,#3D1224 100%);
 }
-/* Manchas de luz difusas, como el fondo de la referencia */
+/* Manchas de luz difusas, como el fondo de la referencia.
+   Van en `fixed` para que no se muevan al desplazar ni alarguen el scroll. */
 .login-bg::before,.login-bg::after{
-  content:"";position:absolute;border-radius:50%;filter:blur(90px);opacity:.55;
-  pointer-events:none
+  content:"";position:fixed;border-radius:50%;filter:blur(90px);opacity:.55;
+  pointer-events:none;z-index:0
 }
 .login-bg::before{width:440px;height:440px;background:#C4557F;top:-120px;right:-100px}
 .login-bg::after{width:520px;height:520px;background:#3B0F24;bottom:-180px;left:-140px;opacity:.75}
 
 .glass{
-  position:relative;z-index:1;width:100%;max-width:392px;
+  /* `margin:auto` centra cuando cabe, y deja desplazar cuando no.
+     Es lo que no logra `align-items:center`, que recorta por arriba. */
+  margin:auto;
+  position:relative;z-index:1;width:100%;max-width:392px;flex-shrink:0;
   background:rgba(255,255,255,.10);
   backdrop-filter:blur(26px) saturate(150%);
   -webkit-backdrop-filter:blur(26px) saturate(150%);
   border:1px solid rgba(255,255,255,.22);
-  border-radius:26px;padding:34px 28px 30px;
+  border-radius:26px;padding:32px 28px 28px;
   box-shadow:0 22px 60px rgba(20,5,12,.5), inset 0 1px 0 rgba(255,255,255,.28);
   color:#fff
+}
+
+/* Pantallas bajas (portátiles a 100%, o el celular en horizontal):
+   se aprieta todo para que quepa sin scroll. */
+@media(max-height:760px){
+  .glass{padding:22px 24px 20px;border-radius:22px}
+  .glass h2{font-size:19px}
+  .glass > div:first-child{margin-bottom:16px}
+  .glass p{font-size:12.5px}
+  .glass input{padding:11px 14px}
+  .google-btn{padding:11px}
+  .glass-btn{margin-top:16px;padding:12px}
+  .sep-o{margin:15px 0 14px}
+  .glass-links{margin-top:14px}
+  .glass-pie{margin-top:16px}
 }
 .glass h2{font-size:22px;font-weight:700;letter-spacing:-.4px;margin-bottom:6px}
 .glass p{font-size:13.5px;color:rgba(255,255,255,.72);line-height:1.55}
@@ -322,7 +345,7 @@ tbody tr:hover{background:var(--surface-2)}
   background:rgba(255,120,110,.18);border:1px solid rgba(255,140,130,.35);
   color:#FFD9D5
 }
-.glass-pie{margin-top:22px;text-align:center;font-size:11px;
+.glass-pie{margin-top:20px;text-align:center;font-size:11px;
   color:rgba(255,255,255,.42);letter-spacing:.3px}
 
 /* Botón de Google y separador, en la pantalla de acceso */
