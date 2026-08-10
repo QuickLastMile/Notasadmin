@@ -153,11 +153,11 @@ function tabMovimientos(a, p, pid){
           <th>Fecha</th><th>Concepto</th><th>Beneficiario</th><th>Cuenta de pago</th>
           <th>Categoría</th><th>Cliente</th>
           <th class="num">Monto</th><th class="num">Reembolsado</th><th class="num">Pendiente</th>
-          <th>Soportes</th><th>Legalizado</th><th>Observación</th><th></th>
+          <th>Soportes</th><th>Estado</th><th>Legalizado</th><th>Observación</th><th></th>
         </tr></thead>
         <tbody>
         ${movs.length ? movs.map(g => filaCaja(g)).join('')
-          : `<tr><td colspan="13">${vacio('📭', 'No hay movimientos con este filtro')}</td></tr>`}
+          : `<tr><td colspan="14">${vacio('📭', 'No hay movimientos con este filtro')}</td></tr>`}
         </tbody>
       </table>
     </div>
@@ -178,8 +178,10 @@ function tarjetaCaja(g){
   const esIngreso = g.tipo === 'ingreso';
   const pend = esIngreso ? 0 : g.monto - (g.reembolsado || 0);
 
+  const est = ESTADOS_PAGO[g.estado] || ESTADOS_PAGO.pendiente_consignacion;
+
   return `
-  <div class="mov">
+  <div class="mov" onclick="if(!event.target.closest('button'))verPago('${g.id}')">
     <div class="mov-top">
       <div style="min-width:0">
         <div class="mov-cn">${esc(g.concepto)}</div>
@@ -213,11 +215,12 @@ function tarjetaCaja(g){
 
     <div class="mov-pie">
       ${esIngreso ? '<span class="chip n">Base</span>' : `
-        <span class="chip ${g.tiene_comprobante ? 'o' : 'd'}">${g.tiene_comprobante ? '📎' : '✕'} Pago</span>
-        <span class="chip ${g.tiene_factura ? 'o' : 'd'}">${g.tiene_factura ? '🧾' : '✕'} Fact.</span>
-        <button class="chip ${g.legalizado ? 'o' : 'w'}" onclick="toggleLeg('${g.id}')">
-          ${g.legalizado ? '✓ Legalizado' : 'Sin legalizar'}</button>`}
-      <button class="btn sm" onclick="modalCaja('${g.tipo}','${g.id}')">✎ Editar</button>
+        <span class="chip ${est.c}">${est.ico} ${est.l}</span>
+        ${g.comprobante_url ? '<span class="chip o">📎 Foto</span>' : ''}
+        ${g.factura_url ? '<span class="chip o">🧾 Foto</span>' : ''}
+        <button class="chip ${g.legalizado ? 'o' : 'n'}" onclick="toggleLeg('${g.id}')">
+          ${g.legalizado ? '✓ Legalizado' : '○ Legalizar'}</button>`}
+      <button class="btn sm" onclick="verPago('${g.id}')">Ver ficha</button>
     </div>
   </div>`;
 }
@@ -235,8 +238,10 @@ function filaCaja(g){
           title="${g.factura_num ? 'Factura ' + esc(g.factura_num) : 'Sin factura'}">
       ${g.tiene_factura ? '🧾' : '✕'} Fact.</span>`;
 
+  const est = ESTADOS_PAGO[g.estado] || ESTADOS_PAGO.pendiente_consignacion;
+
   return `
-  <tr>
+  <tr style="cursor:pointer" onclick="if(!event.target.closest('button'))verPago('${g.id}')">
     <td style="white-space:nowrap;color:var(--text-2)">${fechaCorta(g.fecha)}</td>
     <td>${esc(g.concepto)}</td>
     <td>${b ? `<div style="font-weight:500">${esc(b.nombre)}</div>
@@ -255,13 +260,15 @@ function filaCaja(g){
       ${esIngreso ? '—' : cop(pend)}</td>
     <td style="white-space:nowrap">${soportes}</td>
     <td>${esIngreso ? '<span class="chip n">Base</span>'
+          : `<span class="chip ${est.c}">${est.ico} ${est.l}</span>`}</td>
+    <td>${esIngreso ? '<span class="chip n">—</span>'
           : `<button class="chip ${g.legalizado ? 'o' : 'w'}" onclick="toggleLeg('${g.id}')"
                 title="${g.legalizado_el ? 'Legalizado el ' + fechaCorta(g.legalizado_el) : 'Clic para legalizar'}">
                ${g.legalizado ? '✓ Sí' : 'Pendiente'}</button>`}</td>
     <td style="max-width:190px;font-size:11.5px;color:var(--text-2)">${esc(g.observacion || '')}</td>
     <td style="white-space:nowrap">
+      <button class="btn sm" onclick="verPago('${g.id}')">Ver</button>
       <button class="btn sm" onclick="modalCaja('${g.tipo}','${g.id}')">✎</button>
-      <button class="btn sm dgr" onclick="borrar('caja','${g.id}')">✕</button>
     </td>
   </tr>`;
 }

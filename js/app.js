@@ -16,7 +16,8 @@ const MENU = [
   { id:'proyectos', ico:'▣', lbl:'Proyectos',   vista:m => vProyectos(m) },
   { id:'clientes',  ico:'◍', lbl:'Clientes',    vista:m => vClientes(m) },
   { sec:'Recursos' },
-  { id:'enlaces',   ico:'◈', lbl:'Dashboards',  vista:m => vEnlaces(m) }
+  { id:'enlaces',   ico:'◈', lbl:'Dashboards',  vista:m => vEnlaces(m) },
+  { id:'config',    ico:'⚙', lbl:'Configuración', vista:m => vConfig(m) }
 ];
 
 /* En celular solo caben cuatro: el resto vive en la hoja "Más". */
@@ -170,8 +171,15 @@ async function iniciar(){
   initAtajos();
 
   if(NUBE){
-    // Sin sesión no hay datos que mostrar: primero el acceso por correo
-    if(!await sesionActual()){ mostrarLogin(); return; }
+    const sesion = await sesionActual();
+
+    // Al volver del enlace de recuperación hay sesión, pero lo que toca
+    // es cambiar la contraseña, no entrar directo
+    if(location.hash.includes('recuperar') || location.hash.includes('type=recovery')){
+      mostrarNuevaPassword(); return;
+    }
+    if(!sesion){ mostrarLogin(); return; }
+
     // cargarNube devuelve false si faltan tablas: ya pintó su propia pantalla
     if(!await cargarNube()) return;
   } else {

@@ -29,35 +29,109 @@ async function sesionActual(){
   return usuario;
 }
 
-/** Envía el enlace mágico al correo. No hay contraseñas que recordar ni guardar. */
-async function enviarEnlace(){
-  const email = $('#loginMail').value.trim();
-  if(!email){ toast('Escribe tu correo'); return; }
+const RETORNO = () => location.origin + location.pathname;
 
-  const btn = $('#loginBtn');
-  btn.disabled = true; btn.textContent = 'Enviando…';
+/* Los mensajes de Supabase vienen en inglés y son crípticos. */
+const ERRORES = {
+  'Invalid login credentials':'Correo o contraseña incorrectos',
+  'Email not confirmed':'Falta confirmar tu correo. Revisa la bandeja de entrada.',
+  'User already registered':'Ese correo ya tiene cuenta. Entra con tu contraseña.',
+  'Password should be at least 6 characters':'La contraseña debe tener al menos 6 caracteres',
+  'Unable to validate email address: invalid format':'Ese correo no parece válido',
+  'For security purposes, you can only request this after':'Espera unos segundos antes de volver a intentar'
+};
+const traducir = m => Object.entries(ERRORES)
+  .find(([en]) => (m || '').includes(en))?.[1] || m;
 
-  const { error } = await sb.auth.signInWithOtp({
-    email,
-    options: { emailRedirectTo: location.origin + location.pathname }
+const conBoton = async (id, texto, fn) => {
+  const b = $('#' + id); const original = b.innerHTML;
+  b.disabled = true; b.innerHTML = texto;
+  try{ await fn(); } finally { if(document.getElementById(id)){ b.disabled = false; b.innerHTML = original; } }
+};
+
+/* ---- Entrar con Google --------------------------------------------------- */
+async function entrarGoogle(){
+  const { error } = await sb.auth.signInWithOAuth({
+    provider:'google',
+    options:{ redirectTo: RETORNO() }
   });
+  if(error) mostrarErrorLogin(traducir(error.message));
+}
 
-  btn.disabled = false; btn.textContent = 'Enviar enlace de acceso';
+/* ---- Entrar con correo y contraseña -------------------------------------- */
+async function entrarPassword(){
+  const email = $('#loginMail').value.trim();
+  const pass  = $('#loginPass').value;
+  if(!email || !pass){ mostrarErrorLogin('Escribe tu correo y tu contraseña'); return; }
 
-  if(error){ mostrarErrorLogin(error.message); return; }
+  await conBoton('loginBtn', 'Entrando…', async () => {
+    const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+    if(error) mostrarErrorLogin(traducir(error.message));
+    else location.reload();
+  });
+}
+
+/* ---- Crear cuenta -------------------------------------------------------- */
+async function crearCuenta(){
+  const email = $('#regMail').value.trim();
+  const pass  = $('#regPass').value;
+  const pass2 = $('#regPass2').value;
+
+  if(!email || !pass){ mostrarErrorLogin('Completa correo y contraseña'); return; }
+  if(pass.length < 6){ mostrarErrorLogin('La contraseña debe tener al menos 6 caracteres'); return; }
+  if(pass !== pass2){ mostrarErrorLogin('Las dos contraseñas no coinciden'); return; }
+
+  await conBoton('loginBtn', 'Creando…', async () => {
+    const { data, error } = await sb.auth.signUp({
+      email, password: pass, options:{ emailRedirectTo: RETORNO() }
+    });
+    if(error){ mostrarErrorLogin(traducir(error.message)); return; }
+
+    // Si el proyecto exige confirmar el correo, no hay sesión todavía
+    if(data.session) location.reload();
+    else avisoCorreo('Confirma tu cuenta', email,
+      'Te enviamos un correo para activar la cuenta. Ábrelo y vuelve a entrar.');
+  });
+}
+
+/* ---- Recuperar contraseña — aquí sí va el enlace al correo ---------------- */
+async function recuperarPassword(){
+  const email = $('#recMail').value.trim();
+  if(!email){ mostrarErrorLogin('Escribe tu correo'); return; }
+
+  await conBoton('loginBtn', 'Enviando…', async () => {
+    const { error } = await sb.auth.resetPasswordForEmail(email, {
+      redirectTo: RETORNO() + '#recuperar'
+    });
+    if(error){ mostrarErrorLogin(traducir(error.message)); return; }
+    avisoCorreo('Revisa tu correo', email,
+      'Te enviamos un enlace para crear una contraseña nueva. Ábrelo desde este dispositivo.');
+  });
+}
+
+/* ---- Cambiar la contraseña (tras abrir el enlace de recuperación) --------- */
+async function guardarPasswordNueva(){
+  const pass  = $('#nuevaPass').value;
+  const pass2 = $('#nuevaPass2').value;
+  if(pass.length < 6){ mostrarErrorLogin('Mínimo 6 caracteres'); return; }
+  if(pass !== pass2){ mostrarErrorLogin('Las dos contraseñas no coinciden'); return; }
+
+  await conBoton('loginBtn', 'Guardando…', async () => {
+    const { error } = await sb.auth.updateUser({ password: pass });
+    if(error){ mostrarErrorLogin(traducir(error.message)); return; }
+    toast('Contraseña actualizada ✓');
+    location.href = RETORNO();
+  });
+}
+
+function avisoCorreo(titulo, email, texto){
   $('#loginCard').innerHTML = `
     <div style="text-align:center;padding:14px 4px">
       <div style="font-size:46px;margin-bottom:14px">📬</div>
-      <h2>Revisa tu correo</h2>
-      <p style="margin-top:8px">
-        Te enviamos un enlace a<br><strong style="color:#fff">${esc(email)}</strong>
-      </p>
-      <p style="margin-top:14px;font-size:12.5px">
-        Ábrelo desde este mismo dispositivo y entras directo.<br>
-        Si no llega en un minuto, mira en spam.
-      </p>
-      <button class="glass-btn" onclick="location.reload()"
-              style="margin-top:22px">Volver</button>
+      <h2>${esc(titulo)}</h2>
+      <p style="margin-top:8px">Enviado a<br><strong style="color:#fff">${esc(email)}</strong></p>
+      <p style="margin-top:14px;font-size:12.5px">${esc(texto)}<br>Si no llega en un minuto, mira en spam.</p>
+      <button class="glass-btn" onclick="location.href='${RETORNO()}'" style="margin-top:22px">Volver</button>
     </div>`;
 }
 
@@ -73,41 +147,124 @@ const mostrarErrorLogin = msg => {
 };
 
 /* ---- Pantalla de acceso — vidrio esmerilado sobre cabernet ---------------- */
-function mostrarLogin(){
-  document.body.innerHTML = `
-  <div class="login-bg">
-    <div class="glass" id="loginCard">
 
-      <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
-        <div class="brand-mark" style="width:44px;height:44px;font-size:17px;border-radius:14px">HP</div>
-        <div>
-          <strong style="font-size:17px;display:block;letter-spacing:-.3px">Hub Personal</strong>
-          <span style="font-size:10.5px;color:rgba(255,255,255,.6);
-                text-transform:uppercase;letter-spacing:1px">Centro de control</span>
-        </div>
-      </div>
-
-      <h2>Bienvenida 👋</h2>
-      <p style="margin-bottom:22px">
-        Entra con tu correo. Te llega un enlace y listo — sin contraseñas que recordar.
-      </p>
-
-      <label for="loginMail">Correo</label>
-      <input id="loginMail" type="email" inputmode="email" autocomplete="email"
-             placeholder="tucorreo@gmail.com"
-             onkeydown="if(event.key==='Enter')enviarEnlace()">
-
-      <div id="loginErr" class="glass-err" style="display:none"></div>
-
-      <button class="glass-btn" id="loginBtn" onclick="enviarEnlace()">
-        Enviar enlace de acceso
-      </button>
-
-      <div class="glass-pie">Tus datos viajan cifrados y solo tú los ves</div>
+const cabecera = `
+  <div style="display:flex;align-items:center;gap:12px;margin-bottom:22px">
+    <div class="brand-mark" style="width:44px;height:44px;font-size:17px;border-radius:14px">HP</div>
+    <div>
+      <strong style="font-size:17px;display:block;letter-spacing:-.3px">Hub Personal</strong>
+      <span style="font-size:10.5px;color:rgba(255,255,255,.6);
+            text-transform:uppercase;letter-spacing:1px">Centro de control</span>
     </div>
-  </div>
-  <div class="toast" id="toast"></div>`;
+  </div>`;
+
+const BTN_GOOGLE = `
+  <button class="google-btn" onclick="entrarGoogle()">
+    <svg viewBox="0 0 48 48" width="19" height="19" aria-hidden="true">
+      <path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9 3.6l6.7-6.7C35.6 2.6 30.2 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.8 6.1C12.3 13.2 17.6 9.5 24 9.5z"/>
+      <path fill="#4285F4" d="M46.1 24.6c0-1.6-.1-3.1-.4-4.6H24v9.1h12.4c-.5 2.9-2.2 5.3-4.6 7l7.6 5.9c4.4-4.1 6.7-10.1 6.7-17.4z"/>
+      <path fill="#FBBC05" d="M10.4 28.7c-.5-1.4-.8-2.9-.8-4.7s.3-3.3.8-4.7l-7.8-6.1C.9 16.5 0 20.1 0 24s.9 7.5 2.6 10.8l7.8-6.1z"/>
+      <path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.8 2.3-8.3 2.3-6.4 0-11.7-3.7-13.6-9.8l-7.8 6.1C6.5 42.6 14.6 48 24 48z"/>
+    </svg>
+    Continuar con Google
+  </button>
+  <div class="sep-o"><span>o con tu correo</span></div>`;
+
+function pantalla(html){
+  document.body.innerHTML = `
+    <div class="login-bg"><div class="glass" id="loginCard">${cabecera}${html}</div></div>
+    <div class="toast" id="toast"></div>`;
+}
+
+/** Entrada normal: Google o correo + contraseña. */
+function mostrarLogin(){
+  pantalla(`
+    <h2>Bienvenida 👋</h2>
+    <p style="margin-bottom:20px">Entra para ver tu centro de control.</p>
+
+    ${BTN_GOOGLE}
+
+    <label for="loginMail">Correo</label>
+    <input id="loginMail" type="email" inputmode="email" autocomplete="email"
+           placeholder="tucorreo@gmail.com">
+
+    <label for="loginPass" style="margin-top:14px">Contraseña</label>
+    <input id="loginPass" type="password" autocomplete="current-password"
+           placeholder="••••••••" onkeydown="if(event.key==='Enter')entrarPassword()">
+
+    <div id="loginErr" class="glass-err" style="display:none"></div>
+
+    <button class="glass-btn" id="loginBtn" onclick="entrarPassword()">Entrar</button>
+
+    <div class="glass-links">
+      <button onclick="mostrarRecuperar()">¿Olvidaste tu contraseña?</button>
+      <button onclick="mostrarRegistro()">Crear cuenta</button>
+    </div>`);
   setTimeout(() => $('#loginMail')?.focus(), 80);
+}
+
+function mostrarRegistro(){
+  pantalla(`
+    <h2>Crear cuenta</h2>
+    <p style="margin-bottom:20px">Con tu correo y una contraseña de al menos 6 caracteres.</p>
+
+    ${BTN_GOOGLE}
+
+    <label for="regMail">Correo</label>
+    <input id="regMail" type="email" inputmode="email" autocomplete="email"
+           placeholder="tucorreo@gmail.com">
+
+    <label for="regPass" style="margin-top:14px">Contraseña</label>
+    <input id="regPass" type="password" autocomplete="new-password" placeholder="••••••••">
+
+    <label for="regPass2" style="margin-top:14px">Repite la contraseña</label>
+    <input id="regPass2" type="password" autocomplete="new-password" placeholder="••••••••"
+           onkeydown="if(event.key==='Enter')crearCuenta()">
+
+    <div id="loginErr" class="glass-err" style="display:none"></div>
+
+    <button class="glass-btn" id="loginBtn" onclick="crearCuenta()">Crear cuenta</button>
+
+    <div class="glass-links"><button onclick="mostrarLogin()">← Ya tengo cuenta</button></div>`);
+  setTimeout(() => $('#regMail')?.focus(), 80);
+}
+
+function mostrarRecuperar(){
+  pantalla(`
+    <h2>Recuperar contraseña</h2>
+    <p style="margin-bottom:20px">
+      Te enviamos un enlace al correo para que crees una nueva.
+    </p>
+
+    <label for="recMail">Correo</label>
+    <input id="recMail" type="email" inputmode="email" autocomplete="email"
+           placeholder="tucorreo@gmail.com" onkeydown="if(event.key==='Enter')recuperarPassword()">
+
+    <div id="loginErr" class="glass-err" style="display:none"></div>
+
+    <button class="glass-btn" id="loginBtn" onclick="recuperarPassword()">Enviar enlace</button>
+
+    <div class="glass-links"><button onclick="mostrarLogin()">← Volver</button></div>`);
+  setTimeout(() => $('#recMail')?.focus(), 80);
+}
+
+/** Se muestra al volver del enlace de recuperación. */
+function mostrarNuevaPassword(){
+  pantalla(`
+    <h2>Nueva contraseña</h2>
+    <p style="margin-bottom:20px">Escríbela dos veces para confirmar.</p>
+
+    <label for="nuevaPass">Contraseña</label>
+    <input id="nuevaPass" type="password" autocomplete="new-password" placeholder="••••••••">
+
+    <label for="nuevaPass2" style="margin-top:14px">Repite la contraseña</label>
+    <input id="nuevaPass2" type="password" autocomplete="new-password" placeholder="••••••••"
+           onkeydown="if(event.key==='Enter')guardarPasswordNueva()">
+
+    <div id="loginErr" class="glass-err" style="display:none"></div>
+
+    <button class="glass-btn" id="loginBtn" onclick="guardarPasswordNueva()">Guardar</button>`);
+  setTimeout(() => $('#nuevaPass')?.focus(), 80);
 }
 
 /* ---- Carga inicial ------------------------------------------------------- */
@@ -181,7 +338,7 @@ function mostrarFaltaEsquema(faltantes){
 async function vaciarNube(){
   // En orden inverso a las dependencias, para no chocar con las llaves foráneas
   const orden = ['caja','tareas','novedades','dashboards','rutina','presupuestos',
-                 'periodos','proyectos','beneficiarios','clientes'];
+                 'listas','periodos','proyectos','beneficiarios','clientes'];
   for(const t of orden){
     const { error } = await sb.from(t).delete().neq('id', '00000000-0000-0000-0000-000000000000');
     if(error) console.error(`Error vaciando ${t}:`, error.message);

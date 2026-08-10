@@ -5,7 +5,7 @@
 let S = null;   // estado global
 
 const COLECCIONES = ['clientes','beneficiarios','periodos','presupuestos','caja',
-                     'proyectos','tareas','novedades','dashboards','rutina'];
+                     'proyectos','tareas','novedades','dashboards','rutina','listas'];
 
 /* ---- Persistencia -------------------------------------------------------- */
 const save = () => localStorage.setItem(CFG.storageKey, JSON.stringify(S));

@@ -23,6 +23,7 @@ function modalCaja(tipo, id = null){
 
   const esGasto = tipo === 'gasto';
   const pa = periodoActivo();
+  const estado = g?.estado || 'pendiente_consignacion';
 
   const camposGasto = `
     <div><label>Beneficiario — mensajero o proveedor</label>
@@ -33,51 +34,71 @@ function modalCaja(tipo, id = null){
       <div id="gBenInfo" style="font-size:11.5px;color:var(--text-2);margin-top:5px"></div>
     </div>
 
-    <div class="f2">
-      <div><label>Método de pago</label>
-        <select id="gMet">${optsSelect(METODOS_PAGO, g?.metodo_pago || 'Transferencia')}</select></div>
-      <div><label>N° comprobante de pago</label>
-        <input id="gComp" placeholder="TRF-445120" value="${esc(g?.comprobante_pago || '')}"></div>
-    </div>
+    <div><label>Método de pago</label>
+      <select id="gMet">${optsSelect(lista('metodo_pago'), g?.metodo_pago || 'Transferencia')}</select></div>
 
-    <div class="f2">
-      <div><label>N° factura / cuenta de cobro</label>
-        <input id="gFac" placeholder="FE-30514" value="${esc(g?.factura_num || '')}"></div>
-      <div><label>Reembolsado (lo que ya te pagaron)</label>
-        <input id="gReem" type="number" min="0" value="${g?.reembolsado || 0}"></div>
-    </div>
+    <!-- Adjuntos: la foto se toma con la cámara y se comprime sola -->
+    ${campoArchivo('gComprob', '📎 Comprobante de pago (si aplica)', g?.comprobante_url)}
+    <div><label>N° del comprobante</label>
+      <input id="gComp" placeholder="TRF-445120" value="${esc(g?.comprobante_pago || '')}"></div>
 
-    <div class="f-check">
-      <label><input type="checkbox" id="gTC" ${g?.tiene_comprobante ? 'checked' : ''}> Tengo el comprobante de pago 📎</label>
-      <label><input type="checkbox" id="gTF" ${g?.tiene_factura ? 'checked' : ''}> Tengo la factura 🧾</label>
-    </div>
-    <div class="f-check">
-      <label><input type="checkbox" id="gLeg" ${g?.legalizado ? 'checked' : ''}> Ya legalizado ante contabilidad</label>
+    ${campoArchivo('gFactura', '🧾 Factura o cuenta de cobro (si aplica)', g?.factura_url)}
+    <div><label>N° de la factura</label>
+      <input id="gFac" placeholder="FE-30514" value="${esc(g?.factura_num || '')}"></div>
+
+    <div><label>Estado del pago</label>
+      <select id="gEst">
+        ${Object.entries(ESTADOS_PAGO).map(([k, v]) =>
+          `<option value="${k}" ${estado === k ? 'selected' : ''}>${v.ico} ${v.l}</option>`).join('')}
+      </select>
+      <div style="font-size:11.5px;color:var(--text-2);margin-top:5px" id="gEstAyuda"></div>
     </div>
 
     <div><label>Observación</label>
-      <textarea id="gObs" placeholder="Ej. Falta que entregue la cuenta de cobro">${esc(g?.observacion || '')}</textarea></div>`;
+      <textarea id="gObs" placeholder="Ej. Falta que entregue la cuenta de cobro">${esc(g?.observacion || '')}</textarea></div>
+
+    <!-- Cierre del pago: se llena después, cuando ya legalizaste y te devolvieron -->
+    <div style="border-top:1px solid var(--border);padding-top:14px;margin-top:2px">
+      <div style="font-size:11.5px;font-weight:700;color:var(--text-3);
+                  text-transform:uppercase;letter-spacing:.6px;margin-bottom:11px">
+        Cierre del pago</div>
+
+      <div class="f-check" style="margin-bottom:12px">
+        <label><input type="checkbox" id="gLeg" ${g?.legalizado ? 'checked' : ''}>
+          Ya la pasé a la automatización</label>
+      </div>
+
+      <div class="f-check" style="margin-bottom:11px">
+        <label><input type="checkbox" id="gReemTodo"
+          ${g && g.reembolsado >= g.monto && g.monto > 0 ? 'checked' : ''}
+          onchange="sincronizarReembolso()"> Ya me reembolsaron todo</label>
+      </div>
+
+      <label>Reembolsado (si fue parcial, escribe cuánto)</label>
+      <input id="gReem" type="number" min="0" value="${g?.reembolsado || 0}"
+             oninput="document.getElementById('gReemTodo').checked = false">
+    </div>`;
 
   openModal(formModal(
-    id ? 'Editar movimiento' : (esGasto ? 'Registrar pago o gasto' : 'Registrar ingreso a la caja'),
+    id ? 'Editar pago' : (esGasto ? 'Registrar pago' : 'Registrar ingreso a la caja'),
     `
-    <div class="f2">
-      <div><label>Concepto</label>
-        <input id="gC" placeholder="Ej. Pago recorrido semana 2" value="${esc(g?.concepto || '')}"></div>
-      <div><label>Fecha</label>
-        <input type="date" id="gF" value="${g?.fecha || hoyISO()}"></div>
-    </div>
+    <div><label>Categoría</label>
+      <select id="gK">${optsSelect(lista('categoria_caja'),
+        g?.categoria || (esGasto ? 'Pago mensajero' : 'Base'))}</select></div>
 
     <div class="f2">
+      <div><label>Fecha</label>
+        <input type="date" id="gF" value="${g?.fecha || hoyISO()}"></div>
       <div><label>Monto (COP)</label>
-        <input id="gM" type="number" placeholder="180000" value="${g?.monto || ''}"></div>
-      <div><label>Categoría</label>
-        <select id="gK">${optsSelect(CATEGORIAS_CAJA, g?.categoria || (esGasto ? 'Pago mensajero' : 'Base'))}</select></div>
+        <input id="gM" type="number" inputmode="numeric" placeholder="180000" value="${g?.monto || ''}"></div>
     </div>
+
+    <div><label>Concepto</label>
+      <input id="gC" placeholder="Ej. Pago recorrido semana 2" value="${esc(g?.concepto || '')}"></div>
 
     <div class="f2">
       <div><label>Cliente / centro de costo</label>
-        <select id="gCl">${optsCli(g?.cliente_id || 'c5')}</select></div>
+        <select id="gCl">${optsCli(g?.cliente_id)}</select></div>
       <div><label>Período</label>
         <select id="gPer">${S.periodos.map(p =>
           `<option value="${p.id}" ${(g?.periodo_id || pa?.id) === p.id ? 'selected' : ''}>
@@ -85,12 +106,11 @@ function modalCaja(tipo, id = null){
     </div>
 
     ${esGasto ? camposGasto : `
-    <div class="f2">
-      <div><label>Método</label>
-        <select id="gMet">${optsSelect(METODOS_PAGO, g?.metodo_pago || 'Transferencia')}</select></div>
-      <div><label>N° comprobante</label>
-        <input id="gComp" placeholder="TRF-889012" value="${esc(g?.comprobante_pago || '')}"></div>
-    </div>
+    <div><label>Método</label>
+      <select id="gMet">${optsSelect(lista('metodo_pago'), g?.metodo_pago || 'Transferencia')}</select></div>
+    ${campoArchivo('gComprob', '📎 Comprobante de la consignación', g?.comprobante_url)}
+    <div><label>N° del comprobante</label>
+      <input id="gComp" placeholder="TRF-889012" value="${esc(g?.comprobante_pago || '')}"></div>
     <div><label>Observación</label>
       <textarea id="gObs">${esc(g?.observacion || '')}</textarea></div>`}
     `,
@@ -98,6 +118,19 @@ function modalCaja(tipo, id = null){
     id ? 'Guardar cambios' : 'Registrar'));
 
   pintarDatosBen();
+  pintarAyudaEstado();
+  $('#gEst')?.addEventListener('change', pintarAyudaEstado);
+}
+
+function pintarAyudaEstado(){
+  const sel = $('#gEst'), caja = $('#gEstAyuda');
+  if(sel && caja) caja.textContent = ESTADOS_PAGO[sel.value]?.ayuda || '';
+}
+
+/** "Ya me reembolsaron todo" llena el campo con el monto completo. */
+function sincronizarReembolso(){
+  const todo = $('#gReemTodo').checked;
+  $('#gReem').value = todo ? (+$('#gM').value || 0) : 0;
 }
 
 /** Muestra banco y cuenta del beneficiario elegido, para verificar antes de pagar. */
@@ -118,21 +151,26 @@ async function guardarCaja(tipo, id = null){
 
   const esGasto = tipo === 'gasto';
   const legalizado = esGasto ? $('#gLeg').checked : true;
+  const comprobante_url = refArchivo('gComprob');
+  const factura_url     = esGasto ? refArchivo('gFactura') : '';
 
   const fila = {
     tipo, monto,
     concepto:   $('#gC').value.trim() || 'Sin concepto',
     fecha:      $('#gF').value,
     categoria:  $('#gK').value,
-    cliente_id: $('#gCl').value,
+    cliente_id: $('#gCl').value || null,
     periodo_id: $('#gPer').value,
     metodo_pago:      $('#gMet')?.value  || 'Transferencia',
     comprobante_pago: $('#gComp')?.value.trim() || '',
     observacion:      $('#gObs')?.value.trim()  || '',
     beneficiario_id:  esGasto ? ($('#gBen').value || null) : null,
     factura_num:      esGasto ? $('#gFac').value.trim() : '',
-    tiene_comprobante: esGasto ? $('#gTC').checked : true,
-    tiene_factura:     esGasto ? $('#gTF').checked : true,
+    comprobante_url, factura_url,
+    // El soporte se da por tenido si hay foto adjunta o número registrado
+    tiene_comprobante: !!comprobante_url || !!($('#gComp')?.value.trim()),
+    tiene_factura:     esGasto ? (!!factura_url || !!$('#gFac').value.trim()) : true,
+    estado:            esGasto ? $('#gEst').value : 'finalizado',
     reembolsado:       esGasto ? (+$('#gReem').value || 0) : 0,
     legalizado,
     legalizado_el: legalizado ? (id ? (S.caja.find(x => x.id === id)?.legalizado_el || hoyISO()) : hoyISO()) : null
@@ -146,7 +184,100 @@ async function guardarCaja(tipo, id = null){
   else    await db.insert('caja', fila);
 
   closeModal(); render();
-  toast(id ? 'Movimiento actualizado ✓' : 'Movimiento registrado ✓');
+  toast(id ? 'Pago actualizado ✓' : 'Pago registrado ✓');
+}
+
+/* ---- Ficha del pago: todo lo que se necesita para legalizar --------------- */
+function verPago(id){
+  const g = S.caja.find(x => x.id === id);
+  if(!g) return;
+
+  const b    = ben(g.beneficiario_id);
+  const est  = ESTADOS_PAGO[g.estado] || ESTADOS_PAGO.pendiente_consignacion;
+  const pend = g.monto - (g.reembolsado || 0);
+  const esIngreso = g.tipo === 'ingreso';
+
+  const dato = (etiqueta, valor, mono) => valor ? `
+    <div class="ficha-fila">
+      <span>${esc(etiqueta)}</span>
+      <strong ${mono ? 'style="font-family:var(--mono);font-size:12.5px"' : ''}>${valor}</strong>
+    </div>` : '';
+
+  const adjunto = (ref, titulo, numero) => `
+    <div class="ficha-adj">
+      <div class="ficha-adj-txt">
+        <strong>${esc(titulo)}</strong>
+        <small>${ref ? (esPDF(ref) ? 'PDF adjunto' : 'Foto adjunta') : 'Sin adjuntar'}
+          ${numero ? ` · N° ${esc(numero)}` : ''}</small>
+      </div>
+      ${ref
+        ? `<button class="btn sm pri" onclick="verArchivo(${JSON.stringify(ref).replace(/"/g,'&quot;')},
+             '${esc(titulo)}','${esc(g.concepto)}-${esc(titulo)}')">Ver y descargar</button>`
+        : `<span class="chip d">Falta</span>`}
+    </div>`;
+
+  openModal(`
+    <div class="modal-h">
+      <h3>${esc(g.concepto)}</h3>
+      <button class="btn sm" onclick="closeModal()">✕</button>
+    </div>
+
+    <div class="modal-b" style="gap:0">
+      <div class="ficha-monto">
+        <div class="ficha-monto-val" style="color:${esIngreso ? 'var(--ok)' : 'var(--text)'}">
+          ${esIngreso ? '+' : '−'}${cop(g.monto)}</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:9px">
+          <span class="chip ${est.c}">${est.ico} ${est.l}</span>
+          <span class="chip ${g.legalizado ? 'o' : 'n'}">
+            ${g.legalizado ? '✓ Legalizado' : '○ Sin pasar a automatización'}</span>
+          ${!esIngreso ? `<span class="chip ${pend > 0 ? 'w' : 'o'}">
+            ${pend > 0 ? `Falta cobrar ${cop(pend)}` : '✓ Reembolsado'}</span>` : ''}
+        </div>
+      </div>
+
+      <div class="ficha">
+        ${dato('Fecha', fechaCorta(g.fecha))}
+        ${dato('Categoría', esc(g.categoria))}
+        ${dato('Cliente', g.cliente_id ? cliTag(g.cliente_id) : '')}
+        ${dato('Método de pago', esc(g.metodo_pago))}
+      </div>
+
+      ${b ? `
+      <div class="ficha-tit">Beneficiario</div>
+      <div class="ficha">
+        ${dato('Nombre', esc(b.nombre))}
+        ${dato('Documento', `${esc(b.tipo_doc)} ${esc(b.documento)}`, true)}
+        ${dato('Banco', esc(b.banco))}
+        ${dato('Cuenta', `${esc(b.cuenta)} · ${esc(b.tipo_cuenta)}`, true)}
+        ${dato('Teléfono', esc(b.telefono))}
+      </div>` : ''}
+
+      <div class="ficha-tit">Soportes</div>
+      ${adjunto(g.comprobante_url, 'Comprobante de pago', g.comprobante_pago)}
+      ${!esIngreso ? adjunto(g.factura_url, 'Factura / cuenta de cobro', g.factura_num) : ''}
+
+      ${!esIngreso ? `
+      <div class="ficha-tit">Dinero</div>
+      <div class="ficha">
+        ${dato('Pagado', cop(g.monto), true)}
+        ${dato('Reembolsado', cop(g.reembolsado || 0), true)}
+        <div class="ficha-fila">
+          <span>Pendiente</span>
+          <strong style="font-family:var(--mono);font-size:12.5px;
+                  color:${pend > 0 ? 'var(--warn)' : 'var(--ok)'}">${cop(pend)}</strong>
+        </div>
+        ${dato('Legalizado el', g.legalizado_el ? fechaCorta(g.legalizado_el) : '')}
+      </div>` : ''}
+
+      ${g.observacion ? `
+      <div class="ficha-tit">Observación</div>
+      <p style="font-size:13.5px;color:var(--text-2);padding:0 2px">${esc(g.observacion)}</p>` : ''}
+    </div>
+
+    <div class="modal-f">
+      <button class="btn dgr" onclick="closeModal();borrar('caja','${g.id}')">Eliminar</button>
+      <button class="btn pri" onclick="closeModal();modalCaja('${g.tipo}','${g.id}')">✎ Editar</button>
+    </div>`);
 }
 
 /* ---- Legalización -------------------------------------------------------- */
@@ -309,16 +440,16 @@ function modalBeneficiario(id = null){
 
     <div class="f2">
       <div><label>Tipo de documento</label>
-        <select id="bTD">${optsSelect(TIPOS_DOC, b?.tipo_doc || 'CC')}</select></div>
+        <select id="bTD">${optsSelect(lista('tipo_doc'), b?.tipo_doc || 'CC')}</select></div>
       <div><label>Número</label>
         <input id="bD" placeholder="1013456789" value="${esc(b?.documento || '')}"></div>
     </div>
 
     <div class="f2">
       <div><label>Banco</label>
-        <select id="bB">${optsSelect(BANCOS, b?.banco || 'Bancolombia')}</select></div>
+        <select id="bB">${optsSelect(lista('banco'), b?.banco || 'Bancolombia')}</select></div>
       <div><label>Tipo de cuenta</label>
-        <select id="bTC">${optsSelect(TIPOS_CUENTA, b?.tipo_cuenta || 'Ahorros')}</select></div>
+        <select id="bTC">${optsSelect(lista('tipo_cuenta'), b?.tipo_cuenta || 'Ahorros')}</select></div>
     </div>
 
     <div class="f2">
@@ -330,7 +461,7 @@ function modalBeneficiario(id = null){
 
     <div class="f2">
       <div><label>Rol</label>
-        <select id="bR">${optsSelect(['Mensajero','Proveedor','Contratista','Otro'], b?.rol || 'Mensajero')}</select></div>
+        <select id="bR">${optsSelect(lista('rol_beneficiario'), b?.rol || 'Mensajero')}</select></div>
       <div><label>Estado</label>
         <select id="bA">
           <option value="1" ${b?.activo !== false ? 'selected' : ''}>Activo</option>
@@ -412,7 +543,7 @@ function modalPresupuesto(id = null){
   const p = id ? S.presupuestos.find(x => x.id === id) : null;
   openModal(formModal(id ? 'Editar tope' : 'Nuevo tope de gasto', `
     <div><label>Categoría</label>
-      <select id="tK">${optsSelect(CATEGORIAS_CAJA, p?.categoria || 'Pago mensajero')}</select></div>
+      <select id="tK">${optsSelect(lista('categoria_caja'), p?.categoria || 'Pago mensajero')}</select></div>
     <div><label>Tope por período (COP)</label>
       <input id="tT" type="number" value="${p?.tope || 500000}"></div>
     <p style="font-size:11.5px;color:var(--text-2)">
