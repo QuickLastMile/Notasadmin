@@ -11,12 +11,17 @@ const MENU = [
   { id:'tareas',    ico:'✓', lbl:'Tareas',      vista:m => vTareas(m),    badge:m => m.vencidas.length },
   { id:'novedades', ico:'⚠', lbl:'Novedades',   vista:m => vNovedades(m), badge:m => m.novCriticas.length },
   { sec:'Gestión' },
-  { id:'caja',      ico:'▤', lbl:'Caja menor',  vista:m => vCaja(m),      badge:m => m.arqueo.sinLegalizar.length },
+  { id:'caja',      ico:'▤', lbl:'Caja menor',  lblCorto:'Caja',
+    vista:m => vCaja(m), badge:m => m.arqueo.sinLegalizar.length },
   { id:'proyectos', ico:'▣', lbl:'Proyectos',   vista:m => vProyectos(m) },
   { id:'clientes',  ico:'◍', lbl:'Clientes',    vista:m => vClientes(m) },
   { sec:'Recursos' },
   { id:'enlaces',   ico:'◈', lbl:'Dashboards',  vista:m => vEnlaces(m) }
 ];
+
+/* En celular solo caben cuatro: el resto vive en la hoja "Más". */
+const TABBAR = ['inicio', 'tareas', 'caja', 'novedades'];
+const modulo = id => MENU.find(i => i.id === id);
 
 function renderNav(m){
   $('#nav').innerHTML = MENU.map(i => {
@@ -28,11 +33,71 @@ function renderNav(m){
         ${b ? `<span class="badge">${b}</span>` : ''}
       </button>`;
   }).join('');
+
+  renderTabbar(m);
+}
+
+/* ---- Barra inferior (celular) -------------------------------------------- */
+function renderTabbar(m){
+  const enMas = !TABBAR.includes(vista);
+
+  const botones = TABBAR.map(id => {
+    const i = modulo(id);
+    const b = i.badge ? i.badge(m) : 0;
+    return `
+      <button class="${vista === id ? 'active' : ''}" onclick="go('${id}')">
+        <span class="ico">${i.ico}</span>${i.lblCorto || i.lbl}
+        ${b ? `<span class="badge">${b > 9 ? '9+' : b}</span>` : ''}
+      </button>`;
+  }).join('');
+
+  $('#tabbar').innerHTML = botones + `
+    <button class="${enMas ? 'active' : ''}" onclick="abrirMas()">
+      <span class="ico">⋯</span>Más
+    </button>`;
+}
+
+/* ---- Hoja inferior "Más" -------------------------------------------------- */
+function abrirMas(){
+  const m = metricas();
+  const restantes = MENU.filter(i => i.id && !TABBAR.includes(i.id));
+
+  const item = i => {
+    const b = i.badge ? i.badge(m) : 0;
+    return `<button class="sheet-item" onclick="go('${i.id}');cerrarSheet()">
+      <span class="ico">${i.ico}</span>${i.lbl}
+      ${b ? `<span class="badge">${b}</span>` : ''}
+    </button>`;
+  };
+
+  const oscuro = document.documentElement.getAttribute('data-theme') === 'dark';
+
+  $('#sheet').innerHTML = `
+    <div class="sheet-grip"></div>
+    ${restantes.map(item).join('')}
+    <div class="sheet-sep"></div>
+    <button class="sheet-item" onclick="toggleTheme()">
+      <span class="ico">${oscuro ? '☀️' : '🌙'}</span>Tema ${oscuro ? 'claro' : 'oscuro'}</button>
+    ${NUBE
+      ? `<button class="sheet-item" onclick="salir()">
+           <span class="ico">⎋</span>Salir${usuario?.email ? ` · ${esc(usuario.email)}` : ''}</button>`
+      : `<button class="sheet-item" onclick="cargarEjemplo();cerrarSheet()">
+           <span class="ico">◔</span>Datos de ejemplo</button>
+         <button class="sheet-item" onclick="vaciarTodo();cerrarSheet()">
+           <span class="ico">🗑</span>Vaciar todo</button>`}
+  `;
+  $('#sheetMask').classList.add('on');
+  requestAnimationFrame(() => $('#sheet').classList.add('on'));
+}
+
+function cerrarSheet(){
+  $('#sheet').classList.remove('on');
+  $('#sheetMask').classList.remove('on');
 }
 
 function go(v){
   vista = v;
-  $('#side').classList.remove('open');
+  cerrarSheet();
   render();
   window.scrollTo(0, 0);
 }
@@ -40,7 +105,7 @@ function go(v){
 function render(){
   const m = metricas();
   renderNav(m);
-  const item = MENU.find(i => i.id === vista) || MENU[1];
+  const item = modulo(vista) || MENU[1];
   $('#view').innerHTML = item.vista(m);
 }
 
@@ -81,7 +146,7 @@ function initAtajos(){
   document.addEventListener('keydown', e => {
     const escribiendo = ['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName);
     if(e.key === '/' && !escribiendo){ e.preventDefault(); cap.focus(); }
-    if(e.key === 'Escape') closeModal();
+    if(e.key === 'Escape'){ closeModal(); cerrarSheet(); }
   });
 }
 

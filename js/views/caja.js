@@ -146,7 +146,8 @@ function tabMovimientos(a, p, pid){
       </div>
       <button class="btn sm" onclick="exportarCaja('${pid}')">⬇ Excel</button>
     </div>
-    <div class="card-b flush scroll-x">
+    <!-- Escritorio: tabla completa -->
+    <div class="card-b flush scroll-x tabla-desk">
       <table>
         <thead><tr>
           <th>Fecha</th><th>Concepto</th><th>Beneficiario</th><th>Cuenta de pago</th>
@@ -160,9 +161,65 @@ function tabMovimientos(a, p, pid){
         </tbody>
       </table>
     </div>
+
+    <!-- Celular: una tarjeta por movimiento -->
+    <div class="mov-cards">
+      ${movs.length ? movs.map(g => tarjetaCaja(g)).join('')
+        : vacio('📭', 'No hay movimientos con este filtro')}
+    </div>
   </div>
 
   ${desgloses(a)}`;
+}
+
+/* ---- Movimiento como tarjeta (celular) ------------------------------------ */
+function tarjetaCaja(g){
+  const b = ben(g.beneficiario_id);
+  const esIngreso = g.tipo === 'ingreso';
+  const pend = esIngreso ? 0 : g.monto - (g.reembolsado || 0);
+
+  return `
+  <div class="mov">
+    <div class="mov-top">
+      <div style="min-width:0">
+        <div class="mov-cn">${esc(g.concepto)}</div>
+        <div class="mov-meta">
+          <span>${fechaCorta(g.fecha)}</span>
+          <span class="chip n">${esc(g.categoria)}</span>
+          <span>${cliTag(g.cliente_id)}</span>
+        </div>
+      </div>
+      <div class="mov-monto" style="color:${esIngreso ? 'var(--ok)' : 'var(--text)'}">
+        ${esIngreso ? '+' : '−'}${cop(g.monto)}
+      </div>
+    </div>
+
+    ${b ? `
+    <div class="mov-ben">
+      <b>${esc(b.nombre)}</b> · ${esc(b.tipo_doc)} ${esc(b.documento)}
+      <div class="mov-cta">${esc(b.banco)} ${esc(b.cuenta)}</div>
+    </div>` : ''}
+
+    ${!esIngreso ? `
+    <div class="mov-plata">
+      <div><span>Reembolsado</span>
+        <strong style="color:${g.reembolsado ? 'var(--ok)' : 'var(--text-3)'}">${cop(g.reembolsado || 0)}</strong></div>
+      <div><span>Pendiente</span>
+        <strong style="color:${pend > 0 ? 'var(--warn)' : 'var(--text-3)'}">${cop(pend)}</strong></div>
+    </div>` : ''}
+
+    ${g.observacion ? `<div class="mov-cta" style="margin-top:8px;font-family:inherit;
+      color:var(--text-2);font-size:12px">${esc(g.observacion)}</div>` : ''}
+
+    <div class="mov-pie">
+      ${esIngreso ? '<span class="chip n">Base</span>' : `
+        <span class="chip ${g.tiene_comprobante ? 'o' : 'd'}">${g.tiene_comprobante ? '📎' : '✕'} Pago</span>
+        <span class="chip ${g.tiene_factura ? 'o' : 'd'}">${g.tiene_factura ? '🧾' : '✕'} Fact.</span>
+        <button class="chip ${g.legalizado ? 'o' : 'w'}" onclick="toggleLeg('${g.id}')">
+          ${g.legalizado ? '✓ Legalizado' : 'Sin legalizar'}</button>`}
+      <button class="btn sm" onclick="modalCaja('${g.tipo}','${g.id}')">✎ Editar</button>
+    </div>
+  </div>`;
 }
 
 function filaCaja(g){

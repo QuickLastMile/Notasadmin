@@ -46,13 +46,18 @@ async function enviarEnlace(){
 
   if(error){ mostrarErrorLogin(error.message); return; }
   $('#loginCard').innerHTML = `
-    <div style="text-align:center;padding:12px 4px">
-      <div style="font-size:34px;margin-bottom:10px">📬</div>
-      <h2 style="font-size:16px;margin-bottom:6px">Revisa tu correo</h2>
-      <p style="color:var(--text-2);font-size:13px">
-        Te enviamos un enlace a <strong>${esc(email)}</strong>.<br>
-        Ábrelo desde este mismo dispositivo y entras directo.
+    <div style="text-align:center;padding:14px 4px">
+      <div style="font-size:46px;margin-bottom:14px">📬</div>
+      <h2>Revisa tu correo</h2>
+      <p style="margin-top:8px">
+        Te enviamos un enlace a<br><strong style="color:#fff">${esc(email)}</strong>
       </p>
+      <p style="margin-top:14px;font-size:12.5px">
+        Ábrelo desde este mismo dispositivo y entras directo.<br>
+        Si no llega en un minuto, mira en spam.
+      </p>
+      <button class="glass-btn" onclick="location.reload()"
+              style="margin-top:22px">Volver</button>
     </div>`;
 }
 
@@ -67,40 +72,42 @@ const mostrarErrorLogin = msg => {
   e.style.display = 'block';
 };
 
-/* ---- Pantalla de acceso -------------------------------------------------- */
+/* ---- Pantalla de acceso — vidrio esmerilado sobre cabernet ---------------- */
 function mostrarLogin(){
   document.body.innerHTML = `
-  <div style="min-height:100vh;display:grid;place-items:center;padding:24px;background:var(--bg)">
-    <div class="card" style="max-width:400px;width:100%">
-      <div class="card-b" id="loginCard" style="padding:28px 24px">
-        <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px">
-          <div class="brand-mark" style="width:34px;height:34px;font-size:15px">HP</div>
-          <div>
-            <strong style="font-size:15px;display:block">Hub Personal</strong>
-            <span style="font-size:11px;color:var(--text-3);text-transform:uppercase;
-                  letter-spacing:.4px">Centro de control</span>
-          </div>
+  <div class="login-bg">
+    <div class="glass" id="loginCard">
+
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px">
+        <div class="brand-mark" style="width:44px;height:44px;font-size:17px;border-radius:14px">HP</div>
+        <div>
+          <strong style="font-size:17px;display:block;letter-spacing:-.3px">Hub Personal</strong>
+          <span style="font-size:10.5px;color:rgba(255,255,255,.6);
+                text-transform:uppercase;letter-spacing:1px">Centro de control</span>
         </div>
-
-        <p style="color:var(--text-2);font-size:13px;margin-bottom:16px">
-          Entra con tu correo. Te llega un enlace y listo — sin contraseñas.
-        </p>
-
-        <div class="f">
-          <label>Correo</label>
-          <input id="loginMail" type="email" placeholder="tucorreo@gmail.com"
-                 onkeydown="if(event.key==='Enter')enviarEnlace()">
-        </div>
-
-        <div id="loginErr" class="alert d" style="display:none;margin-top:12px;font-size:12.5px"></div>
-
-        <button class="btn pri" id="loginBtn" onclick="enviarEnlace()"
-                style="width:100%;margin-top:16px;padding:10px">Enviar enlace de acceso</button>
       </div>
+
+      <h2>Bienvenida 👋</h2>
+      <p style="margin-bottom:22px">
+        Entra con tu correo. Te llega un enlace y listo — sin contraseñas que recordar.
+      </p>
+
+      <label for="loginMail">Correo</label>
+      <input id="loginMail" type="email" inputmode="email" autocomplete="email"
+             placeholder="tucorreo@gmail.com"
+             onkeydown="if(event.key==='Enter')enviarEnlace()">
+
+      <div id="loginErr" class="glass-err" style="display:none"></div>
+
+      <button class="glass-btn" id="loginBtn" onclick="enviarEnlace()">
+        Enviar enlace de acceso
+      </button>
+
+      <div class="glass-pie">Tus datos viajan cifrados y solo tú los ves</div>
     </div>
   </div>
   <div class="toast" id="toast"></div>`;
-  setTimeout(() => $('#loginMail')?.focus(), 60);
+  setTimeout(() => $('#loginMail')?.focus(), 80);
 }
 
 /* ---- Carga inicial ------------------------------------------------------- */

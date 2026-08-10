@@ -19,6 +19,14 @@ const CFG = {
   }
 };
 
+/* Abrir con ?local=1 fuerza el modo localStorage aunque haya credenciales.
+   Sirve para probar el diseño o mostrar la app sin tener que iniciar sesión.
+   No expone nada: solo usa el almacenamiento de ese navegador. */
+if(location.search.includes('local=1')){
+  CFG.supabase = { url:'', anonKey:'' };
+  CFG.storageKey += '_demo';
+}
+
 /* Etiquetas compartidas ---------------------------------------------------- */
 const PRI = {
   alta:  { l:'Alta',  c:'d' },
