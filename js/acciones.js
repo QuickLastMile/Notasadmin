@@ -143,6 +143,35 @@ async function guardarCliente(){
   closeModal(); render(); toast('Cliente creado ✓');
 }
 
+/* ---- Accesos rápidos ----------------------------------------------------- */
+function modalEnlace(id = null){
+  const d = id ? S.dashboards.find(x => x.id === id) : null;
+  openModal(formModal(id ? 'Editar enlace' : 'Nuevo enlace', `
+    <div><label>Nombre</label>
+      <input id="enN" placeholder="Ej. Dashboard institucional Cafam" value="${esc(d?.nombre || '')}"></div>
+    <div><label>Dirección web</label>
+      <input id="enU" type="url" inputmode="url" placeholder="https://…" value="${esc(d?.url || '')}"></div>
+    <div><label>Cliente</label>
+      <select id="enC">${optsCli(d?.cliente_id)}</select></div>
+    <p style="font-size:11.5px;color:var(--text-2)">
+      Pégala tal cual la copias del navegador. Se abrirá en una pestaña nueva.</p>`,
+    `guardarEnlace(${id ? `'${id}'` : 'null'})`, id ? 'Guardar' : 'Guardar enlace'));
+}
+
+async function guardarEnlace(id = null){
+  const nombre = $('#enN').value.trim();
+  let url = $('#enU').value.trim();
+  if(!nombre){ toast('Ponle un nombre'); return; }
+  if(!url){ toast('Falta la dirección web'); return; }
+  if(!/^https?:\/\//i.test(url)) url = 'https://' + url;   // pegar sin https es lo normal
+
+  const fila = { nombre, url, cliente_id: $('#enC').value || null };
+  if(id) await db.update('dashboards', id, fila);
+  else    await db.insert('dashboards', fila);
+
+  closeModal(); render(); toast(id ? 'Enlace actualizado ✓' : 'Enlace guardado ✓');
+}
+
 /* ---- Rutina diaria ------------------------------------------------------- */
 async function toggleRutina(id){
   const r = S.rutina.find(x => x.id === id);

@@ -144,11 +144,18 @@ function tabMovimientos(a, p, pid){
           `<button class="chip ${filtroCaja === k ? 'b' : 'n'}" onclick="setFiltroCaja('${k}')">${l}</button>`
         ).join('')}
       </div>
-      <button class="btn sm" onclick="exportarCaja('${pid}')">⬇ Excel</button>
+      <div style="display:flex;gap:6px;align-items:center">
+        <button class="btn sm tabla-solo" onclick="alternarEnvoltura('caja')"
+                title="${envuelveTexto('caja') ? 'Recortar el texto largo' : 'Mostrar el texto completo en varias líneas'}">
+          ${envuelveTexto('caja') ? '⇥ Recortar texto' : '⇤ Ver texto completo'}</button>
+        <button class="btn sm tabla-solo" onclick="restablecerColumnas('caja')"
+                title="Devolver las columnas a su ancho original">↺ Columnas</button>
+        <button class="btn sm" onclick="exportarCaja('${pid}')">⬇ Excel</button>
+      </div>
     </div>
     <!-- Escritorio: tabla completa -->
     <div class="card-b flush scroll-x tabla-desk">
-      <table>
+      <table class="tabla-ajustable ${envuelveTexto('caja') ? 'envuelve' : ''}" data-cols="caja">
         <thead><tr>
           <th>Fecha</th><th>Concepto</th><th>Beneficiario</th><th>Cuenta de pago</th>
           <th>Categoría</th><th>Cliente</th>

@@ -14,11 +14,25 @@ const NUBE = !!(CFG.supabase.url && CFG.supabase.anonKey);
 let sb = null;      // cliente de supabase-js
 let usuario = null; // sesión activa
 
+/* La URL se lee ANTES de que supabase-js consuma el hash del enlace.
+   Si se lee después, el token ya se borró y no hay forma de saber que
+   veníamos de un correo de recuperación. */
+const URL_INICIAL = location.hash + location.search;
+let vieneDeRecuperacion = /type=recovery|[#&?]recuperar/.test(URL_INICIAL);
+
 if(NUBE){
   if(typeof supabase === 'undefined')
     console.error('Falta el script de supabase-js en index.html');
-  else
+  else {
     sb = supabase.createClient(CFG.supabase.url, CFG.supabase.anonKey);
+    // Señal oficial de Supabase: llega tras abrir el enlace del correo
+    sb.auth.onAuthStateChange(evento => {
+      if(evento === 'PASSWORD_RECOVERY'){
+        vieneDeRecuperacion = true;
+        if(!document.getElementById('nuevaPass')) mostrarNuevaPassword();
+      }
+    });
+  }
 }
 
 /* ---- Sesión -------------------------------------------------------------- */
@@ -109,7 +123,10 @@ async function recuperarPassword(){
   });
 }
 
-/* ---- Cambiar la contraseña (tras abrir el enlace de recuperación) --------- */
+/* ---- Fijar o cambiar la contraseña ---------------------------------------
+   updateUser sirve para las dos cosas: cambiar la que ya existe, o crear
+   una para una cuenta que entró con Google y nunca tuvo contraseña.
+   -------------------------------------------------------------------------- */
 async function guardarPasswordNueva(){
   const pass  = $('#nuevaPass').value;
   const pass2 = $('#nuevaPass2').value;
@@ -252,7 +269,8 @@ function mostrarRecuperar(){
 function mostrarNuevaPassword(){
   pantalla(`
     <h2>Nueva contraseña</h2>
-    <p style="margin-bottom:20px">Escríbela dos veces para confirmar.</p>
+    <p style="margin-bottom:20px">Escríbela dos veces para confirmar.
+      Mínimo 6 caracteres.</p>
 
     <label for="nuevaPass">Contraseña</label>
     <input id="nuevaPass" type="password" autocomplete="new-password" placeholder="••••••••">

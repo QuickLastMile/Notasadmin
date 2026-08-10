@@ -267,6 +267,12 @@ clientes(){
 
 /* ---- Usuarios ------------------------------------------------------------ */
 usuarios(){
+  // Si entró con Google, la cuenta puede no tener contraseña todavía
+  const proveedores = usuario?.app_metadata?.providers
+                   || (usuario?.app_metadata?.provider ? [usuario.app_metadata.provider] : []);
+  const conGoogle   = proveedores.includes('google');
+  const conPassword = proveedores.includes('email');
+
   return `
     ${cfgHead('Usuarios', 'Quién entra a la aplicación.')}
 
@@ -279,6 +285,29 @@ usuarios(){
         </div>
         <span class="chip b">Administradora</span>
       </div>
+
+      ${NUBE ? `
+      <div class="cfg-fila">
+        <div class="cfg-fila-txt">
+          <strong>Cómo entras</strong>
+          <small>${proveedores.length
+            ? proveedores.map(p => p === 'google' ? 'Google' : 'Correo y contraseña').join(' · ')
+            : 'Correo y contraseña'}</small>
+        </div>
+        ${conGoogle ? '<span class="chip o">Google</span>' : ''}
+        ${conPassword ? '<span class="chip n">Contraseña</span>' : ''}
+      </div>
+
+      <div class="cfg-fila">
+        <div class="cfg-fila-txt">
+          <strong>${conPassword ? 'Cambiar contraseña' : 'Crear una contraseña'}</strong>
+          <small>${conPassword
+            ? 'Para entrar desde otros dispositivos sin usar Google.'
+            : 'Tu cuenta entra solo con Google, así que todavía no tiene contraseña. Créala aquí y podrás usar las dos formas.'}</small>
+        </div>
+        <button class="btn pri" onclick="modalPassword()">
+          ${conPassword ? 'Cambiar' : 'Crear contraseña'}</button>
+      </div>` : ''}
     </div>
 
     <div class="cfg-nota">
@@ -534,6 +563,41 @@ function contarUso(tipo, valor){
     categoria:        () => S.preguntas.filter(x => x.categoria === valor)
   }[tipo];
   return donde ? donde().length : 0;
+}
+
+/* ---- Contraseña ----------------------------------------------------------
+   Estando ya dentro no hace falta la contraseña vieja: la sesión es la prueba.
+   Sirve tanto para cambiarla como para crear la primera en cuentas de Google.
+   -------------------------------------------------------------------------- */
+function modalPassword(){
+  openModal(formModal('Contraseña de acceso', `
+    <p style="font-size:13px;color:var(--text-2);margin-bottom:2px">
+      Estás dentro, así que no hace falta la contraseña anterior.
+      Con esta podrás entrar desde el celular sin usar Google.
+    </p>
+    <div><label>Nueva contraseña</label>
+      <input id="pw1" type="password" autocomplete="new-password" placeholder="Mínimo 6 caracteres"></div>
+    <div><label>Repítela</label>
+      <input id="pw2" type="password" autocomplete="new-password" placeholder="••••••••"
+             onkeydown="if(event.key==='Enter')guardarPassword()"></div>
+    <div id="pwErr" class="alert d" style="display:none;font-size:12.5px"></div>`,
+    'guardarPassword()', 'Guardar'));
+}
+
+async function guardarPassword(){
+  const p1 = $('#pw1').value, p2 = $('#pw2').value;
+  const err = t => { const e = $('#pwErr'); e.textContent = t; e.style.display = 'flex'; };
+
+  if(p1.length < 6){ err('La contraseña debe tener al menos 6 caracteres'); return; }
+  if(p1 !== p2){ err('Las dos contraseñas no coinciden'); return; }
+
+  const { error } = await sb.auth.updateUser({ password: p1 });
+  if(error){ err(traducir(error.message)); return; }
+
+  // La sesión trae ahora el proveedor 'email'
+  await sesionActual();
+  closeModal(); render();
+  toast('Contraseña guardada ✓ — ya puedes entrar con ella');
 }
 
 /* ---- Preferencias de apariencia ------------------------------------------ */

@@ -16,7 +16,8 @@ const MENU = [
   { id:'proyectos', ico:ICO.proyectos, lbl:'Proyectos',   vista:m => vProyectos(m) },
   { id:'clientes',  ico:ICO.clientes,  lbl:'Clientes',    vista:m => vClientes(m) },
   { sec:'Recursos' },
-  { id:'enlaces',   ico:ICO.enlaces,   lbl:'Dashboards',  vista:m => vEnlaces(m) },
+  { id:'enlaces',   ico:ICO.enlaces,   lbl:'Accesos rápidos', lblCorto:'Accesos',
+    vista:m => vEnlaces(m) },
   { id:'config',    ico:ICO.config,    lbl:'Configuración', vista:m => vConfig(m) }
 ];
 
@@ -109,11 +110,13 @@ function render(){
   renderNav(m);
   const item = modulo(vista) || MENU[1];
   $('#view').innerHTML = item.vista(m);
+  prepararTablas();   // los tiradores de las columnas viven en el DOM nuevo
 }
 
 /* ---- Tema, acento y densidad --------------------------------------------- */
 function aplicarTema(t){
   document.documentElement.setAttribute('data-theme', t);
+  aplicarAcento();   // el acento y su contraste dependen del tema
 }
 function toggleTheme(){
   const nuevo = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
@@ -131,17 +134,62 @@ function initTema(){
   if(tope) CFG.topeAlertaCaja = +tope;
 }
 
-/** El color de acento se sobrescribe encima de los tokens del tema. */
+/**
+ * El color de acento se sobrescribe encima de los tokens del tema.
+ * Dos cosas que hay que resolver aquí y no en el CSS:
+ *  1. Un acento oscuro (salvia, cacao) es ilegible sobre fondo oscuro:
+ *     se aclara hasta que se vea, conservando su tono.
+ *  2. El texto que va ENCIMA de la marca no puede estar fijo en el CSS,
+ *     porque depende de qué tan claro sea el color elegido. Se calcula.
+ */
 function aplicarAcento(){
   const hex = localStorage.getItem('hub_acento');
+  const oscuro = document.documentElement.getAttribute('data-theme') === 'dark';
   const r = document.documentElement.style;
-  if(!hex){ r.removeProperty('--brand'); r.removeProperty('--brand-2'); r.removeProperty('--brand-3'); return; }
-  r.setProperty('--brand', hex);
-  r.setProperty('--brand-2', mezclar(hex, '#000', .22));
-  r.setProperty('--brand-3', mezclar(hex, '#fff', .18));
+
+  if(!hex){
+    r.removeProperty('--brand'); r.removeProperty('--brand-2'); r.removeProperty('--brand-3');
+  } else {
+    let base = hex;
+    if(oscuro && luminancia(base) < .28) base = mezclar(base, '#F0E5D4', .45);
+    r.setProperty('--brand',   base);
+    r.setProperty('--brand-2', oscuro ? mezclar(base, '#fff', .16) : mezclar(base, '#000', .22));
+    r.setProperty('--brand-3', mezclar(base, oscuro ? '#000' : '#fff', .18));
+    r.setProperty('--brand-soft', oscuro ? mezclar(base, '#160C0A', .82) : mezclar(base, '#FFFFFF', .90));
+  }
+  if(!hex) r.removeProperty('--brand-soft');
+
+  actualizarContrasteMarca();
 }
 
-/** Mezcla dos colores hex. Sirve para derivar el tono de hover del acento. */
+/**
+ * Fija --on-brand: el color del texto que va sobre la marca.
+ * No basta con un umbral de claridad. Un tono medio como el granate del
+ * modo oscuro (#C1786A) da 3.4 contra blanco pero 5.2 contra oscuro:
+ * hay que calcular los dos contrastes y quedarse con el mayor.
+ */
+function actualizarContrasteMarca(){
+  const brand = getComputedStyle(document.documentElement)
+    .getPropertyValue('--brand').trim() || '#800000';
+  const OSCURO = '#1B0D09';
+  const elegido = contraste('#FFFFFF', brand) >= contraste(OSCURO, brand) ? '#FFFFFF' : OSCURO;
+  document.documentElement.style.setProperty('--on-brand', elegido);
+}
+
+/** Luminancia relativa (WCAG). 0 = negro, 1 = blanco. */
+function luminancia(hex){
+  const c = [1,3,5].map(i => parseInt(hex.slice(i, i + 2), 16) / 255)
+    .map(v => v <= .03928 ? v / 12.92 : Math.pow((v + .055) / 1.055, 2.4));
+  return .2126 * c[0] + .7152 * c[1] + .0722 * c[2];
+}
+
+/** Razón de contraste entre dos colores (WCAG). 1 = idénticos, 21 = máximo. */
+function contraste(a, b){
+  const [alto, bajo] = [luminancia(a), luminancia(b)].sort((x, y) => y - x);
+  return (alto + .05) / (bajo + .05);
+}
+
+/** Mezcla dos colores hex. Sirve para derivar tonos del acento. */
 function mezclar(a, b, t){
   const n = h => [1,3,5].map(i => parseInt(h.slice(i, i + 2), 16));
   const [r1,g1,b1] = n(a), [r2,g2,b2] = n(b);
@@ -221,9 +269,7 @@ async function iniciar(){
 
     // Al volver del enlace de recuperación hay sesión, pero lo que toca
     // es cambiar la contraseña, no entrar directo
-    if(location.hash.includes('recuperar') || location.hash.includes('type=recovery')){
-      quitarSplash(); mostrarNuevaPassword(); return;
-    }
+    if(vieneDeRecuperacion){ quitarSplash(); mostrarNuevaPassword(); return; }
     if(!sesion){ quitarSplash(); mostrarLogin(); return; }
 
     // cargarNube devuelve false si faltan tablas: ya pintó su propia pantalla
