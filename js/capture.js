@@ -145,7 +145,9 @@ async function commitCap(){
       break;
     case 'novedad':
       await db.insert('novedades', { fecha:hoyISO(), titulo:p.texto, detalle:'',
-        cliente_id:cid, criticidad:p.prioridad, estado:'abierta', accion:'' });
+        cliente_id:cid, criticidad:p.prioridad, estado:'abierta', accion:'',
+        tipo:'', persona_id:null, beneficiario_id:null, reportado_por:'',
+        cerrada_el:null, solucion:'', seguimiento:[], evidencias:[] });
       break;
     case 'enlace':
       await db.insert('dashboards', { nombre:p.texto || p.url, url:p.url || '#', cliente_id:cid });

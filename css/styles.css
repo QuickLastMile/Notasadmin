@@ -810,6 +810,34 @@ tbody tr:hover{background:var(--surface-2)}
 }
 
 /* ============================================================
+   13c-ter. GRÁFICO DE BARRAS — novedades por mes
+   Sin librerías: son seis barras, no hace falta traer 100 KB.
+   ============================================================ */
+.barras{display:flex;align-items:flex-end;gap:10px;height:170px;padding-top:6px}
+.barra-col{flex:1;display:flex;flex-direction:column;align-items:center;
+  height:100%;min-width:0}
+.barra-valor{font-size:12.5px;font-weight:700;height:18px;
+  font-variant-numeric:tabular-nums;color:var(--text-2)}
+.barra-pila{flex:1;width:100%;display:flex;align-items:flex-end;
+  justify-content:center;min-height:0}
+.barra-cuerpo{
+  width:100%;max-width:52px;min-height:3px;border-radius:7px 7px 0 0;
+  background:var(--brand);position:relative;display:flex;
+  flex-direction:column;justify-content:flex-end;transition:height .4s ease
+}
+/* La porción crítica va en el pie de la barra: se compara de un vistazo */
+.barra-critica{width:100%;background:var(--danger);border-radius:0 0 7px 7px}
+.barra-cuerpo:has(.barra-critica[style*="height:100%"]){border-radius:7px}
+.barra-mes{font-size:11px;color:var(--text-3);margin-top:7px;font-weight:600;
+  text-transform:capitalize}
+.barra-mes.actual{color:var(--brand);font-weight:750}
+
+.barras-leyenda{display:flex;gap:16px;justify-content:center;margin-top:14px;
+  font-size:11.5px;color:var(--text-2)}
+.barras-leyenda span{display:flex;align-items:center;gap:6px}
+.barras-leyenda i{width:11px;height:11px;border-radius:3px;display:inline-block}
+
+/* ============================================================
    13d. CALENDARIO
    ============================================================ */
 .cal-barra{display:flex;align-items:center;justify-content:space-between;

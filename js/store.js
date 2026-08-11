@@ -111,6 +111,57 @@ function presupuestoVs(periodoId){
   }).sort((a, b) => b.pct - a.pct);
 }
 
+/* ---- Novedades: cuántas salen y cuánto tardan en cerrarse ----------------
+   Lo que se quiere responder: "¿cuántas novedades salieron este mes?" y
+   "¿estamos mejorando o empeorando?".
+   -------------------------------------------------------------------------- */
+function estadisticasNovedades(meses = 6){
+  const hoy = new Date();
+
+  // Los últimos N meses, del más viejo al más nuevo
+  const periodos = [];
+  for(let i = meses - 1; i >= 0; i--){
+    const d = new Date(hoy.getFullYear(), hoy.getMonth() - i, 1);
+    const ym = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const delMes = S.novedades.filter(n => (n.fecha || '').startsWith(ym));
+    periodos.push({
+      ym,
+      etiqueta: d.toLocaleDateString('es-CO', { month:'short' }).replace('.', ''),
+      nombre: nombreMes(d),
+      total: delMes.length,
+      criticas: delMes.filter(n => n.criticidad === 'alta').length,
+      cerradas: delMes.filter(n => n.estado === 'cerrada').length,
+      novedades: delMes
+    });
+  }
+
+  const esteMes = periodos.at(-1);
+  const mesPasado = periodos.at(-2);
+
+  // Solo las cerradas tienen tiempo real de resolución
+  const cerradas = S.novedades.filter(n => n.estado === 'cerrada' && n.cerrada_el);
+  const promedioDias = cerradas.length
+    ? Math.round(suma(cerradas, n => diasResolucion(n)) / cerradas.length * 10) / 10
+    : null;
+
+  const agrupar = (campo) => {
+    const m = {};
+    S.novedades.forEach(n => { const k = n[campo] || 'sin'; m[k] = (m[k] || 0) + 1; });
+    return Object.entries(m).sort((a, b) => b[1] - a[1]);
+  };
+
+  return {
+    periodos, esteMes, mesPasado,
+    variacion: mesPasado && mesPasado.total
+      ? Math.round((esteMes.total - mesPasado.total) / mesPasado.total * 100)
+      : null,
+    maximo: Math.max(1, ...periodos.map(p => p.total)),
+    promedioDias, cerradas,
+    porTipo: agrupar('tipo'),
+    porCliente: agrupar('cliente_id')
+  };
+}
+
 /* ---- Métricas globales: la fuente única de todas las alertas -------------- */
 function metricas(){
   const pendientes = S.tareas.filter(t => t.estado !== 'hecho' && t.estado !== 'cancelada');
@@ -133,8 +184,10 @@ function metricas(){
   const eventosHoy   = S.eventos.filter(ev => eventoEnFecha(ev, hoyISO()));
   const eventosAviso = eventosEnAviso();
 
-  const novAbiertas = S.novedades.filter(n => n.estado === 'abierta');
+  // "Sin cerrar" incluye las que están en gestión: siguen pendientes
+  const novAbiertas = S.novedades.filter(n => n.estado !== 'cerrada');
   const novCriticas = novAbiertas.filter(n => n.criticidad === 'alta');
+  const novEstancadas = novAbiertas.filter(n => diasResolucion(n) > 7);
 
   const proyActivos = S.proyectos.filter(p => p.estado !== 'hecho');
   const proyRiesgo  = proyActivos.filter(p =>
@@ -144,5 +197,5 @@ function metricas(){
            enEspera, esperaAtrasada, altaPendiente,
            eventosHoy, eventosAviso,
            periodo: pa, arqueo: a, presupuestosExcedidos,
-           novAbiertas, novCriticas, proyActivos, proyRiesgo };
+           novAbiertas, novCriticas, novEstancadas, proyActivos, proyRiesgo };
 }

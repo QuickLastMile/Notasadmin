@@ -202,11 +202,58 @@ function seed(){
        proyecto_id:'p5', prioridad:'baja',  estado:'hecho', vence:t(-3), completada_el:t(-3)})
   ];
 
+  const N = (o) => Object.assign(
+    { tipo:'', persona_id:null, beneficiario_id:null, reportado_por:'',
+      cerrada_el:null, solucion:'', seguimiento:[], evidencias:[] }, o);
+
   const novedades = [
-    {id:'n1', fecha:t(0),  titulo:'Sheet de ausencias no actualiza', detalle:'Los coordinadores reportan datos viejos en la app de consulta.', cliente_id:'c1', criticidad:'alta',  estado:'abierta', accion:'Revisar permisos del gid publicado'},
-    {id:'n2', fecha:t(0),  titulo:'Moto 3 sin preoperacional',      detalle:'El mensajero no registró el HSQ de hoy.',                        cliente_id:'c1', criticidad:'media', estado:'abierta', accion:'Llamar al coordinador de zona'},
-    {id:'n3', fecha:t(-1), titulo:'Retraso en entrega de informe',  detalle:'Diebold pidió el informe para hoy y falta la pestaña de SLA.',   cliente_id:'c2', criticidad:'alta',  estado:'abierta', accion:'Priorizar hoy en la mañana'},
-    {id:'n4', fecha:t(-2), titulo:'Factura sin soporte físico',     detalle:'Gasto de refrigerio quedó sin recibo.',                          cliente_id:'c2', criticidad:'baja',  estado:'cerrada', accion:'Se reconstruyó con voucher'}
+    N({id:'n1', fecha:t(0), titulo:'Sheet de ausencias no actualiza',
+       detalle:'Los coordinadores reportan datos viejos en la app de consulta.',
+       cliente_id:'c1', tipo:'Sistemas', criticidad:'alta', estado:'abierta',
+       reportado_por:'Carlos Pérez', persona_id:'co1',
+       accion:'Revisar permisos del gid publicado'}),
+
+    N({id:'n2', fecha:t(0), titulo:'Moto 3 sin preoperacional',
+       detalle:'El mensajero no registró el HSQ de hoy antes de salir.',
+       cliente_id:'c1', tipo:'Operativa', criticidad:'media', estado:'en_gestion',
+       beneficiario_id:'b1', reportado_por:'Yo misma',
+       accion:'Llamar al coordinador de zona',
+       seguimiento:[{fecha:t(0), texto:'Llamé a Jhon, dice que se le pasó. Lo va a registrar ahora'}]}),
+
+    N({id:'n3', fecha:t(-9), titulo:'Retraso en entrega de informe',
+       detalle:'Diebold pidió el informe y faltaba la pestaña de SLA.',
+       cliente_id:'c2', tipo:'Cliente', criticidad:'alta', estado:'abierta',
+       persona_id:'co2', reportado_por:'Diana Rojas',
+       accion:'Priorizar hoy en la mañana',
+       seguimiento:[{fecha:t(-8), texto:'Diana escribió pidiendo el informe'},
+                    {fecha:t(-5), texto:'Se armó la pestaña, falta validar los datos'}]}),
+
+    N({id:'n4', fecha:t(-16), titulo:'Factura sin soporte físico',
+       detalle:'Gasto de refrigerio quedó sin recibo.',
+       cliente_id:'c2', tipo:'Documentación', criticidad:'baja', estado:'cerrada',
+       accion:'Buscar el voucher del datáfono', cerrada_el:t(-14),
+       solucion:'Se reconstruyó con el voucher del datáfono y contabilidad lo aceptó'}),
+
+    N({id:'n5', fecha:t(-22), titulo:'Entrega rechazada en la sede norte',
+       detalle:'El cliente no recibió porque el pedido llegó incompleto.',
+       cliente_id:'c1', tipo:'Entregas', criticidad:'alta', estado:'cerrada',
+       beneficiario_id:'b2', reportado_por:'Coordinador de zona',
+       accion:'Reprogramar la entrega y avisar al cliente', cerrada_el:t(-20),
+       solucion:'Se reprogramó para el día siguiente con el pedido completo. El cliente aceptó.',
+       seguimiento:[{fecha:t(-21), texto:'Se confirmó con bodega que faltaban dos cajas'}]}),
+
+    N({id:'n6', fecha:t(-38), titulo:'Daño mecánico moto 5',
+       detalle:'Se varó en plena ruta, tocó reasignar los envíos.',
+       cliente_id:'c1', tipo:'Operativa', criticidad:'alta', estado:'cerrada',
+       beneficiario_id:'b3', accion:'Llevar al taller y cubrir la ruta',
+       cerrada_el:t(-35),
+       solucion:'Se reparó en taller. Los envíos los cubrió Leidy sin retrasos.'}),
+
+    N({id:'n7', fecha:t(-45), titulo:'Cobro duplicado del parqueadero',
+       detalle:'Nos facturaron dos veces el mismo mes.',
+       cliente_id:'c1', tipo:'Administrativo', criticidad:'media', estado:'cerrada',
+       beneficiario_id:'b4', accion:'Reclamar al proveedor', cerrada_el:t(-40),
+       solucion:'El parqueadero emitió nota crédito por el duplicado.'})
   ];
 
   const dashboards = [

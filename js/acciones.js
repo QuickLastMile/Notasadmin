@@ -280,49 +280,119 @@ Esta acción no se puede deshacer.`,
 
 /* ---- Caja menor: está en js/acciones-caja.js ------------------------------ */
 
-/* ---- Novedades ----------------------------------------------------------- */
-async function cerrarNovedad(id){
-  await db.update('novedades', id, { estado:'cerrada' });
-  render(); toast('Novedad cerrada');
+/* ---- Novedades: la ficha y el cierre están en js/ficha-novedad.js ------- */
+
+function modalNovedad(id = null){
+  const n = id ? S.novedades.find(x => x.id === id) : null;
+
+  openModal(formModal(id ? 'Editar novedad' : 'Registrar novedad', `
+    <div><label>¿Qué pasó?</label>
+      <input id="nT" placeholder="Ej. La moto 3 no salió a ruta"
+             value="${esc(n?.titulo || '')}"></div>
+
+    <div><label>Detalle</label>
+      <textarea id="nD" placeholder="Contexto: desde cuándo, a qué hora, qué se vio">${esc(n?.detalle || '')}</textarea></div>
+
+    <div class="f2">
+      <div><label>Fecha en que ocurrió</label>
+        <input type="date" id="nF" value="${n?.fecha || hoyISO()}"></div>
+      <div><label>Criticidad</label><select id="nK">
+        ${['alta','media','baja'].map(x =>
+          `<option value="${x}" ${(n?.criticidad || 'media') === x ? 'selected' : ''}>${PRI[x].l}</option>`).join('')}
+      </select></div>
+    </div>
+
+    <div class="f2">
+      <div><label>Tipo</label><select id="nTipo">
+        <option value="">— Sin tipo —</option>
+        ${lista('categoria_novedad').map(x =>
+          `<option ${(n?.tipo || '') === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}
+      </select></div>
+      <div><label>Estado</label><select id="nE">
+        ${Object.entries(ESTADOS_NOVEDAD).map(([k, v]) =>
+          `<option value="${k}" ${(n?.estado || 'abierta') === k ? 'selected' : ''}>${v.ico} ${v.l}</option>`).join('')}
+      </select></div>
+    </div>
+
+    <div><label>Cliente (opcional)</label>
+      <select id="nC">${optsCli(n?.cliente_id)}</select></div>
+
+    <div class="f2">
+      <div><label>Persona del cliente</label>
+        <select id="nPersona"><option value="">— Ninguna —</option>
+          ${S.colaboradores.filter(c => c.activo !== false).map(c =>
+            `<option value="${c.id}" ${n?.persona_id === c.id ? 'selected' : ''}>${esc(c.nombre)}</option>`).join('')}
+        </select></div>
+      <div><label>Mensajero involucrado</label>
+        <select id="nBen"><option value="">— Ninguno —</option>
+          ${S.beneficiarios.filter(b => b.activo).map(b =>
+            `<option value="${b.id}" ${n?.beneficiario_id === b.id ? 'selected' : ''}>${esc(b.nombre)}</option>`).join('')}
+        </select></div>
+    </div>
+
+    <div><label>¿Quién la reportó?</label>
+      <input id="nRep" placeholder="Ej. El coordinador de zona, o yo misma"
+             value="${esc(n?.reportado_por || '')}"></div>
+
+    <div><label>Acción a tomar</label>
+      <input id="nA" placeholder="Ej. Revisar permisos del Sheet" value="${esc(n?.accion || '')}"></div>`,
+    `guardarNovedad(${id ? `'${id}'` : 'null'})`, id ? 'Guardar cambios' : 'Registrar'));
+}
+
+async function guardarNovedad(id = null){
+  const titulo = $('#nT').value.trim();
+  if(!titulo){ toast('Describe la novedad'); return; }
+
+  const estado = $('#nE').value;
+  const fila = {
+    titulo,
+    fecha:      $('#nF').value,
+    detalle:    $('#nD').value.trim(),
+    tipo:       $('#nTipo').value || '',
+    criticidad: $('#nK').value,
+    estado,
+    cliente_id: $('#nC').value || null,
+    persona_id: $('#nPersona').value || null,
+    beneficiario_id: $('#nBen').value || null,
+    reportado_por:   $('#nRep').value.trim(),
+    accion:     $('#nA').value.trim()
+  };
+
+  // Al cerrarla desde el formulario se marca la fecha; al reabrirla se limpia
+  if(id){
+    const anterior = S.novedades.find(x => x.id === id);
+    if(estado === 'cerrada' && anterior.estado !== 'cerrada') fila.cerrada_el = hoyISO();
+    if(estado !== 'cerrada') fila.cerrada_el = null;
+  } else {
+    Object.assign(fila, { cerrada_el: estado === 'cerrada' ? hoyISO() : null,
+                          solucion:'', seguimiento:[], evidencias:[] });
+  }
+
+  if(id) await db.update('novedades', id, fila);
+  else    await db.insert('novedades', fila);
+
+  closeModal(); render();
+  toast(id ? 'Novedad actualizada ✓' : 'Novedad registrada ✓');
 }
 
 /** Convierte una novedad en tarea para hoy: que no se quede en anécdota. */
 async function novedadATarea(id){
   const n = S.novedades.find(x => x.id === id);
   await db.insert('tareas', {
-    titulo: n.accion || n.titulo, cliente_id:n.cliente_id, proyecto_id:null,
-    prioridad:n.criticidad, estado:'pendiente', vence:hoyISO()
+    titulo: n.accion || n.titulo,
+    cliente_id: n.cliente_id, proyecto_id: null, persona_id: n.persona_id || null,
+    prioridad: n.criticidad, estado:'pendiente', vence: hoyISO(),
+    tipo:'Seguimiento', hora:'', repite:'',
+    espera_que:'', espera_fecha:null, checklist:[], seguimiento:[], adjuntos:[],
+    notas: `Viene de la novedad: ${n.titulo}`, resultado:'', completada_el:null
   });
-  render(); toast('Convertida en tarea para hoy');
-}
-
-function modalNovedad(){
-  openModal(formModal('Registrar novedad', `
-    <div><label>¿Qué pasó?</label>
-      <input id="nT" placeholder="Ej. El dashboard no carga los datos"></div>
-    <div><label>Detalle</label>
-      <textarea id="nD" placeholder="Contexto, quién reportó, desde cuándo…"></textarea></div>
-    <div class="f2">
-      <div><label>Cliente</label><select id="nC">${optsCli('c1')}</select></div>
-      <div><label>Criticidad</label><select id="nK">
-        <option value="alta">Alta</option>
-        <option value="media" selected>Media</option>
-        <option value="baja">Baja</option></select></div>
-    </div>
-    <div><label>Acción a tomar</label>
-      <input id="nA" placeholder="Ej. Revisar permisos del Sheet"></div>`,
-    'guardarNovedad()', 'Registrar'));
-}
-
-async function guardarNovedad(){
-  const titulo = $('#nT').value.trim();
-  if(!titulo){ toast('Describe la novedad'); return; }
-  await db.insert('novedades', {
-    fecha:hoyISO(), titulo, detalle:$('#nD').value.trim(),
-    cliente_id:$('#nC').value, criticidad:$('#nK').value,
-    estado:'abierta', accion:$('#nA').value.trim()
+  // Registrarlo en el seguimiento de la novedad deja el rastro de qué se hizo
+  await db.update('novedades', id, {
+    estado: n.estado === 'abierta' ? 'en_gestion' : n.estado,
+    seguimiento: [...(n.seguimiento || []),
+                  { fecha: hoyISO(), texto: 'Se creó una tarea para gestionarla' }]
   });
-  closeModal(); render(); toast('Novedad registrada ✓');
+  render(); toast('Convertida en tarea para hoy ✓');
 }
 
 /* ---- Proyectos ----------------------------------------------------------- */
