@@ -16,7 +16,11 @@ const CFG = {
   supabase: {
     url:     'https://jxfyiqisrnexjocqwicx.supabase.co',
     anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imp4ZnlpcWlzcm5leGpvY3F3aWN4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYzNzQ0NjIsImV4cCI6MjEwMTk1MDQ2Mn0.odI73fI-lS1hjiNwA4lF3-EmH2KcfVZukyiXX6jfn38'
-  }
+  },
+
+  // NEXA usa esta Edge Function cuando está desplegada. La clave de OpenAI
+  // vive exclusivamente como secreto de Supabase, nunca en este archivo.
+  nexa: { functionName: 'nexa-chat' }
 };
 
 /* Abrir con ?local=1 fuerza el modo localStorage aunque haya credenciales.

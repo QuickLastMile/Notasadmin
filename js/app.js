@@ -293,6 +293,7 @@ async function iniciar(){
 
   initFecha();
   initAtajos();
+  iniciarNexa();
   aplicarBarra();
   renderPieLateral();
   render();

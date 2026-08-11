@@ -90,6 +90,14 @@
 </div>
 <div class="toast" id="toast"></div>
 
+<!-- NEXA — asistente contextual. El contenido se crea desde js/nexa.js. -->
+<section class="nexa-chat" id="nexaChat" aria-label="Asistente NEXA" aria-hidden="true"></section>
+<button class="nexa-fab" id="nexaFab" type="button" onclick="toggleNexa()"
+        aria-label="Abrir asistente NEXA" title="Hablar con NEXA">
+  <img src="assets/nexa-bot/06_icono_chat.png" alt="">
+  <span class="nexa-fab-dot" aria-hidden="true"></span>
+</button>
+
 <!-- ══════════════════════════════════════════════════════════
      Todos los scripts van con `defer`: se descargan en paralelo
      y se ejecutan en orden al terminar de leer el HTML. Sin esto,
@@ -121,6 +129,7 @@
 <script defer src="js/ficha-proyecto.js?v=36"></script>
 <script defer src="js/google-workspace.js?v=38"></script>
 <script defer src="js/notificaciones.js?v=35"></script>
+<script defer src="js/nexa.js?v=1"></script>
 
 <script defer src="js/views/inicio.js?v=26"></script>
 <script defer src="js/views/tareas.js?v=26"></script>
