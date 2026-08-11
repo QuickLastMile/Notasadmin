@@ -82,7 +82,10 @@ function vCaja(){
 
   const acciones = `
     ${selectorPeriodo}
-    <button class="btn" onclick="modalReembolso('${pid}')">💰 Reembolso</button>
+    <button class="btn" onclick="modalBot('${pid}')"
+            title="Abrir el bot de WhatsApp y ver qué falta pasar">
+      💬 Bot${a.sinLegalizar.length ? ` <span class="chip d" style="padding:0 6px">${a.sinLegalizar.length}</span>` : ''}</button>
+    <button class="btn" onclick="modalReembolso('${pid}')">💰 Consignación</button>
     <button class="btn" onclick="modalCaja('ingreso')">+ Ingreso</button>
     <button class="btn pri" onclick="modalCaja('gasto')">+ Pago / gasto</button>`;
 

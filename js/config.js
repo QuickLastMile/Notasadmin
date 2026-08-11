@@ -27,6 +27,33 @@ if(location.search.includes('local=1')){
   CFG.storageKey += '_demo';
 }
 
+/* ---- Integraciones -------------------------------------------------------
+   El bot de WhatsApp al que se le pasan las facturas para legalizar.
+   Se guarda por dispositivo para poder cambiarlo sin tocar código.
+   -------------------------------------------------------------------------- */
+const BOT_POR_DEFECTO = '573102064803';   // +57 310 206 4803
+
+const botWhatsapp = () => localStorage.getItem('hub_bot_wa') || BOT_POR_DEFECTO;
+
+/** Deja solo dígitos y antepone el indicativo de Colombia si falta. */
+function normalizarWhatsapp(numero){
+  const d = String(numero || '').replace(/\D/g, '');
+  if(!d) return '';
+  if(d.startsWith('57')) return d;
+  if(d.length === 10)    return '57' + d;    // celular colombiano suelto
+  return d;
+}
+
+/** "+57 310 206 4803" — legible, para mostrar. */
+function whatsappLegible(numero){
+  const d = normalizarWhatsapp(numero);
+  if(d.length !== 12) return '+' + d;
+  return `+${d.slice(0,2)} ${d.slice(2,5)} ${d.slice(5,8)} ${d.slice(8)}`;
+}
+
+const enlaceBot = (texto = '') =>
+  `https://wa.me/${botWhatsapp()}${texto ? '?text=' + encodeURIComponent(texto) : ''}`;
+
 /* Etiquetas compartidas ---------------------------------------------------- */
 const PRI = {
   alta:  { l:'Alta',  c:'d' },

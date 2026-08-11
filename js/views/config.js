@@ -114,7 +114,6 @@ function cfgPendiente(item){
   const explica = {
     campos:'Definir campos propios (texto, número, lista…) para agregarlos a proyectos, clientes o movimientos de caja sin tocar código.',
     notif:'Elegir de qué te avisa la app y por dónde: pagos por legalizar, topes de presupuesto, tareas vencidas.',
-    integraciones:'Conectar Google Sheets, WhatsApp o tus dashboards, para que los datos entren y salgan solos.',
     automatiz:'Reglas del tipo "si un pago lleva 5 días sin factura, créame una tarea". Automatizar lo que hoy persigues a mano.',
     actividad:'Historial de quién cambió qué y cuándo. Requiere registrar cada movimiento en la base de datos.'
   }[it.id] || '';
@@ -392,6 +391,48 @@ apariencia(){
     </div>`;
 },
 
+/* ---- Integraciones ------------------------------------------------------- */
+integraciones(){
+  const num = botWhatsapp();
+  return `
+    ${cfgHead('Integraciones', 'Servicios externos conectados a la aplicación.')}
+
+    <div class="cfg-lista">
+      <div class="cfg-fila">
+        <span class="bot-avatar" style="width:38px;height:38px;font-size:18px;border-radius:11px">💬</span>
+        <div class="cfg-fila-txt">
+          <strong>Bot de legalización · WhatsApp</strong>
+          <small>Al que le pasas las facturas para que las apruebe.
+            Desde Caja menor se abre el chat con un clic.</small>
+        </div>
+        <span class="chip o">Conectado</span>
+      </div>
+
+      <div class="cfg-fila">
+        <div class="cfg-fila-txt">
+          <strong>Número del bot</strong>
+          <small>${esc(whatsappLegible(num))}
+            ${num === BOT_POR_DEFECTO ? '' : ' · personalizado'}</small>
+        </div>
+        <button class="btn" onclick="modalBotNumero()">Cambiar</button>
+      </div>
+    </div>
+
+    <div class="cfg-nota">
+      <p>El enlace usa <code>wa.me</code>, el formato oficial de WhatsApp:
+      en el celular abre la aplicación y en el computador abre WhatsApp Web.
+      <strong>No envía nada solo</strong> — solo abre la conversación.</p>
+      <p>El número se guarda en este dispositivo, no en tu cuenta.</p>
+    </div>
+
+    <div class="cfg-tit-sec">Otras integraciones</div>
+    <div class="cfg-pendiente">
+      <span class="chip w">En construcción</span>
+      <p>Conectar Google Sheets y tus dashboards, para que los datos entren
+        y salgan solos sin copiar y pegar.</p>
+    </div>`;
+},
+
 /* ---- Preferencias -------------------------------------------------------- */
 prefs(){
   const fila = (titulo, sub, control) => `
@@ -563,6 +604,35 @@ function contarUso(tipo, valor){
     categoria:        () => S.preguntas.filter(x => x.categoria === valor)
   }[tipo];
   return donde ? donde().length : 0;
+}
+
+/* ---- Número del bot ------------------------------------------------------ */
+function modalBotNumero(){
+  openModal(formModal('Número del bot', `
+    <div><label>WhatsApp del bot</label>
+      <input id="botNum" inputmode="tel" placeholder="3102064803"
+             value="${esc(botWhatsapp())}"></div>
+    <p style="font-size:11.5px;color:var(--text-2)">
+      Puedes escribirlo con o sin el 57: si pones un celular colombiano de
+      10 dígitos, el indicativo se agrega solo.</p>
+    <div id="botPrev" style="font-size:13px;color:var(--text-2)"></div>`,
+    'guardarBotNumero()', 'Guardar'));
+
+  const prev = () => {
+    const d = normalizarWhatsapp($('#botNum').value);
+    $('#botPrev').innerHTML = d
+      ? `Quedará como <strong>${esc(whatsappLegible(d))}</strong>`
+      : '<span style="color:var(--danger)">Escribe un número</span>';
+  };
+  $('#botNum').addEventListener('input', prev);
+  prev();
+}
+
+async function guardarBotNumero(){
+  const d = normalizarWhatsapp($('#botNum').value);
+  if(d.length < 10){ toast('El número no parece válido'); return; }
+  localStorage.setItem('hub_bot_wa', d);
+  closeModal(); render(); toast('Número actualizado ✓');
 }
 
 /* ---- Contraseña ----------------------------------------------------------

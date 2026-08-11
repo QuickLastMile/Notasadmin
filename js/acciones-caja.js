@@ -479,6 +479,98 @@ async function aplicarReembolso(periodoId){
     : `${nOk} gasto${nOk > 1 ? 's' : ''} consignado${nOk > 1 ? 's' : ''} · ${cop(totalOk)} ✓`);
 }
 
+/* ---- El bot de WhatsApp --------------------------------------------------
+   Abre la conversación con el bot al que se le pasan las facturas, y de paso
+   muestra qué falta por pasar, para no tener que ir a buscarlo a la tabla.
+   -------------------------------------------------------------------------- */
+function modalBot(periodoId){
+  const a = arqueo(periodoId);
+  const porPasar = a.sinLegalizar.sort((x, y) => x.fecha < y.fecha ? -1 : 1);
+  const total = suma(porPasar, g => g.monto);
+  const sinSoporte = porPasar.filter(g => !g.tiene_comprobante || !g.tiene_factura);
+
+  const filas = porPasar.map(g => {
+    const b = ben(g.beneficiario_id);
+    const falta = !g.tiene_comprobante || !g.tiene_factura;
+    return `
+    <div class="reem-fila" style="cursor:pointer" onclick="closeModal();verPago('${g.id}')">
+      <span class="reem-txt">
+        <strong>${esc(g.concepto)}</strong>
+        <small>${fechaCorta(g.fecha)} · ${esc(g.categoria)}${b ? ' · ' + esc(b.nombre) : ''}</small>
+      </span>
+      ${falta ? '<span class="chip d">Sin soporte</span>' : '<span class="chip o">📎 Listo</span>'}
+      <span class="reem-monto">${cop(g.monto)}</span>
+    </div>`;
+  }).join('');
+
+  openModal(`
+    <div class="modal-h">
+      <h3>Bot de legalización</h3>
+      <button class="btn sm" onclick="closeModal()">✕</button>
+    </div>
+
+    <div class="modal-b">
+      <div class="bot-cab">
+        <div class="bot-avatar">💬</div>
+        <div>
+          <strong>WhatsApp</strong>
+          <small>${esc(whatsappLegible(botWhatsapp()))}</small>
+        </div>
+        <a class="btn pri" href="${enlaceBot()}" target="_blank" rel="noopener"
+           onclick="closeModal()">Abrir chat ↗</a>
+      </div>
+
+      ${porPasar.length ? `
+        <div class="reem-resumen" style="margin-bottom:4px">
+          <div><span>Por pasar</span><strong>${cop(total)}</strong></div>
+          <div><span>Facturas</span><strong>${porPasar.length}</strong></div>
+        </div>
+
+        ${sinSoporte.length ? `
+          <div class="alert w">
+            <span>⚠️</span>
+            <div class="a-txt"><b>${sinSoporte.length} sin soporte completo</b>
+              <small>Al bot le va a faltar la foto. Complétalas antes de pasarlas
+                o te las va a rechazar.</small></div>
+          </div>` : ''}
+
+        <div class="cfg-tit-sec" style="margin-top:6px">Falta pasar</div>
+        <div class="reem-lista">${filas}</div>
+
+        <button class="btn" style="width:100%;margin-top:4px"
+                onclick="copiarResumenBot('${periodoId}')">
+          📋 Copiar el resumen para pegarlo</button>
+      ` : `
+        <div class="alert o">
+          <span>✅</span>
+          <div class="a-txt"><b>No hay nada por pasar</b>
+            <small>Todos los gastos del período ya están legalizados.</small></div>
+        </div>`}
+    </div>`);
+}
+
+/** Copia la lista al portapapeles: sirve para pegarla en el chat o revisarla. */
+async function copiarResumenBot(periodoId){
+  const a = arqueo(periodoId);
+  const p = per(periodoId);
+  const lineas = a.sinLegalizar
+    .sort((x, y) => x.fecha < y.fecha ? -1 : 1)
+    .map(g => `${fechaCorta(g.fecha)} · ${g.concepto} · ${cop(g.monto)}`);
+
+  const texto = [
+    `Legalización ${p?.nombre || ''}`.trim(),
+    ...lineas,
+    `TOTAL: ${cop(suma(a.sinLegalizar, g => g.monto))} en ${a.sinLegalizar.length} facturas`
+  ].join('\n');
+
+  try{
+    await navigator.clipboard.writeText(texto);
+    toast('Resumen copiado ✓');
+  }catch{
+    toast('No se pudo copiar — revisa los permisos del navegador');
+  }
+}
+
 /* ---- Pérdidas ------------------------------------------------------------
    Un gasto que ya sabes que no te van a devolver. Dejarlo como "pendiente"
    solo infla lo que crees que te deben; marcándolo sabes cuánto perdiste.
