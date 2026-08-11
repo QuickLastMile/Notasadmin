@@ -3,7 +3,8 @@
    ========================================================================== */
 
 /* ---- Modal --------------------------------------------------------------- */
-function openModal(html){
+function openModal(html, clase = ''){
+  $('#modal').className = `modal${clase ? ' ' + clase : ''}`;
   $('#modal').innerHTML = html;
   $('#mask').classList.add('on');
   setTimeout(() => $('#modal').querySelector('input,select,textarea')?.focus(), 50);

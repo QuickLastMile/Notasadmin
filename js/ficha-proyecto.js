@@ -83,7 +83,7 @@ function verProyecto(id){
         ${p.estado !== 'hecho' ? `<button class="btn pri" onclick="entregarProyecto('${p.id}')">Marcar entregado</button>` : `<button class="btn" onclick="reabrirProyecto('${p.id}')">Reabrir</button>`}
         <button class="btn" onclick="closeModal()">Cerrar</button>
       </div>
-    </div>`);
+    </div>`, 'modal-proyecto');
 }
 
 async function anotarSeguimientoProyecto(id){

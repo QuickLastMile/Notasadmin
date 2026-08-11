@@ -378,6 +378,11 @@ tbody tr:hover{background:var(--surface-2)}
 .mask.on{display:flex}
 .modal{background:var(--surface);border-radius:20px;width:100%;max-width:480px;
   box-shadow:var(--shadow-lg);border:1px solid var(--border)}
+.modal.modal-proyecto{width:min(960px,calc(100vw - 36px));max-width:960px}
+.modal-proyecto .modal-h{padding:20px 26px}
+.modal-proyecto .modal-b{padding:22px 26px}
+.modal-proyecto .modal-f{padding:16px 26px}
+.modal-proyecto .tf-notas{font-size:14px;line-height:1.65;white-space:pre-line}
 .modal-h{padding:17px 20px;border-bottom:1px solid var(--border);
   display:flex;justify-content:space-between;align-items:center}
 .modal-h h3{font-size:16px;letter-spacing:-.2px}
@@ -963,6 +968,8 @@ tbody tr:hover{background:var(--surface-2)}
   .tabla-solo{display:none}   /* en celular no hay tabla que ajustar */
 
   .modal{max-width:100%;border-radius:22px}
+  .modal.modal-proyecto{width:100%;max-width:100%}
+  .modal-proyecto .modal-h,.modal-proyecto .modal-b,.modal-proyecto .modal-f{padding-left:18px;padding-right:18px}
   .mask{padding:20px 14px 40px;align-items:flex-end}
   .f2{grid-template-columns:1fr}
 
