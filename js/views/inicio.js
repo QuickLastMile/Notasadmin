@@ -34,6 +34,12 @@ function alertasDelDia(m){
       titulo:`Caja menor al ${Math.round(q.pctUsado * 100)}%`,
       sub:`Quedan ${cop(q.saldo)} de la base — considera pedir reembolso`, ir:'caja' });
 
+  if(q.montoPerdido > 0)
+    a.push({ tono:'d', ico:'📉',
+      titulo:`${cop(q.montoPerdido)} en pérdidas este período`,
+      sub:`${q.perdidas.length} gasto${q.perdidas.length > 1 ? 's' : ''} que ya no vas a recuperar · ${Math.round(q.pctPerdido * 100)}% de lo gastado`,
+      ir:'caja' });
+
   if(m.presupuestosExcedidos.length)
     a.push({ tono:'d', ico:'🎯',
       titulo:`${m.presupuestosExcedidos.length} categoría${m.presupuestosExcedidos.length > 1 ? 's' : ''} sobre el tope`,

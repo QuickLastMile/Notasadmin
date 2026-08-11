@@ -172,6 +172,9 @@ async function guardarCaja(tipo, id = null){
     tiene_factura:     esGasto ? (!!factura_url || !!$('#gFac').value.trim()) : true,
     estado:            esGasto ? $('#gEst').value : 'finalizado',
     reembolsado:       esGasto ? (+$('#gReem').value || 0) : 0,
+    // La pérdida se marca desde su propio diálogo, no aquí: al editar se conserva
+    perdida:        id ? (S.caja.find(x => x.id === id)?.perdida || false) : false,
+    motivo_perdida: id ? (S.caja.find(x => x.id === id)?.motivo_perdida || '') : '',
     legalizado,
     legalizado_el: legalizado ? (id ? (S.caja.find(x => x.id === id)?.legalizado_el || hoyISO()) : hoyISO()) : null
   };
@@ -227,12 +230,16 @@ function verPago(id){
         <div class="ficha-monto-val" style="color:${esIngreso ? 'var(--ok)' : 'var(--text)'}">
           ${esIngreso ? '+' : '−'}${cop(g.monto)}</div>
         <div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-top:9px">
-          <span class="chip ${est.c}">${est.ico} ${est.l}</span>
+          ${g.perdida
+            ? `<span class="chip d">📉 Pérdida de ${cop(pend)}</span>`
+            : `<span class="chip ${est.c}">${est.ico} ${est.l}</span>`}
           <span class="chip ${g.legalizado ? 'o' : 'n'}">
             ${g.legalizado ? '✓ Legalizado' : '○ Sin pasar a automatización'}</span>
-          ${!esIngreso ? `<span class="chip ${pend > 0 ? 'w' : 'o'}">
+          ${!esIngreso && !g.perdida ? `<span class="chip ${pend > 0 ? 'w' : 'o'}">
             ${pend > 0 ? `Falta cobrar ${cop(pend)}` : '✓ Reembolsado'}</span>` : ''}
         </div>
+        ${g.perdida && g.motivo_perdida
+          ? `<p style="font-size:12px;color:var(--danger);margin-top:9px">${esc(g.motivo_perdida)}</p>` : ''}
       </div>
 
       <div class="ficha">
@@ -276,6 +283,9 @@ function verPago(id){
 
     <div class="modal-f">
       <button class="btn dgr" onclick="closeModal();borrar('caja','${g.id}')">Eliminar</button>
+      ${esIngreso ? '' : `
+        <button class="btn" onclick="closeModal();modalPerdida('${g.id}')">
+          ${g.perdida ? '↺ Ya no es pérdida' : '📉 Marcar pérdida'}</button>`}
       <button class="btn pri" onclick="closeModal();modalCaja('${g.tipo}','${g.id}')">✎ Editar</button>
     </div>`);
 }
@@ -301,60 +311,174 @@ async function toggleLeg(id){
  * Reparte un reembolso recibido entre los gastos legalizados más antiguos
  * que aún tengan saldo por cobrar. Así no toca ir uno por uno.
  */
+/**
+ * Reembolso por selección: marcas cuáles gastos te devolvieron y cada uno
+ * queda saldado por completo. Es lo que pasa de verdad — te consignan por
+ * un lote de gastos concretos, no un monto suelto que haya que repartir.
+ */
 function modalReembolso(periodoId){
   const a = arqueo(periodoId);
+
+  if(!a.porCobrar.length){
+    openModal(formModal('Registrar reembolso', `
+      <div class="alert ${a.trabado > 0 ? 'w' : 'o'}">
+        <span>${a.trabado > 0 ? '🔒' : '✅'}</span>
+        <div class="a-txt">
+          <b>${a.trabado > 0 ? 'No hay nada cobrable todavía' : 'Todo al día'}</b>
+          <small>${a.trabado > 0
+            ? `Tienes ${cop(a.trabado)} en gastos sin legalizar. Legalízalos primero y aparecerán aquí.`
+            : 'No hay gastos pendientes de reembolso en este período.'}</small>
+        </div>
+      </div>`, 'closeModal()', 'Entendido'));
+    return;
+  }
+
+  const filas = a.porCobrar
+    .sort((x, y) => x.fecha < y.fecha ? -1 : 1)
+    .map(g => {
+      const falta = g.monto - (g.reembolsado || 0);
+      const b = ben(g.beneficiario_id);
+      return `
+      <label class="reem-fila">
+        <input type="checkbox" value="${g.id}" data-monto="${falta}"
+               onchange="sumarSeleccion()">
+        <span class="reem-txt">
+          <strong>${esc(g.concepto)}</strong>
+          <small>${fechaCorta(g.fecha)} · ${esc(g.categoria)}${b ? ' · ' + esc(b.nombre) : ''}</small>
+        </span>
+        <span class="reem-monto">${cop(falta)}</span>
+      </label>`;
+    }).join('');
+
   openModal(formModal('Registrar reembolso recibido', `
-    <div class="alert o" style="margin-bottom:2px">
-      <span>💰</span>
-      <div class="a-txt">
-        <b>Por cobrar: ${cop(a.cobrable)}</b>
-        <small>Es lo legalizado que aún no te devuelven.
-        ${a.trabado > 0 ? `Otros ${cop(a.trabado)} están trabados por falta de legalización.` : ''}</small>
-      </div>
+    <p style="font-size:13px;color:var(--text-2)">
+      Marca los gastos que te devolvieron. Cada uno marcado queda saldado
+      y pasa a "reembolsado".
+    </p>
+
+    <div class="reem-acciones">
+      <button type="button" class="btn sm" onclick="marcarTodosReembolso(true)">Marcar todos</button>
+      <button type="button" class="btn sm" onclick="marcarTodosReembolso(false)">Ninguno</button>
+      <span style="margin-left:auto;font-size:12px;color:var(--text-3)">
+        ${a.porCobrar.length} por cobrar · ${cop(a.cobrable)}</span>
     </div>
+
+    <div class="reem-lista" id="reemLista">${filas}</div>
+
+    <div class="reem-total">
+      <span>Seleccionado</span>
+      <strong id="reemTotal">$ 0</strong>
+    </div>
+
     <div class="f2">
-      <div><label>Monto recibido</label>
-        <input id="rM" type="number" value="${Math.round(a.cobrable)}"></div>
-      <div><label>Fecha</label><input type="date" id="rF" value="${hoyISO()}"></div>
-    </div>
-    <div><label>Observación</label>
-      <input id="rO" placeholder="Ej. Transferencia de nómina del 15"></div>
-    <p style="font-size:11.5px;color:var(--text-2)">
-      Se aplicará a los gastos legalizados más antiguos que sigan pendientes.</p>`,
-    `aplicarReembolso('${periodoId}')`, 'Aplicar'));
+      <div><label>Fecha del reembolso</label>
+        <input type="date" id="rF" value="${hoyISO()}"></div>
+      <div><label>Observación</label>
+        <input id="rO" placeholder="Ej. Transferencia del 15"></div>
+    </div>`,
+    `aplicarReembolso('${periodoId}')`, 'Marcar como reembolsados'));
+
+  sumarSeleccion();
+}
+
+/** Total en vivo de lo marcado, para cuadrar contra lo que llegó al banco. */
+function sumarSeleccion(){
+  const marcadas = [...document.querySelectorAll('#reemLista input:checked')];
+  const total = marcadas.reduce((a, c) => a + (+c.dataset.monto || 0), 0);
+  const el = $('#reemTotal');
+  if(el){
+    el.textContent = cop(total);
+    el.style.color = total ? 'var(--ok)' : 'var(--text-3)';
+  }
+}
+
+function marcarTodosReembolso(valor){
+  document.querySelectorAll('#reemLista input').forEach(c => c.checked = valor);
+  sumarSeleccion();
 }
 
 async function aplicarReembolso(periodoId){
-  let restante = +$('#rM').value;
-  if(!restante){ toast('Escribe el monto recibido'); return; }
+  const marcadas = [...document.querySelectorAll('#reemLista input:checked')];
+  if(!marcadas.length){ toast('Marca al menos un gasto'); return; }
 
-  const obs = $('#rO').value.trim();
-  const pendientes = S.caja
-    .filter(g => g.periodo_id === periodoId && g.tipo === 'gasto'
-              && g.legalizado && (g.monto - (g.reembolsado || 0)) > 0)
-    .sort((a, b) => a.fecha < b.fecha ? -1 : 1);
+  const obs   = $('#rO').value.trim();
+  const fecha = $('#rF').value;
+  let total = 0;
 
-  let cubiertos = 0;
-  for(const g of pendientes){
-    if(restante <= 0) break;
-    const falta = g.monto - (g.reembolsado || 0);
-    const aplica = Math.min(falta, restante);
+  for(const c of marcadas){
+    const g = S.caja.find(x => x.id === c.value);
+    if(!g) continue;
+    total += g.monto - (g.reembolsado || 0);
     await db.update('caja', g.id, {
-      reembolsado: (g.reembolsado || 0) + aplica,
-      observacion: obs ? [g.observacion, obs].filter(Boolean).join(' · ') : g.observacion
+      reembolsado: g.monto,                    // marcado = saldado por completo
+      estado: 'finalizado',
+      observacion: obs
+        ? [g.observacion, `Reembolsado ${fechaCorta(fecha)}: ${obs}`].filter(Boolean).join(' · ')
+        : g.observacion
     });
-    restante -= aplica;
-    cubiertos++;
   }
 
   const p = per(periodoId);
   if(p) await db.update('periodos', periodoId,
-    { reembolso_recibido: (p.reembolso_recibido || 0) + (+$('#rM').value - restante) });
+    { reembolso_recibido: (p.reembolso_recibido || 0) + total });
 
   closeModal(); render();
-  toast(restante > 0
-    ? `Aplicado a ${cubiertos} gastos · sobran ${cop(restante)} sin asignar`
-    : `Reembolso aplicado a ${cubiertos} gastos ✓`);
+  toast(`${marcadas.length} gasto${marcadas.length > 1 ? 's' : ''} reembolsado${marcadas.length > 1 ? 's' : ''} · ${cop(total)} ✓`);
+}
+
+/* ---- Pérdidas ------------------------------------------------------------
+   Un gasto que ya sabes que no te van a devolver. Dejarlo como "pendiente"
+   solo infla lo que crees que te deben; marcándolo sabes cuánto perdiste.
+   -------------------------------------------------------------------------- */
+const MOTIVOS_PERDIDA = [
+  'Sin soporte — se perdió el recibo',
+  'Rechazado por contabilidad',
+  'Fuera de plazo para legalizar',
+  'Faltante de caja',
+  'Gasto no autorizado',
+  'Otro'
+];
+
+function modalPerdida(id){
+  const g = S.caja.find(x => x.id === id);
+  const falta = g.monto - (g.reembolsado || 0);
+
+  if(g.perdida){
+    confirmarPeligro('¿Recuperar este gasto?',
+      `"${g.concepto}" está marcado como pérdida de ${cop(falta)}.\n\n` +
+      `Al recuperarlo vuelve a contar como pendiente por cobrar.`,
+      async () => {
+        await db.update('caja', id, { perdida:false, motivo_perdida:'' });
+        render(); toast('Vuelve a contar como cobrable');
+      }, 'Recuperar');
+    return;
+  }
+
+  openModal(formModal('Registrar pérdida', `
+    <div class="alert w">
+      <span>📉</span>
+      <div class="a-txt">
+        <b>${esc(g.concepto)} · ${cop(falta)}</b>
+        <small>Este monto dejará de contar como "por cobrar" y pasará a pérdidas.
+          Podrás revertirlo si al final sí te lo devuelven.</small>
+      </div>
+    </div>
+    <div><label>¿Por qué se perdió?</label>
+      <select id="pMotivo">${MOTIVOS_PERDIDA.map(m => `<option>${esc(m)}</option>`).join('')}</select></div>
+    <div><label>Detalle (opcional)</label>
+      <input id="pDet" placeholder="Ej. El parqueadero no emitió factura"></div>`,
+    `guardarPerdida('${id}')`, 'Marcar como pérdida'));
+}
+
+async function guardarPerdida(id){
+  const motivo = $('#pMotivo').value;
+  const det    = $('#pDet').value.trim();
+  await db.update('caja', id, {
+    perdida: true,
+    motivo_perdida: det ? `${motivo} — ${det}` : motivo,
+    estado: 'finalizado'
+  });
+  closeModal(); render(); toast('Marcado como pérdida');
 }
 
 /* ---- Períodos ------------------------------------------------------------ */
@@ -501,7 +625,8 @@ function exportarCaja(periodoId){
 
   const cols = ['Fecha','Tipo','Concepto','Categoria','Cliente','Beneficiario','Documento',
                 'Banco','Tipo cuenta','Cuenta','Metodo pago','Comprobante','Factura',
-                'Monto','Reembolsado','Pendiente','Legalizado','Fecha legalizacion','Observacion'];
+                'Monto','Reembolsado','Pendiente','Perdida','Motivo perdida',
+                'Legalizado','Fecha legalizacion','Observacion'];
 
   const campo = v => {
     const s = String(v ?? '').replace(/"/g, '""');
@@ -519,12 +644,14 @@ function exportarCaja(periodoId){
         g.metodo_pago || '', g.comprobante_pago || '', g.factura_num || '',
         g.monto, g.reembolsado || 0,
         g.tipo === 'gasto' ? g.monto - (g.reembolsado || 0) : 0,
+        g.perdida ? 'SI' : 'NO', g.motivo_perdida || '',
         g.legalizado ? 'SI' : 'NO', g.legalizado_el || '', g.observacion || ''
       ].map(campo).join(';');
     });
 
   const totales = ['', '', 'TOTALES', '', '', '', '', '', '', '', '', '', '',
-                   a.gastado, a.reembolsado, a.pendiente, '', '', ''].map(campo).join(';');
+                   a.gastado, a.reembolsado, a.pendiente,
+                   a.montoPerdido, '', '', '', ''].map(campo).join(';');
 
   // BOM para que Excel en español abra las tildes bien
   const csv = '﻿' + [cols.join(';'), ...filas, totales].join('\r\n');

@@ -7,6 +7,7 @@
 let cajaTab   = 'movimientos';
 let periodoSel = null;          // null = usa el período activo
 let filtroCaja = 'todos';
+let buscarCaja = '';
 
 const TABS_CAJA = [
   ['movimientos',  'Movimientos'],
@@ -17,12 +18,36 @@ const TABS_CAJA = [
 
 const FILTROS_CAJA = {
   todos:         g => true,
-  sinlegalizar:  g => g.tipo === 'gasto' && !g.legalizado,
-  sinsoporte:    g => g.tipo === 'gasto' && (!g.tiene_comprobante || !g.tiene_factura),
-  porcobrar:     g => g.tipo === 'gasto' && (g.monto - (g.reembolsado || 0)) > 0
+  sinlegalizar:  g => g.tipo === 'gasto' && !g.legalizado && !g.perdida,
+  sinsoporte:    g => g.tipo === 'gasto' && !g.perdida && (!g.tiene_comprobante || !g.tiene_factura),
+  porcobrar:     g => g.tipo === 'gasto' && !g.perdida && (g.monto - (g.reembolsado || 0)) > 0,
+  perdidas:      g => g.tipo === 'gasto' && !!g.perdida
 };
 
-function setCajaTab(t){ cajaTab = t; render(); }
+/** Busca en todo lo que uno recuerda de un movimiento, no solo el concepto. */
+function coincideBusqueda(g, q){
+  if(!q) return true;
+  const b = ben(g.beneficiario_id);
+  const texto = [
+    g.concepto, g.categoria, g.observacion, g.metodo_pago,
+    g.comprobante_pago, g.factura_num, g.motivo_perdida,
+    cli(g.cliente_id).nombre,
+    b?.nombre, b?.documento, b?.banco, b?.cuenta,
+    String(g.monto), fechaCorta(g.fecha)
+  ].filter(Boolean).join(' ').toLowerCase();
+  // Todas las palabras deben aparecer: así "cafam parqueadero" acota de verdad
+  return q.toLowerCase().split(/\s+/).filter(Boolean).every(p => texto.includes(p));
+}
+
+/** Busca y vuelve a poner el cursor donde estaba: si no, se pierde a cada tecla. */
+function buscarCajaAhora(v){
+  buscarCaja = v;
+  render();
+  const i = $('#buscaCaja');
+  if(i){ i.focus(); i.setSelectionRange(i.value.length, i.value.length); }
+}
+
+function setCajaTab(t){ cajaTab = t; buscarCaja = ''; render(); }
 function setPeriodoSel(id){ periodoSel = id; render(); }
 function setFiltroCaja(f){ filtroCaja = f; render(); }
 
@@ -108,6 +133,11 @@ function tarjetasArqueo(a){
     ${kpi('Sin legalizar', cop(a.montoSinLeg),
           `${a.sinLegalizar.length} movimientos · ${a.sinSoporte.length} sin soporte completo`,
           a.sinLegalizar.length ? 'w' : 'o')}
+    ${kpi('Pérdidas', cop(a.montoPerdido),
+          a.perdidas.length
+            ? `${a.perdidas.length} gasto${a.perdidas.length > 1 ? 's' : ''} · ${Math.round(a.pctPerdido * 100)}% de lo gastado`
+            : 'Nada dado por perdido',
+          a.montoPerdido > 0 ? 'd' : 'o')}
   </div>
 
   <div class="card" style="margin-bottom:14px"><div class="card-b">
@@ -127,23 +157,36 @@ function tarjetasArqueo(a){
 function tabMovimientos(a, p, pid){
   const movs = a.movs
     .filter(FILTROS_CAJA[filtroCaja])
+    .filter(g => coincideBusqueda(g, buscarCaja))
     .sort((x, y) => y.fecha < x.fecha ? -1 : 1);
 
   const filtros = [
     ['todos',        `Todos (${a.movs.length})`],
     ['sinlegalizar', `Sin legalizar (${a.sinLegalizar.length})`],
     ['sinsoporte',   `Sin soporte (${a.sinSoporte.length})`],
-    ['porcobrar',    `Por cobrar (${a.gastos.filter(FILTROS_CAJA.porcobrar).length})`]
+    ['porcobrar',    `Por cobrar (${a.porCobrar.length})`],
+    ['perdidas',     `Pérdidas (${a.perdidas.length})`]
   ];
+
+  const totalVisible = suma(movs.filter(g => g.tipo === 'gasto'), g => g.monto);
 
   return `
   <div class="card">
-    <div class="card-h">
-      <div style="display:flex;gap:6px;flex-wrap:wrap">
-        ${filtros.map(([k, l]) =>
-          `<button class="chip ${filtroCaja === k ? 'b' : 'n'}" onclick="setFiltroCaja('${k}')">${l}</button>`
-        ).join('')}
+    <div class="card-h" style="flex-direction:column;align-items:stretch;gap:11px">
+      <div class="cfg-buscar">
+        <span>${ICO.buscar}</span>
+        <input id="buscaCaja" value="${esc(buscarCaja)}"
+               placeholder="Buscar por concepto, mensajero, cédula, cuenta, monto, factura…"
+               oninput="buscarCajaAhora(this.value)">
+        ${buscarCaja ? `<button class="busca-x" onclick="buscarCajaAhora('')" title="Limpiar">✕</button>` : ''}
       </div>
+
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          ${filtros.map(([k, l]) =>
+            `<button class="chip ${filtroCaja === k ? 'b' : 'n'}" onclick="setFiltroCaja('${k}')">${l}</button>`
+          ).join('')}
+        </div>
       <div style="display:flex;gap:6px;align-items:center">
         <button class="btn sm tabla-solo" onclick="alternarEnvoltura('caja')"
                 title="${envuelveTexto('caja') ? 'Recortar el texto largo' : 'Mostrar el texto completo en varias líneas'}">
@@ -152,6 +195,13 @@ function tabMovimientos(a, p, pid){
                 title="Devolver las columnas a su ancho original">↺ Columnas</button>
         <button class="btn sm" onclick="exportarCaja('${pid}')">⬇ Excel</button>
       </div>
+      </div>
+
+      ${buscarCaja || filtroCaja !== 'todos' ? `
+        <div class="resultado-busqueda">
+          ${movs.length} de ${a.movs.length} movimientos
+          ${totalVisible ? ` · ${cop(totalVisible)} en gastos` : ''}
+        </div>` : ''}
     </div>
     <!-- Escritorio: tabla completa -->
     <div class="card-b flush scroll-x tabla-desk">
@@ -164,7 +214,8 @@ function tabMovimientos(a, p, pid){
         </tr></thead>
         <tbody>
         ${movs.length ? movs.map(g => filaCaja(g)).join('')
-          : `<tr><td colspan="14">${vacio('📭', 'No hay movimientos con este filtro')}</td></tr>`}
+          : `<tr><td colspan="14">${vacio('📭', buscarCaja
+              ? `Nada coincide con "${buscarCaja}"` : 'No hay movimientos con este filtro')}</td></tr>`}
         </tbody>
       </table>
     </div>
@@ -172,7 +223,7 @@ function tabMovimientos(a, p, pid){
     <!-- Celular: una tarjeta por movimiento -->
     <div class="mov-cards">
       ${movs.length ? movs.map(g => tarjetaCaja(g)).join('')
-        : vacio('📭', 'No hay movimientos con este filtro')}
+        : vacio('📭', buscarCaja ? `Nada coincide con "${buscarCaja}"` : 'No hay movimientos con este filtro')}
     </div>
   </div>
 
@@ -188,7 +239,8 @@ function tarjetaCaja(g){
   const est = ESTADOS_PAGO[g.estado] || ESTADOS_PAGO.pendiente_consignacion;
 
   return `
-  <div class="mov" onclick="if(!event.target.closest('button'))verPago('${g.id}')">
+  <div class="mov ${g.perdida ? 'mov-perdida' : ''}"
+       onclick="if(!event.target.closest('button'))verPago('${g.id}')">
     <div class="mov-top">
       <div style="min-width:0">
         <div class="mov-cn">${esc(g.concepto)}</div>
@@ -222,7 +274,8 @@ function tarjetaCaja(g){
 
     <div class="mov-pie">
       ${esIngreso ? '<span class="chip n">Base</span>' : `
-        <span class="chip ${est.c}">${est.ico} ${est.l}</span>
+        ${g.perdida ? '<span class="chip d">📉 Pérdida</span>'
+                    : `<span class="chip ${est.c}">${est.ico} ${est.l}</span>`}
         ${g.comprobante_url ? '<span class="chip o">📎 Foto</span>' : ''}
         ${g.factura_url ? '<span class="chip o">🧾 Foto</span>' : ''}
         <button class="chip ${g.legalizado ? 'o' : 'n'}" onclick="toggleLeg('${g.id}')">
@@ -248,7 +301,8 @@ function filaCaja(g){
   const est = ESTADOS_PAGO[g.estado] || ESTADOS_PAGO.pendiente_consignacion;
 
   return `
-  <tr style="cursor:pointer" onclick="if(!event.target.closest('button'))verPago('${g.id}')">
+  <tr class="${g.perdida ? 'fila-perdida' : ''}" style="cursor:pointer"
+      onclick="if(!event.target.closest('button'))verPago('${g.id}')">
     <td style="white-space:nowrap;color:var(--text-2)">${fechaCorta(g.fecha)}</td>
     <td>${esc(g.concepto)}</td>
     <td>${b ? `<div style="font-weight:500">${esc(b.nombre)}</div>
@@ -263,10 +317,12 @@ function filaCaja(g){
       ${esIngreso ? '+' : '−'} ${cop(g.monto)}</td>
     <td class="num" style="color:${g.reembolsado ? 'var(--ok)' : 'var(--text-3)'}">
       ${esIngreso ? '—' : cop(g.reembolsado || 0)}</td>
-    <td class="num" style="color:${pend > 0 ? 'var(--warn)' : 'var(--text-3)'};font-weight:${pend > 0 ? '600' : '400'}">
-      ${esIngreso ? '—' : cop(pend)}</td>
+    <td class="num" style="color:${g.perdida ? 'var(--danger)' : pend > 0 ? 'var(--warn)' : 'var(--text-3)'};
+        font-weight:${pend > 0 ? '600' : '400'}">
+      ${esIngreso ? '—' : (g.perdida ? '−' + cop(pend) : cop(pend))}</td>
     <td style="white-space:nowrap">${soportes}</td>
     <td>${esIngreso ? '<span class="chip n">Base</span>'
+          : g.perdida ? '<span class="chip d">📉 Pérdida</span>'
           : `<span class="chip ${est.c}">${est.ico} ${est.l}</span>`}</td>
     <td>${esIngreso ? '<span class="chip n">—</span>'
           : `<button class="chip ${g.legalizado ? 'o' : 'w'}" onclick="toggleLeg('${g.id}')"
@@ -275,7 +331,10 @@ function filaCaja(g){
     <td style="max-width:190px;font-size:11.5px;color:var(--text-2)">${esc(g.observacion || '')}</td>
     <td style="white-space:nowrap">
       <button class="btn sm" onclick="verPago('${g.id}')">Ver</button>
-      <button class="btn sm" onclick="modalCaja('${g.tipo}','${g.id}')">✎</button>
+      ${esIngreso ? '' :
+        `<button class="btn sm ${g.perdida ? '' : 'dgr'}" onclick="modalPerdida('${g.id}')"
+                 title="${g.perdida ? 'Quitar la marca de pérdida' : 'Marcar como pérdida'}">
+           ${g.perdida ? '↺' : '📉'}</button>`}
     </td>
   </tr>`;
 }

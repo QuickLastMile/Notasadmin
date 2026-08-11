@@ -62,7 +62,8 @@ function seed(){
     tiene_comprobante:false, tiene_factura:false,
     estado:'pendiente_consignacion',
     legalizado:false, legalizado_el:null,
-    reembolsado:0, observacion:''
+    reembolsado:0, observacion:'',
+    perdida:false, motivo_perdida:''
   }, o);
 
   const caja = [
@@ -120,7 +121,14 @@ function seed(){
         cliente_id:'c2', fecha:t(0), beneficiario_id:'b1',
         metodo_pago:'Efectivo', tiene_comprobante:false, tiene_factura:false,
         legalizado:false, reembolsado:0,
-        observacion:'Sin soporte todavía' })
+        observacion:'Sin soporte todavía' }),
+
+    G({ id:'g9', estado:'finalizado', monto:38000, concepto:'Domicilio urgente sin recibo', categoria:'Transporte',
+        cliente_id:'c1', fecha:t(-12), beneficiario_id:'b2',
+        metodo_pago:'Efectivo', tiene_comprobante:false, tiene_factura:false,
+        legalizado:false, reembolsado:0,
+        perdida:true, motivo_perdida:'Sin soporte — se perdió el recibo',
+        observacion:'Se pagó en efectivo y no dieron recibo' })
   ];
 
   /* ---- Resto de módulos --------------------------------------------------- */

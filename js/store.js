@@ -67,26 +67,37 @@ function arqueo(periodoId){
   const movs   = S.caja.filter(g => g.periodo_id === periodoId);
   const gastos = movs.filter(g => g.tipo === 'gasto');
 
-  const base   = suma(movs.filter(g => g.tipo === 'ingreso'), g => g.monto);
+  const base    = suma(movs.filter(g => g.tipo === 'ingreso'), g => g.monto);
   const gastado = suma(gastos, g => g.monto);
-  const saldo  = base - gastado;
+  const saldo   = base - gastado;
 
   const reembolsado = suma(gastos, g => g.reembolsado || 0);
-  const pendiente   = gastado - reembolsado;
 
-  const sinLegalizar = gastos.filter(g => !g.legalizado);
+  /* Pérdidas: gastos que ya diste por no recuperables — rechazados, sin
+     soporte, o plata que sencillamente no apareció. Se separan del resto
+     porque no son "pendiente por cobrar": nadie te las va a devolver, y
+     mezclarlas inflaría lo que crees que te deben. */
+  const perdidas      = gastos.filter(g => g.perdida);
+  const montoPerdido  = suma(perdidas, g => g.monto - (g.reembolsado || 0));
+
+  const recuperables  = gastos.filter(g => !g.perdida);
+  const pendiente     = suma(recuperables, g => g.monto - (g.reembolsado || 0));
+
+  const sinLegalizar = recuperables.filter(g => !g.legalizado);
   const montoSinLeg  = suma(sinLegalizar, g => g.monto);
 
   // Un gasto está "sin soporte" si le falta comprobante de pago o factura
-  const sinSoporte = gastos.filter(g => !g.tiene_comprobante || !g.tiene_factura);
+  const sinSoporte = recuperables.filter(g => !g.tiene_comprobante || !g.tiene_factura);
 
-  // Lo que ya podrías cobrar: legalizado y aún no reembolsado
-  const cobrable = suma(gastos.filter(g => g.legalizado), g => g.monto - (g.reembolsado || 0));
+  // Lo que ya podrías cobrar: legalizado, sin reembolsar y no dado por perdido
+  const porCobrar = recuperables.filter(g => g.legalizado && (g.monto - (g.reembolsado || 0)) > 0);
+  const cobrable  = suma(porCobrar, g => g.monto - (g.reembolsado || 0));
   // Lo que está trabado por falta de legalización
-  const trabado  = suma(sinLegalizar, g => g.monto - (g.reembolsado || 0));
+  const trabado   = suma(sinLegalizar, g => g.monto - (g.reembolsado || 0));
 
   return { movs, gastos, base, gastado, saldo, pctUsado: pct(gastado, base),
-           reembolsado, pendiente, cobrable, trabado,
+           reembolsado, pendiente, cobrable, trabado, porCobrar,
+           perdidas, montoPerdido, pctPerdido: pct(montoPerdido, gastado),
            sinLegalizar, montoSinLeg, sinSoporte };
 }
 
