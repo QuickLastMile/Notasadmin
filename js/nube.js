@@ -13,6 +13,7 @@ const NUBE = !!(CFG.supabase.url && CFG.supabase.anonKey);
 
 let sb = null;      // cliente de supabase-js
 let usuario = null; // sesión activa
+let sesionNube = null; // incluye temporalmente el token del proveedor Google
 
 /* La URL se lee ANTES de que supabase-js consuma el hash del enlace.
    Si se lee después, el token ya se borró y no hay forma de saber que
@@ -39,6 +40,7 @@ if(NUBE){
 async function sesionActual(){
   if(!sb) return null;
   const { data } = await sb.auth.getSession();
+  sesionNube = data.session || null;
   usuario = data.session?.user || null;
   return usuario;
 }

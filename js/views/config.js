@@ -443,9 +443,27 @@ apariencia(){
 /* ---- Integraciones ------------------------------------------------------- */
 integraciones(){
   const num = botWhatsapp();
+  const google = googleWorkspaceConectado();
   return `
     ${cfgHead('Integraciones', 'Servicios externos conectados a la aplicación.')}
 
+    <div class="cfg-tit-sec">Google Workspace</div>
+    <div class="cfg-lista">
+      <div class="cfg-fila">
+        <span class="bot-avatar" style="width:38px;height:38px;font-size:18px;border-radius:11px">G</span>
+        <div class="cfg-fila-txt"><strong>Drive · Sheets · Calendar</strong>
+          <small>Crea carpetas por proyecto, hojas de respuestas y eventos de entrega.</small></div>
+        <span class="chip ${google?'o':'w'}">${google?'Conectado':'Requiere permiso'}</span>
+        <button class="btn ${google?'':'pri'}" onclick="conectarGoogleWorkspace()">${google?'Renovar permiso':'Conectar Google'}</button>
+      </div>
+      ${google?`<div class="cfg-fila"><div class="cfg-fila-txt"><strong>Cuenta autorizada</strong>
+        <small>${esc(usuario?.email||'Cuenta de Google')} · Los archivos creados pertenecen a esta cuenta.</small></div>
+        <button class="btn" onclick="desconectarGoogleWorkspace()">Desactivar</button></div>`:''}
+    </div>
+    <div class="cfg-nota"><p>Drive y Calendar se administran desde cada proyecto. Sheets se crea y sincroniza desde el detalle de cada formulario.</p>
+      <p>La primera conexión volverá a abrir Google para solicitar los permisos adicionales.</p></div>
+
+    <div class="cfg-tit-sec">Mensajería</div>
     <div class="cfg-lista">
       <div class="cfg-fila">
         <span class="bot-avatar" style="width:38px;height:38px;font-size:18px;border-radius:11px">💬</span>
@@ -474,11 +492,10 @@ integraciones(){
       <p>El número se guarda en este dispositivo, no en tu cuenta.</p>
     </div>
 
-    <div class="cfg-tit-sec">Otras integraciones</div>
+    <div class="cfg-tit-sec">Próxima integración</div>
     <div class="cfg-pendiente">
-      <span class="chip w">En construcción</span>
-      <p>Conectar Google Sheets y tus dashboards, para que los datos entren
-        y salgan solos sin copiar y pegar.</p>
+      <span class="chip w">Telegram</span>
+      <p>El bot podrá enviar alertas programadas y recibir consultas. Para activarlo necesitaremos el token privado generado por @BotFather y el chat de destino.</p>
     </div>`;
 },
 

@@ -121,6 +121,10 @@ create table if not exists proyectos (
   base_url       text default '',
   seguimiento   jsonb default '[]'::jsonb,
   campos        jsonb not null default '{}'::jsonb,
+  drive_folder_id text default '',
+  drive_folder_url text default '',
+  calendar_event_id text default '',
+  calendar_event_url text default '',
   created_at  timestamptz default now(),
   updated_at  timestamptz default now()
 );

@@ -45,12 +45,22 @@ function verProyecto(id){
 
       ${p.notas ? `<div class="tf-tit"><span>Objetivo / resultado esperado</span></div><div class="tf-notas">${esc(p.notas)}</div>` : ''}
 
-      ${(p.repositorio_url || p.base_url) ? `
+      ${(p.repositorio_url || p.base_url || p.drive_folder_url || p.calendar_event_url) ? `
         <div class="tf-tit"><span>Recursos</span></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
           ${enlaceProyecto(p.repositorio_url, 'Repositorio', '⌘')}
           ${enlaceProyecto(p.base_url, 'Base de trabajo', '▦')}
+          ${enlaceProyecto(p.drive_folder_url, 'Carpeta de Drive', '▰')}
+          ${enlaceProyecto(p.calendar_event_url, 'Evento en Calendar', '▣')}
         </div>` : ''}
+
+      <div class="tf-tit"><span>Google Workspace</span></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        ${p.drive_folder_url?`<a class="btn" href="${esc(p.drive_folder_url)}" target="_blank" rel="noopener">Abrir Drive ↗</a>`:
+          `<button class="btn" onclick="crearCarpetaDrive('${p.id}')">＋ Crear carpeta Drive</button>`}
+        ${p.calendar_event_url?`<a class="btn" href="${esc(p.calendar_event_url)}" target="_blank" rel="noopener">Abrir Calendar ↗</a>`:
+          `<button class="btn" onclick="crearEventoGoogleCalendar('${p.id}')">＋ Agregar a Calendar</button>`}
+      </div>
 
       <div class="tf-tit"><span>Formularios públicos</span>
         <button class="btn sm pri" onclick="closeModal();modalFormulario('${p.id}')">+ Formulario</button></div>
