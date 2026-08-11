@@ -283,7 +283,7 @@ async function iniciar(){
     // es cambiar la contraseña, no entrar directo
     if(vieneDeRecuperacion){ quitarSplash(); mostrarNuevaPassword(); return; }
     if(!sesion){ quitarSplash(); mostrarLogin(); return; }
-    procesarRetornoGoogleWorkspace();
+    await procesarRetornoGoogleWorkspace();
 
     // cargarNube devuelve false si faltan tablas: ya pintó su propia pantalla
     if(!await cargarNube()){ quitarSplash(); return; }

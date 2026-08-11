@@ -9,13 +9,19 @@ const GOOGLE_SCOPES = [
 const googleToken = () => sesionNube?.provider_token || '';
 const googleWorkspaceConectado = () => !!googleToken() && localStorage.getItem('nexa_google_workspace') === '2';
 
-function procesarRetornoGoogleWorkspace(){
+async function procesarRetornoGoogleWorkspace(){
   const url=new URL(location.href);
-  if(url.searchParams.get('google_workspace')==='ok' && googleToken()){
-    localStorage.setItem('nexa_google_workspace','2');
+  if(googleToken()){
+    const prueba=await fetch('https://www.googleapis.com/drive/v3/about?fields=user(emailAddress)',{
+      headers:{Authorization:`Bearer ${googleToken()}`}
+    }).catch(()=>null);
+    if(prueba?.ok) localStorage.setItem('nexa_google_workspace','2');
+    else localStorage.removeItem('nexa_google_workspace');
+  }
+  if(url.searchParams.has('google_workspace')){
     url.searchParams.delete('google_workspace');
     history.replaceState({},'',url.pathname+(url.search||'')+(url.hash||''));
-    setTimeout(()=>toast('Google Workspace conectado ✓'),500);
+    if(googleWorkspaceConectado()) setTimeout(()=>toast('Google Workspace conectado ✓'),500);
   }
 }
 
