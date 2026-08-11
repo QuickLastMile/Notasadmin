@@ -106,9 +106,14 @@ aside{
 }
 .brand{padding:18px 16px 14px;display:flex;align-items:center;gap:11px;
   border-bottom:1px solid var(--border);position:relative}
-.brand-logo{width:34px;height:34px;flex-shrink:0;display:grid;place-items:center}
-.brand-logo svg{width:100%;height:100%}
-.brand-txt{min-width:0;overflow:hidden}
+.brand-logo{width:178px;height:46px;flex-shrink:0;display:grid;place-items:center;transition:.2s ease}
+.brand-logo .marca{display:none;max-width:100%;max-height:100%;object-fit:contain}
+.brand-logo .marca-wordmark{display:block;width:100%;height:100%}
+.brand-txt{display:none;min-width:0;overflow:hidden}
+:root[data-theme="dark"] .brand-logo{width:40px;height:40px}
+:root[data-theme="dark"] .brand-logo .marca-wordmark{display:none}
+:root[data-theme="dark"] .brand-logo .marca-blanca{display:block;width:100%;height:100%}
+:root[data-theme="dark"] .brand-txt{display:block}
 .brand-txt strong{display:block;font-size:17px;letter-spacing:1.6px;font-weight:750;
   white-space:nowrap}
 .brand-txt span{font-size:8.5px;color:var(--text-3);letter-spacing:1.4px;
@@ -158,6 +163,11 @@ nav::-webkit-scrollbar-track{background:transparent}
    ------------------------------------------------------------ */
 #app.mini aside{width:72px;min-width:72px;max-width:72px}
 #app.mini .brand{padding:18px 0 14px;justify-content:center}
+#app.mini .brand-logo{width:38px;height:38px}
+#app.mini .brand-logo .marca-wordmark{display:none}
+#app.mini .brand-logo .marca-clara{display:block;width:100%;height:100%}
+:root[data-theme="dark"] #app.mini .brand-logo .marca-clara{display:none}
+:root[data-theme="dark"] #app.mini .brand-logo .marca-blanca{display:block}
 #app.mini .brand-txt{display:none}
 #app.mini nav{padding:10px 8px;overflow:visible}
 

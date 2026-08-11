@@ -268,7 +268,10 @@ function quitarSplash(){
 
 async function iniciar(){
   initTema();
-  $('#brandLogo').innerHTML = logoNexa(32, 'side');
+  $('#brandLogo').innerHTML = `
+    <img class="marca marca-wordmark" src="assets/nexa-wordmark.png?v=35" alt="NEXA · Centro de Gestión">
+    <img class="marca marca-clara" src="assets/nexa-logo-light.png?v=35" alt="NEXA">
+    <img class="marca marca-blanca" src="assets/nexa-logo-white.png?v=35" alt="NEXA">`;
 
   const tokenPublico = new URLSearchParams(location.search).get('form');
   if(tokenPublico){ await mostrarFormularioPublico(tokenPublico); return; }

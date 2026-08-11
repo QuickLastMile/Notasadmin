@@ -103,7 +103,7 @@ async function registrarServiceWorker(){
 async function mostrarAvisoNavegador(titulo,detalle,tag='nexa-prueba'){
   if(Notification.permission!=='granted') return false;
   const reg=await registrarServiceWorker();
-  if(reg) await reg.showNotification(titulo,{body:detalle,tag,icon:'assets/nexa-icon.svg',badge:'assets/nexa-icon.svg',data:{url:location.origin+location.pathname}});
+  if(reg) await reg.showNotification(titulo,{body:detalle,tag,icon:'assets/nexa-app-icon-512.png',badge:'assets/nexa-logo-white.png',data:{url:location.origin+location.pathname}});
   else new Notification(titulo,{body:detalle,tag});
   return true;
 }
