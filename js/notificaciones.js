@@ -138,10 +138,50 @@ function abrirNotificacion(id){
 }
 function cambiarPreferenciaNotif(clave,valor){ guardarNotifPrefs({[clave]:valor}); repintarPanel(); }
 
+let panelNotificacionesAbierto=false;
+
+function renderCampanaSuperior(){
+  const host=$('#notifTop'); if(!host||!S)return;
+  const n=notificacionesPendientes();
+  host.innerHTML=`<button class="notif-top-btn ${n?'con-alertas':''} ${panelNotificacionesAbierto?'activo':''}"
+    onclick="togglePanelNotificaciones()" title="${n?`${n} notificación${n===1?'':'es'} pendiente${n===1?'':'s'}`:'Sin notificaciones pendientes'}"
+    aria-label="Notificaciones" aria-expanded="${panelNotificacionesAbierto}">
+    <span class="notif-top-ico">${ICO.campana}</span>${n?`<span class="notif-top-badge">${n>99?'99+':n}</span>`:''}</button>`;
+  if(panelNotificacionesAbierto) pintarPanelNotificaciones();
+}
+
+function togglePanelNotificaciones(forzar=null){
+  panelNotificacionesAbierto=forzar===null?!panelNotificacionesAbierto:!!forzar;
+  const panel=$('#notifPanel'); if(!panel)return;
+  panel.classList.toggle('abierto',panelNotificacionesAbierto);
+  panel.setAttribute('aria-hidden',String(!panelNotificacionesAbierto));
+  renderCampanaSuperior();
+}
+
+function pintarPanelNotificaciones(){
+  const panel=$('#notifPanel'); if(!panel)return;
+  const hist=sincronizarHistorialNotificaciones(), pendientes=hist.filter(x=>x.activa&&!x.atendida);
+  panel.innerHTML=`<div class="notif-panel-head"><div><strong>Notificaciones</strong><small>${pendientes.length?`${pendientes.length} requieren atención`:'Todo está al día'}</small></div>
+    <button class="notif-panel-cerrar" onclick="togglePanelNotificaciones(false)" aria-label="Cerrar notificaciones">×</button></div>
+    <div class="notif-panel-body">${pendientes.length?pendientes.slice(0,8).map(n=>`
+      <div class="notif-panel-fila"><button class="notif-panel-info" onclick="abrirNotificacionPanel('${n.id}')">
+        <span class="notif-ico ${n.tono}">${n.ico}</span><span><strong>${esc(n.titulo)}</strong><small>${esc(n.detalle)}</small><em>Hoy</em></span></button>
+        <button class="notif-panel-check" onclick="atenderDesdePanel('${n.id}')" title="Marcar atendida" aria-label="Marcar ${esc(n.titulo)} como atendida">✓</button></div>`).join(''):
+      `<div class="notif-panel-vacio"><span>✓</span><strong>Todo bajo control</strong><small>No hay notificaciones pendientes.</small></div>`}</div>
+    <div class="notif-panel-foot">${pendientes.length?`<button onclick="atenderTodasDesdePanel()">✓ Atender todas</button>`:'<span></span>'}
+      <button class="principal" onclick="go('notificaciones')">Ver historial completo →</button></div>`;
+}
+
+function atenderDesdePanel(id){ atenderNotificacion(id); panelNotificacionesAbierto=true; pintarPanelNotificaciones(); renderCampanaSuperior(); }
+function atenderTodasDesdePanel(){ atenderTodasNotificaciones(); panelNotificacionesAbierto=true; pintarPanelNotificaciones(); renderCampanaSuperior(); }
+function abrirNotificacionPanel(id){
+  const n=notifHistorial().find(x=>x.id===id); if(!n)return;
+  atenderNotificacion(id); panelNotificacionesAbierto=true; pintarPanelNotificaciones(); renderCampanaSuperior(); go(n.ir);
+}
+
 function iniciarNotificaciones(){
   sincronizarHistorialNotificaciones(); registrarServiceWorker();
   setTimeout(enviarNotificacionesNuevas,900);
   setInterval(()=>{ sincronizarHistorialNotificaciones(); enviarNotificacionesNuevas(); },300000);
   document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible'){sincronizarHistorialNotificaciones();render();}});
 }
-

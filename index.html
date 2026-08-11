@@ -19,7 +19,7 @@
 <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin>
 
 <!-- Sube ?v= en cada despliegue para que nadie quede con CSS/JS viejo en caché -->
-<link rel="stylesheet" href="css/styles.css?v=33">
+<link rel="stylesheet" href="css/styles.css?v=34">
 
 <!-- El tema se aplica antes de pintar, para que no haya un destello blanco -->
 <script>
@@ -69,6 +69,7 @@
         <span class="capture-hint">Enter ↵</span>
         <div class="preview" id="prev"></div>
       </div>
+      <div class="notif-top" id="notifTop"></div>
       <div class="hoy"><b id="hoyTxt"></b><span id="hoySub"></span></div>
     </div>
     <div class="wrap" id="view"></div>
@@ -81,6 +82,7 @@
 <!-- ══ Hoja inferior "Más" ═══════════════════════════════════ -->
 <div class="sheet-mask" id="sheetMask" onclick="cerrarSheet()"></div>
 <div class="sheet" id="sheet"></div>
+<aside class="notif-panel" id="notifPanel" aria-hidden="true"></aside>
 
 <div class="mask" id="mask" onclick="if(event.target===this)closeModal()">
   <div class="modal" id="modal"></div>
@@ -116,7 +118,7 @@
 <script defer src="js/formularios.js?v=31"></script>
 <script defer src="js/formulario-publico.js?v=30"></script>
 <script defer src="js/ficha-proyecto.js?v=28"></script>
-<script defer src="js/notificaciones.js?v=33"></script>
+<script defer src="js/notificaciones.js?v=34"></script>
 
 <script defer src="js/views/inicio.js?v=26"></script>
 <script defer src="js/views/tareas.js?v=26"></script>
@@ -129,6 +131,6 @@
 <script defer src="js/views/notificaciones.js?v=33"></script>
 <script defer src="js/views/config.js?v=33"></script>
 
-<script defer src="js/app.js?v=33"></script>
+<script defer src="js/app.js?v=34"></script>
 </body>
 </html>

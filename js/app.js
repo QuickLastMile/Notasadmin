@@ -8,7 +8,7 @@ let vista = 'inicio';
 const MENU = [
   { sec:'Diario' },
   { id:'inicio',    ico:ICO.inicio,    lbl:'Inicio',      vista:m => vInicio(m) },
-  { id:'notificaciones', ico:ICO.campana, lbl:'Notificaciones', lblCorto:'Avisos',
+  { id:'notificaciones', ico:ICO.campana, lbl:'Notificaciones', lblCorto:'Avisos', oculto:true,
     vista:m => vNotificaciones(m), badge:() => notificacionesPendientes() },
   { id:'tareas',    ico:ICO.tareas,    lbl:'Tareas',      vista:m => vTareas(m),    badge:m => m.vencidas.length },
   { id:'novedades', ico:ICO.novedades, lbl:'Novedades',   vista:m => vNovedades(m), badge:m => m.novCriticas.length },
@@ -32,6 +32,7 @@ const modulo = id => MENU.find(i => i.id === id);
 function renderNav(m){
   $('#nav').innerHTML = MENU.map(i => {
     if(i.sec) return `<div class="nav-lbl">${i.sec}</div>`;
+    if(i.oculto) return '';
     const b = i.badge ? i.badge(m) : 0;
     return `
       <button class="nav-item ${vista === i.id ? 'active' : ''}" onclick="go('${i.id}')"
@@ -67,7 +68,7 @@ function renderTabbar(m){
 /* ---- Hoja inferior "Más" -------------------------------------------------- */
 function abrirMas(){
   const m = metricas();
-  const restantes = MENU.filter(i => i.id && !TABBAR.includes(i.id));
+  const restantes = MENU.filter(i => i.id && !i.oculto && !TABBAR.includes(i.id));
 
   const item = i => {
     const b = i.badge ? i.badge(m) : 0;
@@ -112,6 +113,7 @@ function go(v){
 function render(){
   const m = metricas();
   renderNav(m);
+  renderCampanaSuperior();
   const item = modulo(vista) || MENU[1];
   $('#view').innerHTML = item.vista(m);
   prepararTablas();   // los tiradores de las columnas viven en el DOM nuevo
