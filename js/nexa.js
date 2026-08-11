@@ -8,6 +8,7 @@
 const NEXA_KEY = () => `nexa_chat_v1_${usuario?.id || 'local'}`;
 let nexaAbierto = false;
 let nexaHistorial = [];
+let nexaEstadoActual = 'disponible';
 
 function nexaCargarHistorial(){
   try { nexaHistorial = JSON.parse(localStorage.getItem(NEXA_KEY())) || []; }
@@ -28,10 +29,9 @@ function renderNexa(){
   caja.setAttribute('aria-hidden', String(!nexaAbierto));
   if(!nexaAbierto) return;
   caja.innerHTML = `
-    <div class="nexa-chat-head">
-      <img src="assets/nexa-bot/03_avatar_perfil.png" alt="NEXA">
-      <div><strong>NEXA</strong><small>Tu asistente inteligente</small></div>
-      <span class="nexa-estado" id="nexaEstado">🟢 Disponible</span>
+    <div class="nexa-chat-head" data-estado="${nexaEstadoActual}">
+      <div class="nexa-head-mascota"><img src="assets/nexa-bot/nexa-mascota-flotante-v2.png" alt="NEXA"></div>
+      <div><strong>NEXA</strong><small>Tu asistente inteligente</small><span class="nexa-estado" id="nexaEstado">🟢 Disponible</span></div>
       <button class="nexa-cerrar" type="button" onclick="toggleNexa()" aria-label="Cerrar NEXA">×</button>
     </div>
     <div class="nexa-mensajes" id="nexaMensajes">
@@ -56,7 +56,12 @@ function toggleNexa(){
 }
 
 function nexaBajar(){ const d = $('#nexaMensajes'); if(d) d.scrollTop = d.scrollHeight; }
-function nexaEstado(texto){ const e = $('#nexaEstado'); if(e) e.textContent = texto; }
+function nexaEstado(texto, estado = 'disponible'){
+  nexaEstadoActual = estado;
+  const e = $('#nexaEstado'); if(e) e.textContent = texto;
+  const h = document.querySelector('.nexa-chat-head'); if(h) h.dataset.estado = estado;
+  const fab = $('#nexaFab'); if(fab) fab.dataset.estado = estado;
+}
 
 function nexaResponderLocal(mensaje){
   const q = mensaje.toLowerCase();
@@ -92,14 +97,14 @@ async function nexaPreguntar(mensaje){
   if(!mensaje?.trim()) return;
   nexaHistorial.push({rol:'user', texto:mensaje.trim()});
   renderNexa();
-  nexaEstado('💭 Analizando…');
+  nexaEstado('💭 Analizando…', 'pensando');
   const local = nexaResponderLocal(mensaje);
   let respuesta = null;
   try { respuesta = await nexaIA(mensaje); } catch { respuesta = null; }
   nexaHistorial.push({rol:'bot', texto:respuesta || local});
   nexaGuardarHistorial();
   renderNexa();
-  nexaEstado(respuesta ? '🟢 Disponible' : '💡 Consulta local');
+  nexaEstado(respuesta ? '🟢 Disponible' : '💡 Consulta local', respuesta ? 'disponible' : 'completado');
 }
 
 function nexaEnviar(e){
@@ -110,4 +115,17 @@ function nexaEnviar(e){
   nexaPreguntar(mensaje);
 }
 
-function iniciarNexa(){ nexaCargarHistorial(); }
+function iniciarNexa(){
+  nexaCargarHistorial();
+  const fab = $('#nexaFab');
+  if(!fab) return;
+  fab.addEventListener('mouseenter', () => fab.classList.add('saluda'));
+  fab.addEventListener('mouseleave', () => fab.classList.remove('saluda'));
+  const frases = ['¿Qué revisamos?', 'Estoy lista para ayudarte', 'Revisemos tus pendientes'];
+  let i = 0;
+  setInterval(() => {
+    if(nexaAbierto) return;
+    const s = $('#nexaSaludoFab');
+    if(s){ i = (i + 1) % frases.length; s.textContent = frases[i]; s.classList.remove('cambia'); void s.offsetWidth; s.classList.add('cambia'); }
+  }, 9000);
+}
