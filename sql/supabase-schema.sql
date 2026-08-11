@@ -113,8 +113,13 @@ create table if not exists proyectos (
   cliente_id  uuid references clientes(id) on delete set null,
   estado      text default 'en_curso' check (estado in ('propuesta','en_curso','en_riesgo','hecho')),
   avance      int  default 0 check (avance between 0 and 100),
+  avance_modo text default 'automatico' check (avance_modo in ('automatico','manual')),
   vence       date,
   notas       text,
+  responsable_id uuid,
+  repositorio_url text default '',
+  base_url       text default '',
+  seguimiento   jsonb default '[]'::jsonb,
   created_at  timestamptz default now(),
   updated_at  timestamptz default now()
 );

@@ -59,6 +59,17 @@ const periodoActivo = () => S.periodos.find(p => p.estado === 'abierto')
                          || S.periodos[S.periodos.length - 1]
                          || null;
 
+/** Avance visible del proyecto: automático por tareas o manual si así se eligió. */
+function avanceProyecto(p){
+  const tareas = S.tareas.filter(t => t.proyecto_id === p.id && t.estado !== 'cancelada');
+  const hechas = tareas.filter(t => t.estado === 'hecho').length;
+  const automatico = (p.avance_modo || 'automatico') === 'automatico';
+  const avance = p.estado === 'hecho' ? 100 : automatico
+    ? (tareas.length ? Math.round(hechas / tareas.length * 100) : 0)
+    : Math.max(0, Math.min(100, +(p.avance || 0)));
+  return { avance, tareas, hechas, automatico };
+}
+
 /* ---- Caja: arqueo de un período ------------------------------------------ */
 /**
  * Todo lo que hay que saber de un período de caja.

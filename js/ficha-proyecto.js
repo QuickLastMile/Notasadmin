@@ -1,0 +1,119 @@
+/* ============================================================================
+   FICHA DE PROYECTO — objetivo, enlaces, tareas y seguimiento
+   ========================================================================== */
+
+const enlaceProyecto = (url, etiqueta, icono) => url ? `
+  <a class="btn" href="${esc(url)}" target="_blank" rel="noopener noreferrer">
+    ${icono} ${esc(etiqueta)} ↗</a>` : '';
+
+function verProyecto(id){
+  const p = pro(id);
+  if(!p) return;
+  const ap = avanceProyecto(p);
+  const est = EST_PROYECTO[p.estado] || EST_PROYECTO.en_curso;
+  const responsable = colab(p.responsable_id);
+  const d = p.vence ? diasDesde(p.vence) : null;
+  const pendientes = ap.tareas.filter(t => t.estado !== 'hecho');
+  const vencidas = pendientes.filter(t => t.vence && diasDesde(t.vence) < 0);
+  const seg = p.seguimiento || [];
+
+  openModal(`
+    <div class="modal-h">
+      <h3 style="flex:1;min-width:0">${esc(p.nombre)}</h3>
+      <button class="btn sm" onclick="closeModal();modalProyecto('${p.id}')" title="Editar proyecto">✎</button>
+      <button class="btn sm" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-b" style="gap:0">
+      <div class="tf-cab">
+        <div style="flex:1;min-width:0">
+          <div style="display:flex;gap:6px;flex-wrap:wrap">
+            <span class="chip ${est.c}">${est.l}</span>
+            ${p.cliente_id ? `<span class="chip n">${cliTag(p.cliente_id)}</span>` : ''}
+            ${responsable ? `<span class="chip n">👤 ${esc(responsable.nombre)}</span>` : ''}
+            ${p.vence ? `<span class="chip ${d < 0 && p.estado !== 'hecho' ? 'd' : d < 3 ? 'w' : 'n'}">Entrega ${fechaTxt(p.vence)}</span>` : ''}
+          </div>
+        </div>
+      </div>
+
+      <div class="tf-tit"><span>Avance</span><span class="chip ${ap.avance === 100 ? 'o' : 'n'}">${ap.avance}% · ${ap.automatico ? 'automático' : 'manual'}</span></div>
+      <div style="margin-bottom:12px">${barra(ap.avance, 'var(--brand)')}</div>
+      <div style="display:flex;gap:7px;flex-wrap:wrap;margin-bottom:8px">
+        <span class="chip n">${ap.hechas}/${ap.tareas.length} terminadas</span>
+        <span class="chip ${pendientes.length ? 'w' : 'o'}">${pendientes.length} pendientes</span>
+        ${vencidas.length ? `<span class="chip d">${vencidas.length} vencidas</span>` : ''}
+      </div>
+
+      ${p.notas ? `<div class="tf-tit"><span>Objetivo / resultado esperado</span></div><div class="tf-notas">${esc(p.notas)}</div>` : ''}
+
+      ${(p.repositorio_url || p.base_url) ? `
+        <div class="tf-tit"><span>Recursos</span></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+          ${enlaceProyecto(p.repositorio_url, 'Repositorio', '⌘')}
+          ${enlaceProyecto(p.base_url, 'Base de trabajo', '▦')}
+        </div>` : ''}
+
+      <div class="tf-tit"><span>Tareas del proyecto</span>
+        <button class="btn sm pri" onclick="closeModal();modalTarea(null,'${p.id}')">+ Tarea</button></div>
+      <div class="tf-lista">
+        ${ap.tareas.length ? ap.tareas.map(t => {
+          const e = ESTADOS_TAREA[t.estado] || ESTADOS_TAREA.pendiente;
+          return `<button class="tf-paso" style="width:100%;text-align:left" onclick="closeModal();verTarea('${t.id}')">
+            <span class="chk ${t.estado === 'hecho' ? 'on' : ''}">✓</span>
+            <span style="flex:1">${esc(t.titulo)}</span>
+            <span class="chip ${e.c}">${e.l}</span>
+          </button>`;
+        }).join('') : '<div class="tf-vacio">Sin tareas todavía. Agrega la primera para empezar a medir el avance.</div>'}
+      </div>
+
+      <div class="tf-tit"><span>Seguimiento</span><span class="chip n">${seg.length}</span></div>
+      <div class="tf-lista">
+        ${seg.length ? [...seg].reverse().map(s => `<div class="tf-paso">
+          <span style="flex:1">${esc(s.texto)}</span><small>${fechaTxt(s.fecha)}</small>
+        </div>`).join('') : '<div class="tf-vacio">Aún no hay actualizaciones</div>'}
+      </div>
+      <div class="tf-alta">
+        <input id="proySeg" placeholder="Ej. Cliente aprobó la primera versión"
+               onkeydown="if(event.key==='Enter')anotarSeguimientoProyecto('${p.id}')">
+        <button class="btn" onclick="anotarSeguimientoProyecto('${p.id}')">Agregar</button>
+      </div>
+    </div>
+    <div class="modal-f" style="justify-content:space-between">
+      <button class="btn peligro" onclick="eliminarProyecto('${p.id}')">Eliminar</button>
+      <div style="display:flex;gap:8px">
+        ${p.estado !== 'hecho' ? `<button class="btn pri" onclick="entregarProyecto('${p.id}')">Marcar entregado</button>` : `<button class="btn" onclick="reabrirProyecto('${p.id}')">Reabrir</button>`}
+        <button class="btn" onclick="closeModal()">Cerrar</button>
+      </div>
+    </div>`);
+}
+
+async function anotarSeguimientoProyecto(id){
+  const p = pro(id), input = $('#proySeg');
+  const texto = input?.value.trim();
+  if(!p || !texto) return;
+  await db.update('proyectos', id, {
+    seguimiento:[...(p.seguimiento || []), { fecha:hoyISO(), texto }]
+  });
+  verProyecto(id); render(); toast('Seguimiento agregado');
+}
+
+async function entregarProyecto(id){
+  await db.update('proyectos', id, { estado:'hecho', avance:100 });
+  verProyecto(id); render(); toast('Proyecto marcado como entregado ✓');
+}
+
+async function reabrirProyecto(id){
+  await db.update('proyectos', id, { estado:'en_curso' });
+  verProyecto(id); render(); toast('Proyecto reabierto');
+}
+
+function eliminarProyecto(id){
+  const p = pro(id), cantidad = S.tareas.filter(t => t.proyecto_id === id).length;
+  confirmarPeligro('¿Eliminar este proyecto?',
+    `"${p.nombre}" se eliminará. Sus ${cantidad} tarea${cantidad === 1 ? '' : 's'} permanecerán, pero quedarán sin proyecto.`,
+    async () => {
+      for(const t of S.tareas.filter(t => t.proyecto_id === id))
+        await db.update('tareas', t.id, { proyecto_id:null });
+      await db.remove('proyectos', id);
+      render(); toast('Proyecto eliminado');
+    });
+}

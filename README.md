@@ -177,7 +177,7 @@ Settings → Pages → Branch `main` / carpeta `/ (root)` → Save.
 | Novedades | 🔧 Por revisar con el usuario |
 | Diseño general | 🔧 Por revisar con el usuario |
 | Menú / módulos | 🔧 Por revisar con el usuario |
-| Proyectos | ✅ Solo lectura — falta editar |
+| Proyectos | ✅ Ficha operativa: edición, tareas, avance, seguimiento y enlaces |
 | Clientes | ✅ Solo lectura — falta editar |
 | Dashboards | ✅ Funcionando |
 | Supabase | 🔌 Integración escrita y probada — falta pegar las credenciales |

@@ -80,8 +80,9 @@ function modalFecha(id){
     'Guardar'));
 }
 
-function modalTarea(id = null){
+function modalTarea(id = null, proyectoPreset = null){
   const t = id ? S.tareas.find(x => x.id === id) : null;
+  const pp = !t && proyectoPreset ? pro(proyectoPreset) : null;
   const estado = t?.estado || 'pendiente';
 
   openModal(formModal(id ? 'Editar tarea' : 'Nueva tarea', `
@@ -130,10 +131,10 @@ function modalTarea(id = null){
     </div>
 
     <div class="f2">
-      <div><label>Cliente (opcional)</label><select id="mC" onchange="sincronizarCeco()">${optsCli(t?.cliente_id)}</select>
+      <div><label>Cliente (opcional)</label><select id="mC" onchange="sincronizarCeco()">${optsCli(t?.cliente_id || pp?.cliente_id)}</select>
         <div id="mCecoInfo" style="font-size:11.5px;color:var(--text-2);margin-top:5px"></div></div>
       <div><label>Proyecto</label><select id="mPr">
-        <option value="">— Ninguno —</option>${optsProy(t?.proyecto_id)}</select></div>
+        <option value="">— Ninguno —</option>${optsProy(t?.proyecto_id || pp?.id)}</select></div>
     </div>
 
     <!-- Solo aparece cuando el estado es "En espera" -->
@@ -396,32 +397,63 @@ async function novedadATarea(id){
 }
 
 /* ---- Proyectos ----------------------------------------------------------- */
-function modalProyecto(){
-  openModal(formModal('Nuevo proyecto', `
+function modalProyecto(id = null){
+  const p = id ? S.proyectos.find(x => x.id === id) : null;
+  const modo = p?.avance_modo || 'automatico';
+  openModal(formModal(id ? 'Editar proyecto' : 'Nuevo proyecto', `
     <div><label>Nombre</label>
-      <input id="pN" placeholder="Ej. Dashboard de indicadores"></div>
+      <input id="pN" placeholder="Ej. Dashboard de indicadores" value="${esc(p?.nombre || '')}"></div>
     <div class="f2">
-      <div><label>Cliente</label><select id="pC">${optsCli('c1')}</select></div>
+      <div><label>Cliente</label><select id="pC">${optsCli(p?.cliente_id)}</select></div>
       <div><label>Estado</label><select id="pE">
-        <option value="propuesta">Propuesta</option>
-        <option value="en_curso" selected>En curso</option>
-        <option value="en_riesgo">En riesgo</option>
-        <option value="hecho">Entregado</option></select></div>
+        ${Object.entries(EST_PROYECTO).map(([k,v]) => `<option value="${k}" ${(p?.estado || 'en_curso') === k ? 'selected' : ''}>${v.l}</option>`).join('')}
+      </select></div>
     </div>
     <div class="f2">
-      <div><label>Avance (%)</label><input id="pA" type="number" value="0" min="0" max="100"></div>
-      <div><label>Fecha de entrega</label><input type="date" id="pV"></div>
-    </div>`, 'guardarProyecto()', 'Crear'));
+      <div><label>Responsable</label><select id="pR"><option value="">— Sin responsable —</option>
+        ${S.colaboradores.filter(c => c.activo !== false).map(c => `<option value="${c.id}" ${p?.responsable_id === c.id ? 'selected' : ''}>${esc(c.nombre)}</option>`).join('')}</select></div>
+      <div><label>Fecha de entrega</label><input type="date" id="pV" value="${p?.vence || ''}"></div>
+    </div>
+    <div class="f2">
+      <div><label>Cómo calcular el avance</label><select id="pModo" onchange="pintarAvanceProyecto()">
+        <option value="automatico" ${modo === 'automatico' ? 'selected' : ''}>Automático según tareas</option>
+        <option value="manual" ${modo === 'manual' ? 'selected' : ''}>Manual</option></select></div>
+      <div id="pAvanceBox"><label>Avance manual (%)</label>
+        <input id="pA" type="number" value="${p?.avance || 0}" min="0" max="100"></div>
+    </div>
+    <div><label>Objetivo / resultado esperado</label>
+      <textarea id="pNotas" placeholder="Qué debe quedar entregado y cómo sabremos que terminó">${esc(p?.notas || '')}</textarea></div>
+    <div class="f2">
+      <div><label>Repositorio (opcional)</label><input type="url" id="pRepo" placeholder="https://github.com/…" value="${esc(p?.repositorio_url || '')}"></div>
+      <div><label>Base de trabajo (opcional)</label><input type="url" id="pBase" placeholder="https://docs.google.com/…" value="${esc(p?.base_url || '')}"></div>
+    </div>`, `guardarProyecto(${id ? `'${id}'` : 'null'})`, id ? 'Guardar cambios' : 'Crear'));
+  pintarAvanceProyecto();
 }
 
-async function guardarProyecto(){
+function pintarAvanceProyecto(){
+  const box = $('#pAvanceBox');
+  if(box) box.style.display = $('#pModo')?.value === 'manual' ? 'block' : 'none';
+}
+
+const urlProyectoValida = v => !v || /^https?:\/\/[^\s]+$/i.test(v);
+
+async function guardarProyecto(id = null){
   const nombre = $('#pN').value.trim();
   if(!nombre){ toast('Escribe el nombre'); return; }
-  await db.insert('proyectos', {
-    nombre, cliente_id:$('#pC').value, estado:$('#pE').value,
-    avance:+$('#pA').value || 0, vence:$('#pV').value || null
-  });
-  closeModal(); render(); toast('Proyecto creado ✓');
+  const repositorio_url = $('#pRepo').value.trim();
+  const base_url = $('#pBase').value.trim();
+  if(!urlProyectoValida(repositorio_url) || !urlProyectoValida(base_url)){
+    toast('Los enlaces deben comenzar por http:// o https://'); return;
+  }
+  const fila = {
+    nombre, cliente_id:$('#pC').value || null, estado:$('#pE').value,
+    responsable_id:$('#pR').value || null, vence:$('#pV').value || null,
+    avance_modo:$('#pModo').value, avance:+$('#pA').value || 0,
+    notas:$('#pNotas').value.trim(), repositorio_url, base_url
+  };
+  if(id) await db.update('proyectos', id, fila);
+  else await db.insert('proyectos', { ...fila, seguimiento:[] });
+  closeModal(); render(); toast(id ? 'Proyecto actualizado ✓' : 'Proyecto creado ✓');
 }
 
 /* ---- Clientes ------------------------------------------------------------ */
