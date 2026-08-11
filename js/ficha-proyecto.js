@@ -52,6 +52,13 @@ function verProyecto(id){
           ${enlaceProyecto(p.base_url, 'Base de trabajo', '▦')}
         </div>` : ''}
 
+      <div class="tf-tit"><span>Formularios públicos</span>
+        <button class="btn sm pri" onclick="closeModal();modalFormulario('${p.id}')">+ Formulario</button></div>
+      <div class="tf-lista">
+        ${formsProyecto(p.id).length ? formsProyecto(p.id).map(tarjetaFormularioProyecto).join('')
+          : '<div class="tf-vacio">Sin formularios. Crea uno para recopilar respuestas mediante un enlace público.</div>'}
+      </div>
+
       <div class="tf-tit"><span>Tareas del proyecto</span>
         <button class="btn sm pri" onclick="closeModal();modalTarea(null,'${p.id}')">+ Tarea</button></div>
       <div class="tf-lista">

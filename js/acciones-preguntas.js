@@ -7,8 +7,9 @@
    ========================================================================== */
 
 /** Formulario de pregunta, en panel lateral para que quepa todo. */
-function modalPregunta(id = null){
+function modalPregunta(id = null, formularioPreset = null){
   const q = id ? S.preguntas.find(x => x.id === id) : null;
+  const form = !q && formularioPreset ? S.formularios.find(x => x.id === formularioPreset) : null;
   const tipo = q?.tipo || 'texto';
 
   openDrawer(`
@@ -33,13 +34,18 @@ function modalPregunta(id = null){
 
       <div class="f2">
         <div><label>Proyecto</label>
-          <select id="qProy"><option value="">— Ninguno —</option>${optsProy(q?.proyecto_id)}</select></div>
+          <select id="qProy"><option value="">— Ninguno —</option>${optsProy(q?.proyecto_id || form?.proyecto_id)}</select></div>
         <div><label>Categoría</label>
           <select id="qCat"><option value="">— Sin categoría —</option>
             ${lista('categoria').map(c =>
               `<option ${q?.categoria === c ? 'selected' : ''}>${esc(c)}</option>`).join('')}
           </select></div>
       </div>
+
+      <div><label>Formulario</label><select id="qForm">
+        <option value="">— Banco general —</option>
+        ${S.formularios.map(f => `<option value="${f.id}" ${(q?.formulario_id || formularioPreset) === f.id ? 'selected' : ''}>${esc(f.nombre)}</option>`).join('')}
+      </select></div>
 
       <div class="f2">
         <div><label>Orden</label>
@@ -119,6 +125,7 @@ async function guardarPregunta(id = null){
   const fila = {
     texto, tipo, opciones,
     proyecto_id: $('#qProy').value || null,
+    formulario_id: $('#qForm').value || null,
     categoria:   $('#qCat').value || null,
     orden:       +$('#qOrden').value || 0,
     activa:      $('#qActiva').value === '1',

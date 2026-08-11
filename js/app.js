@@ -266,6 +266,9 @@ async function iniciar(){
   initTema();
   $('#brandLogo').innerHTML = logoNexa(32, 'side');
 
+  const tokenPublico = new URLSearchParams(location.search).get('form');
+  if(tokenPublico){ await mostrarFormularioPublico(tokenPublico); return; }
+
   if(NUBE){
     const sesion = await sesionActual();
 

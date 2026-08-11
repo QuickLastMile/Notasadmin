@@ -383,6 +383,23 @@ tbody tr:hover{background:var(--surface-2)}
 .modal-proyecto .modal-b{padding:22px 26px}
 .modal-proyecto .modal-f{padding:16px 26px}
 .modal-proyecto .tf-notas{font-size:14px;line-height:1.65;white-space:pre-line}
+
+/* Formulario público */
+.pub-page{min-height:100vh;background:linear-gradient(145deg,var(--bg),var(--surface-2));padding:28px 16px 48px}
+.pub-brand{max-width:760px;margin:0 auto 18px;display:flex;align-items:center;gap:10px;color:var(--text)}
+.pub-brand b{display:block;letter-spacing:1px}.pub-brand small{display:block;color:var(--text-2)}
+.pub-card{max-width:760px;margin:auto;background:var(--surface);border:1px solid var(--border);border-radius:22px;box-shadow:var(--shadow-lg);overflow:hidden}
+.pub-head{padding:28px 30px;background:var(--brand-soft);border-bottom:1px solid var(--border)}
+.pub-head h1{font-size:25px;margin-bottom:8px}.pub-head p{color:var(--text-2);line-height:1.55;white-space:pre-line}
+.pub-pregunta{padding:22px 30px;border-bottom:1px solid var(--border)}
+.pub-pregunta>label{display:flex;align-items:flex-start;gap:9px;font-weight:650;margin-bottom:10px;line-height:1.4}
+.pub-pregunta>label span{display:grid;place-items:center;background:var(--brand-soft);color:var(--brand);border-radius:50%;width:24px;height:24px;flex:none;font-size:12px}
+.pub-pregunta>label b{color:var(--danger)}
+.pub-pregunta input,.pub-pregunta select,.pub-pregunta textarea{width:100%;padding:12px 13px;border:1.5px solid var(--border);border-radius:10px;background:var(--surface);font-size:16px}
+.pub-opciones{display:grid;gap:9px}.pub-opciones label{padding:10px;border:1px solid var(--border);border-radius:10px}.pub-opciones input{width:auto;margin-right:6px}
+.pub-privacidad,.pub-ayuda{margin:20px 30px;color:var(--text-2);font-size:12px;line-height:1.5}.pub-enviar{margin:0 30px 28px;width:calc(100% - 60px);padding:13px}
+.pub-enviado{text-align:center;padding:55px 30px}.pub-enviado span{display:grid;place-items:center;margin:0 auto 16px;width:58px;height:58px;border-radius:50%;background:var(--ok-soft);color:var(--ok);font-size:28px}.pub-enviado p{margin-top:9px;color:var(--text-2)}
+.pub-foot{text-align:center;color:var(--text-3);font-size:11px;margin-top:16px}
 .modal-h{padding:17px 20px;border-bottom:1px solid var(--border);
   display:flex;justify-content:space-between;align-items:center}
 .modal-h h3{font-size:16px;letter-spacing:-.2px}
@@ -970,6 +987,7 @@ tbody tr:hover{background:var(--surface-2)}
   .modal{max-width:100%;border-radius:22px}
   .modal.modal-proyecto{width:100%;max-width:100%}
   .modal-proyecto .modal-h,.modal-proyecto .modal-b,.modal-proyecto .modal-f{padding-left:18px;padding-right:18px}
+  .pub-page{padding:12px 10px 35px}.pub-head,.pub-pregunta{padding-left:18px;padding-right:18px}.pub-head h1{font-size:21px}.pub-card{border-radius:17px}
   .mask{padding:20px 14px 40px;align-items:flex-end}
   .f2{grid-template-columns:1fr}
 
