@@ -179,13 +179,15 @@ function rowTarea(t){
     <button class="chk ${hecho ? 'on' : ''}" onclick="toggleTarea('${t.id}')"
             title="${hecho ? 'Reabrir' : 'Marcar como hecha'}">✓</button>
 
-    <div class="row-main" style="cursor:pointer" onclick="modalTarea('${t.id}')">
+    <div class="row-main" style="cursor:pointer" onclick="verTarea('${t.id}')">
       <div class="row-t">${esc(t.titulo)}
         ${t.estado === 'en_proceso' || t.estado === 'en_espera' || cancelada
           ? `<span class="chip ${est.c}">${est.l}</span>` : ''}
         ${!cerrada && t.prioridad === 'alta' ? '<span class="chip d">Alta</span>' : ''}
         ${chipFecha}
         ${chk.length ? `<span class="chip ${chkOk === chk.length ? 'o' : 'n'}">☑ ${chkOk}/${chk.length}</span>` : ''}
+        ${(t.adjuntos || []).length ? `<span class="chip n" title="${(t.adjuntos || []).length} adjunto(s)">📎 ${(t.adjuntos || []).length}</span>` : ''}
+        ${(t.seguimiento || []).length ? `<span class="chip n" title="${(t.seguimiento || []).length} anotación(es)">💬 ${(t.seguimiento || []).length}</span>` : ''}
         ${t.repite ? `<span class="chip n" title="${esc(REPETICIONES[t.repite]?.l || '')}">🔁</span>` : ''}
       </div>
       <div class="row-s">
@@ -207,10 +209,13 @@ function rowTarea(t){
         <div class="row-s" style="margin-top:3px"><span>✎ ${esc(t.resultado.slice(0, 60))}${t.resultado.length > 60 ? '…' : ''}</span></div>` : ''}
     </div>
 
+    <button class="btn sm row-rapida" onclick="modalTarea('${t.id}')"
+            title="Editar los datos">✎</button>
     ${cerrada ? '' : `<button class="btn sm row-rapida" onclick="posponer('${t.id}')"
                             title="Empujar un día">→ 1d</button>`}
     ${menuAcciones([
-      ['Editar',           `modalTarea('${t.id}')`],
+      ['Abrir',            `verTarea('${t.id}')`],
+      ['Editar datos',     `modalTarea('${t.id}')`],
       ['Reprogramar',      `modalFecha('${t.id}')`],
       ['Duplicar',         `duplicarTarea('${t.id}')`],
       [hecho ? 'Reabrir' : 'Marcar hecha', `toggleTarea('${t.id}')`],

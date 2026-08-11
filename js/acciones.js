@@ -29,7 +29,9 @@ async function toggleTarea(id){
     const base = t.vence && diasDesde(t.vence) > 0 ? new Date(t.vence + 'T00:00:00') : new Date();
     const prox = dISO(new Date(base.getTime() + REPETICIONES[t.repite].dias * 86400000));
     const { id:_, created_at, updated_at, completada_el, ...resto } = t;
-    await db.insert('tareas', { ...resto, estado:'pendiente', vence: prox, completada_el:null });
+    await db.insert('tareas', { ...resto, estado:'pendiente', vence: prox, completada_el:null,
+      resultado:'', seguimiento:[], adjuntos:[],
+      checklist:(t.checklist || []).map(p => ({ ...p, ok:false })) });
     render();
     toast(`Hecha ✓ — la próxima queda para ${fechaTxt(prox)}`);
     return;
@@ -246,7 +248,8 @@ async function guardarTarea(id = null){
     notas:       $('#mN').value.trim()
   };
   if($('#mRes')) fila.resultado = $('#mRes').value.trim();
-  if(!id) Object.assign(fila, { completada_el: estado === 'hecho' ? hoyISO() : null, resultado:'' });
+  if(!id) Object.assign(fila, { completada_el: estado === 'hecho' ? hoyISO() : null,
+                               resultado:'', seguimiento:[], adjuntos:[] });
 
   if(id) await db.update('tareas', id, fila);
   else    await db.insert('tareas', fila);
@@ -258,8 +261,11 @@ async function guardarTarea(id = null){
 async function duplicarTarea(id){
   const t = S.tareas.find(x => x.id === id);
   const { id:_, created_at, updated_at, ...resto } = t;
+  // La copia arranca limpia: el seguimiento y los adjuntos son de la original
   await db.insert('tareas', { ...resto, titulo: t.titulo + ' (copia)',
-                              estado:'pendiente', completada_el:null });
+                              estado:'pendiente', completada_el:null,
+                              resultado:'', seguimiento:[], adjuntos:[],
+                              checklist:(t.checklist || []).map(p => ({ ...p, ok:false })) });
   render(); toast('Tarea duplicada');
 }
 

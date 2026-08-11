@@ -98,7 +98,11 @@ a{color:var(--brand)}
 aside{
   width:236px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);
   display:flex;flex-direction:column;position:sticky;top:0;height:100vh;
-  transition:width .22s cubic-bezier(.4,0,.2,1)
+  transition:width .22s cubic-bezier(.4,0,.2,1);
+  /* Un elemento flex trae `min-width:auto`, que le impide encogerse por
+     debajo del ancho mínimo de su contenido. Sin esto, al contraer la barra
+     el ancho declarado se ignoraba y se quedaba en 236 px. */
+  min-width:0
 }
 .brand{padding:18px 16px 14px;display:flex;align-items:center;gap:11px;
   border-bottom:1px solid var(--border);position:relative}
@@ -118,7 +122,11 @@ aside{
 .side-toggle:hover{color:var(--brand);border-color:var(--brand-line)}
 .side-toggle svg{width:14px;height:14px}
 
-nav{padding:12px 10px;flex:1;overflow-y:auto;overflow-x:hidden}
+nav{padding:12px 10px;flex:1;overflow-y:auto;overflow-x:hidden;scrollbar-width:thin}
+/* La barra de desplazamiento gruesa apretaba el contenido y se veía encerrado */
+nav::-webkit-scrollbar{width:5px}
+nav::-webkit-scrollbar-thumb{background:var(--border);border-radius:20px}
+nav::-webkit-scrollbar-track{background:transparent}
 .nav-lbl{font-size:9.5px;text-transform:uppercase;letter-spacing:1px;color:var(--text-3);
   padding:14px 10px 6px;font-weight:700;white-space:nowrap}
 .nav-item{display:flex;align-items:center;gap:11px;width:100%;padding:10px 11px;
@@ -142,19 +150,53 @@ nav{padding:12px 10px;flex:1;overflow-y:auto;overflow-x:hidden}
 .side-foot .ico{display:grid;place-items:center;flex-shrink:0}
 .side-foot .ico svg{width:16px;height:16px}
 
-/* ---- 3b. Barra lateral contraída: solo iconos -------------- */
-#app.mini aside{width:66px}
+/* ---- 3b. Barra lateral contraída: solo iconos --------------
+   El contador iba fuera del botón con un transform, y `overflow:hidden`
+   del nav lo recortaba. Ahora va dentro del propio botón, que se ensancha
+   lo justo para alojarlo. Los separadores de sección se colapsan del todo
+   para que los ocho iconos quepan sin scroll.
+   ------------------------------------------------------------ */
+#app.mini aside{width:72px;min-width:72px;max-width:72px}
 #app.mini .brand{padding:18px 0 14px;justify-content:center}
 #app.mini .brand-txt{display:none}
-#app.mini .nav-lbl{opacity:0;height:14px;padding:8px 0 0;overflow:hidden}
-#app.mini .nav-item{justify-content:center;padding:11px 0;gap:0}
+#app.mini nav{padding:10px 8px;overflow:visible}
+
+/* Los rótulos de sección no aportan sin texto, pero sí un separador fino */
+#app.mini .nav-lbl{
+  height:1px;padding:0;margin:9px 10px;overflow:hidden;
+  background:var(--border);color:transparent;font-size:0
+}
+#app.mini .nav-lbl:first-child{display:none}
+
+#app.mini .nav-item{
+  position:relative;justify-content:center;padding:11px 0;gap:0;
+  width:56px;margin:0 auto 3px;border-radius:14px
+}
 #app.mini .nav-item .lbl{display:none}
-#app.mini .nav-item .badge{position:absolute;margin:0;transform:translate(13px,-11px);
-  padding:0 5px;font-size:9px;line-height:15px;min-width:16px;border:2px solid var(--surface)}
-#app.mini .nav-item{position:relative}
-#app.mini .side-foot{flex-direction:column}
+#app.mini .nav-item .ico{width:22px;height:22px}
+#app.mini .nav-item .ico svg{width:21px;height:21px}
+
+/* El contador se ancla a la esquina del botón, sin salirse */
+#app.mini .nav-item .badge{
+  position:absolute;top:4px;right:6px;margin:0;
+  min-width:15px;padding:0 4px;font-size:9px;line-height:15px;
+  border:1.5px solid var(--surface)
+}
+#app.mini .nav-item.active .badge{border-color:var(--brand)}
+
+#app.mini .side-foot{flex-direction:column;padding:9px 8px}
 #app.mini .side-foot .lbl{display:none}
-#app.mini .side-foot button{padding:10px 0}
+#app.mini .side-foot button{padding:11px 0;width:56px;margin:0 auto;border-radius:13px}
+
+/* Etiqueta flotante al pasar el mouse: sin ella los iconos son adivinanza */
+#app.mini .nav-item::after{
+  content:attr(title);position:absolute;left:calc(100% + 10px);top:50%;
+  transform:translateY(-50%);white-space:nowrap;z-index:60;
+  background:var(--text);color:var(--bg);font-size:12px;font-weight:600;
+  padding:6px 10px;border-radius:8px;box-shadow:var(--shadow-lg);
+  opacity:0;pointer-events:none;transition:opacity .13s
+}
+#app.mini .nav-item:hover::after{opacity:1}
 
 main{flex:1;min-width:0;display:flex;flex-direction:column}
 .wrap{padding:24px 26px 60px;max-width:1220px;width:100%}
@@ -712,6 +754,60 @@ tbody tr:hover{background:var(--surface-2)}
 .drawer-f{padding:15px 20px;border-top:1px solid var(--border);
   display:flex;justify-content:flex-end;gap:9px;flex-shrink:0;
   padding-bottom:calc(15px + env(safe-area-inset-bottom))}
+
+/* ============================================================
+   13c-bis. FICHA DE TAREA — el espacio de trabajo
+   ============================================================ */
+.tf-cab{display:flex;gap:13px;align-items:flex-start;padding:2px 0 14px;
+  border-bottom:1px solid var(--border);margin-bottom:4px}
+.tf-meta{font-size:12px;color:var(--text-3);margin-top:7px;line-height:1.5}
+.chk.grande{width:28px;height:28px;font-size:14px;flex-shrink:0}
+
+.tf-tit{display:flex;align-items:center;justify-content:space-between;gap:10px;
+  font-size:10.5px;font-weight:700;color:var(--text-3);text-transform:uppercase;
+  letter-spacing:.8px;margin:20px 0 9px}
+
+.tf-notas{font-size:13.5px;color:var(--text-2);line-height:1.6;padding:12px 14px;
+  background:var(--surface-2);border-left:3px solid var(--border);
+  border-radius:0 11px 11px 0;white-space:pre-line}
+
+.tf-lista{display:grid;gap:6px}
+.tf-vacio{font-size:12.5px;color:var(--text-3);padding:10px 2px;font-style:italic}
+
+.tf-paso{display:flex;align-items:center;gap:11px;padding:9px 11px;
+  background:var(--surface-2);border-radius:11px;transition:.13s}
+.tf-paso span{flex:1;font-size:13.5px;min-width:0}
+.tf-paso.ok span{text-decoration:line-through;color:var(--text-3)}
+.tf-paso .btn{opacity:0;transition:.13s}
+.tf-paso:hover .btn{opacity:1}
+
+.tf-alta{display:flex;gap:8px;margin-top:9px}
+.tf-alta input{flex:1;padding:10px 13px;border:1.5px solid var(--border);
+  border-radius:11px;background:var(--bg);font-size:15px}
+.tf-alta input:focus{outline:none;border-color:var(--brand);
+  background:var(--surface);box-shadow:0 0 0 3px var(--brand-soft)}
+
+/* Bitácora: lo más nuevo arriba */
+.tf-nota{padding:11px 13px;background:var(--surface-2);border-radius:11px}
+.tf-nota-txt{font-size:13.5px;line-height:1.5;white-space:pre-line}
+.tf-nota-pie{display:flex;align-items:center;justify-content:space-between;
+  margin-top:6px;font-size:11.5px;color:var(--text-3)}
+.tf-nota-pie .btn{opacity:0;transition:.13s}
+.tf-nota:hover .btn{opacity:1}
+
+.tf-adjuntos{display:grid;gap:7px}
+.tf-adj{display:flex;align-items:center;gap:11px;padding:10px 12px;
+  background:var(--surface-2);border-radius:11px}
+.tf-adj-ico{font-size:20px;flex-shrink:0}
+.tf-adj-txt{flex:1;min-width:0}
+.tf-adj-txt strong{display:block;font-size:13.5px;overflow:hidden;
+  text-overflow:ellipsis;white-space:nowrap}
+.tf-adj-txt small{display:block;font-size:11.5px;color:var(--text-3);margin-top:1px}
+
+/* En táctil no hay hover: las acciones se ven siempre */
+@media(max-width:860px){
+  .tf-paso .btn,.tf-nota-pie .btn{opacity:1}
+}
 
 /* ============================================================
    13d. CALENDARIO

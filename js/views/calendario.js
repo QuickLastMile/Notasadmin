@@ -131,7 +131,7 @@ function celdaDia(iso){
                           color: t.estado === 'hecho' ? 'var(--text-3)'
                                : diasDesde(iso) < 0 ? 'var(--danger)' : 'var(--brand)',
                           hecho: t.estado === 'hecho',
-                          fn: `modalTarea('${t.id}')` }))
+                          fn: `verTarea('${t.id}')` }))
   ];
 
   return `

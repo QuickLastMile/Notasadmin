@@ -163,7 +163,7 @@ function seed(){
   const T = (o) => Object.assign(
     { repite:'', notas:'', completada_el:null, proyecto_id:null,
       tipo:'', persona_id:null, hora:'', espera_que:'', espera_fecha:null,
-      checklist:[], resultado:'' }, o);
+      checklist:[], resultado:'', seguimiento:[], adjuntos:[] }, o);
 
   const tareas = [
     T({id:'t1', titulo:'Pasar las facturas al bot de WhatsApp', cliente_id:'c5',
@@ -176,7 +176,12 @@ function seed(){
        proyecto_id:'p3', prioridad:'alta', estado:'en_espera', vence:t(2),
        tipo:'Seguimiento', persona_id:'co2',
        espera_que:'Aprobación del informe por parte de Diana',
-       espera_fecha:t(-1)}),
+       espera_fecha:t(-1),
+       seguimiento:[
+         {fecha:t(-4), texto:'Enviado por correo el borrador completo'},
+         {fecha:t(-2), texto:'Diana pidió agregar la pestaña de SLA'},
+         {fecha:t(-1), texto:'Reenviado con SLA. Quedó de revisarlo hoy'}
+       ]}),
     T({id:'t3', titulo:'Activar GitHub Pages en DASHALFAGRES', cliente_id:'c3',
        proyecto_id:'p4', prioridad:'media', estado:'pendiente', vence:t(0)}),
     T({id:'t4', titulo:'Reunión seguimiento coordinadores Cafam', cliente_id:'c1',
