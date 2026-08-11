@@ -133,6 +133,32 @@ function cfgPendiente(item){
    ========================================================================== */
 const SECCIONES = {
 
+/* ---- Notificaciones ----------------------------------------------------- */
+notif(){
+  const p=notifPrefs(), permiso=!('Notification' in window)?'no_disponible':Notification.permission;
+  const fila=(titulo,sub,clave)=>`<div class="cfg-fila"><div class="cfg-fila-txt"><strong>${titulo}</strong><small>${sub}</small></div>
+    <button class="switch ${p[clave]!==false?'on':''}" onclick="cambiarPreferenciaNotif('${clave}',${p[clave]===false})" aria-label="${titulo}"></button></div>`;
+  return `${cfgHead('Notificaciones','Elige qué necesita seguimiento y cómo quieres recibirlo.',
+    `<button class="btn" onclick="go('notificaciones')">Ver centro de avisos</button>`)}
+    <div class="cfg-tit-sec">Avisos del navegador</div>
+    <div class="cfg-lista"><div class="cfg-fila"><div class="cfg-fila-txt"><strong>Permiso del navegador</strong>
+      <small>${permiso==='granted'?'Autorizado en este dispositivo':permiso==='denied'?'Bloqueado en la configuración del navegador':'Todavía no autorizado'}</small></div>
+      <span class="chip ${permiso==='granted'?'o':permiso==='denied'?'d':'w'}">${permiso==='granted'?'Activo':permiso==='denied'?'Bloqueado':'Pendiente'}</span>
+      ${permiso!=='granted'?`<button class="btn pri" onclick="permisoNotificaciones()">Activar</button>`:`<button class="btn" onclick="probarNotificacion()">Enviar prueba</button>`}</div></div>
+    <div class="cfg-nota"><p>El aviso aparece cuando NEXA está abierta o instalada y activa. Para garantizar envíos con el navegador completamente cerrado se necesitará un servicio programado; podrá conectarse después con Telegram.</p></div>
+    <div class="cfg-tit-sec">Qué debe avisarme</div><div class="cfg-lista">
+      ${fila('Tareas','Vencidas, para hoy y seguimientos atrasados.','tareas')}
+      ${fila('Proyectos','En riesgo o próximos a su fecha de entrega.','proyectos')}
+      ${fila('Caja menor','Movimientos sin legalizar y saldo bajo.','caja')}
+      ${fila('Formularios','Respuestas recibidas durante las últimas 24 horas.','formularios')}
+      ${fila('Novedades','Novedades críticas todavía abiertas.','novedades')}
+      ${fila('Calendario','Fechas y eventos dentro de su ventana de aviso.','calendario')}
+    </div>
+    <div class="cfg-tit-sec">Anticipación para proyectos</div><div class="cfg-lista"><div class="cfg-fila">
+      <div class="cfg-fila-txt"><strong>Avisar antes del vencimiento</strong><small>Se aplica a proyectos activos con fecha de entrega.</small></div>
+      <select onchange="cambiarPreferenciaNotif('anticipacion',+this.value)">${[1,2,3,5,7,15].map(d=>`<option value="${d}" ${+p.anticipacion===d?'selected':''}>${d} día${d===1?'':'s'} antes</option>`).join('')}</select></div></div>`;
+},
+
 /* ---- Campos personalizados ---------------------------------------------- */
 campos(){
   const q = cfgBuscar.toLowerCase();

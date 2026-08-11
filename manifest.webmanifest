@@ -1,0 +1,6 @@
+{
+  "name":"NEXA — Centro de Gestión","short_name":"NEXA","start_url":"./","display":"standalone",
+  "background_color":"#F7F0E5","theme_color":"#800000","lang":"es-CO",
+  "icons":[{"src":"assets/nexa-icon.svg","sizes":"any","type":"image/svg+xml","purpose":"any maskable"}]
+}
+

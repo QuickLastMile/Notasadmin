@@ -8,6 +8,8 @@ let vista = 'inicio';
 const MENU = [
   { sec:'Diario' },
   { id:'inicio',    ico:ICO.inicio,    lbl:'Inicio',      vista:m => vInicio(m) },
+  { id:'notificaciones', ico:ICO.campana, lbl:'Notificaciones', lblCorto:'Avisos',
+    vista:m => vNotificaciones(m), badge:() => notificacionesPendientes() },
   { id:'tareas',    ico:ICO.tareas,    lbl:'Tareas',      vista:m => vTareas(m),    badge:m => m.vencidas.length },
   { id:'novedades', ico:ICO.novedades, lbl:'Novedades',   vista:m => vNovedades(m), badge:m => m.novCriticas.length },
   { id:'calendario',ico:ICO.calendario,lbl:'Calendario',  vista:m => vCalendario(m),
@@ -288,6 +290,7 @@ async function iniciar(){
   aplicarBarra();
   renderPieLateral();
   render();
+  iniciarNotificaciones();
   quitarSplash();
 }
 

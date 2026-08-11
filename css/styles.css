@@ -729,6 +729,15 @@ tbody tr:hover{background:var(--surface-2)}
 .cfg-pendiente{padding:26px;border:1px dashed var(--border);border-radius:var(--radius)}
 .cfg-pendiente p{font-size:13.5px;color:var(--text-2);line-height:1.6;margin:13px 0}
 .cfg-pendiente small{font-size:12px;color:var(--text-3);line-height:1.55;display:block}
+.notif-resumen{display:flex;align-items:center;gap:14px;padding:18px;margin-bottom:18px;border:1px solid var(--border);border-radius:var(--radius);background:var(--surface)}
+.notif-resumen>div{flex:1}.notif-resumen strong,.notif-resumen small{display:block}.notif-resumen small{color:var(--text-3);margin-top:3px;font-size:12px}
+.notif-campana{width:42px;height:42px;border-radius:12px;display:grid;place-items:center;background:var(--brand-soft);color:var(--brand)}.notif-campana svg{width:21px}
+.notif-lista{border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;background:var(--surface)}
+.notif-fila{display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--border)}.notif-fila:last-child{border-bottom:0}.notif-fila.atendida{opacity:.58}
+.notif-contenido{display:flex;align-items:flex-start;gap:12px;flex:1;min-width:0;text-align:left}.notif-contenido>span:last-child{min-width:0}.notif-contenido strong,.notif-contenido small,.notif-contenido em{display:block}
+.notif-contenido strong{font-size:13.5px}.notif-contenido small{font-size:12px;color:var(--text-2);margin-top:3px;line-height:1.4}.notif-contenido em{font-size:10.5px;color:var(--text-3);margin-top:5px;font-style:normal}
+.notif-ico{width:36px;height:36px;border-radius:10px;display:grid;place-items:center;background:var(--surface-2);flex:none}.notif-ico.d{background:var(--danger-soft)}.notif-ico.w{background:var(--warn-soft)}
+.notif-vacio{text-align:center;padding:38px 18px;color:var(--text-2);font-size:13px}
 
 .cfg-movil{display:none}
 
@@ -1012,6 +1021,7 @@ tbody tr:hover{background:var(--surface-2)}
   .cfg-fila{padding:14px}
   .cfg-fila .seg,.cfg-fila .colores{margin-left:auto}
   .cfg-panel{display:flex;flex-direction:column}
+  .notif-resumen{align-items:flex-start;flex-wrap:wrap}.notif-resumen .btn{width:100%}.notif-fila{align-items:flex-start}.notif-fila>.btn{font-size:0}.notif-fila>.btn:after{content:'✓';font-size:13px}
 
   /* El drawer entra desde abajo, que es donde alcanza el pulgar */
   .drawer{top:auto;left:0;right:0;width:100%;max-height:92vh;
