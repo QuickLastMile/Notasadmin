@@ -8,9 +8,11 @@
    ========================================================================== */
 
 let clienteAbierto = null;
+let colabAbierto   = null;
 
 function abrirCliente(id){
   clienteAbierto = clienteAbierto === id ? null : id;
+  if(!clienteAbierto) colabAbierto = null;   // al cerrar el cliente, cerrar su ficha
   render();
 }
 
@@ -107,51 +109,113 @@ function tarjetaCliente(c){
   </div>`;
 }
 
-/* ---- Fila de colaborador: la ficha y el pulso de sus tareas --------------- */
+/* ---- Fila de colaborador: se expande al tocarla --------------------------- */
+function abrirColaborador(id){
+  colabAbierto = colabAbierto === id ? null : id;
+  render();
+}
+
 function filaColaborador(co){
-  const tks = S.tareas.filter(t => t.persona_id === co.id);
+  const abierto = colabAbierto === co.id;
+
+  const tks  = S.tareas.filter(t => t.persona_id === co.id);
   const pend = tks.filter(t => t.estado !== 'hecho' && t.estado !== 'cancelada');
   const ven  = pend.filter(t => t.vence && diasDesde(t.vence) < 0).length;
   const esp  = pend.filter(t => t.estado === 'en_espera').length;
+  const hechas = tks.filter(t => t.estado === 'hecho');
 
-  // El último movimiento con esta persona: para saber hace cuánto no se le hace seguimiento
-  const ultima = tks
-    .map(t => t.completada_el || t.vence)
-    .filter(Boolean)
-    .sort()
-    .at(-1);
+  const novs = S.novedades.filter(n => n.persona_id === co.id);
+  const novAbiertas = novs.filter(n => n.estado !== 'cerrada').length;
+  const evs = S.eventos.filter(e => e.persona_id === co.id);
 
+  // El último movimiento con esta persona: hace cuánto no se le hace seguimiento
+  const ultima = tks.map(t => t.completada_el || t.vence).filter(Boolean).sort().at(-1);
   const contacto = [co.celular, co.correo].filter(Boolean);
 
   return `
-  <div class="row" style="${co.activo === false ? 'opacity:.55' : ''}">
-    <span class="dot" style="width:9px;height:9px;background:${cli(co.cliente_id).color}"></span>
-    <div class="row-main">
-      <div class="row-t">${esc(co.nombre)}
-        <span class="chip n">${esc(co.cargo || '—')}</span>
-        ${co.activo === false ? '<span class="chip n">Inactivo</span>' : ''}
+  <div class="colab ${abierto ? 'abierto' : ''} ${co.activo === false ? 'inactivo' : ''}">
+    <div class="row" style="cursor:pointer" onclick="abrirColaborador('${co.id}')">
+      <span class="dot" style="width:9px;height:9px;background:${cli(co.cliente_id).color}"></span>
+      <div class="row-main">
+        <div class="row-t">${esc(co.nombre)}
+          <span class="chip n">${esc(co.cargo || '—')}</span>
+          ${ven ? `<span class="chip d">${ven} vencida${ven > 1 ? 's' : ''}</span>` : ''}
+          ${esp ? `<span class="chip w">⏳ ${esp}</span>` : ''}
+          ${novAbiertas ? `<span class="chip d">⚠ ${novAbiertas}</span>` : ''}
+          ${co.activo === false ? '<span class="chip n">Inactivo</span>' : ''}
+        </div>
+        <div class="row-s">
+          ${co.cedula ? `<span>CC ${esc(co.cedula)}</span>` : ''}
+          ${co.area ? `<span>${esc(co.area)}</span>` : ''}
+          ${contacto.length ? `<span>${contacto.map(esc).join(' · ')}</span>` : ''}
+          <span>${pend.length} pendiente${pend.length === 1 ? '' : 's'}</span>
+        </div>
       </div>
-      <div class="row-s">
-        ${co.cedula ? `<span>CC ${esc(co.cedula)}</span>` : ''}
-        ${co.area ? `<span>${esc(co.area)}</span>` : ''}
-        ${co.ciudad ? `<span>${esc(co.ciudad)}</span>` : ''}
-        ${contacto.length ? `<span>${contacto.map(esc).join(' · ')}</span>` : ''}
-      </div>
-      <div class="row-s" style="margin-top:3px">
-        <span>Pendientes: <strong>${pend.length}</strong></span>
-        ${ven ? `<span style="color:var(--danger)">Vencidas: <strong>${ven}</strong></span>` : ''}
-        ${esp ? `<span style="color:var(--warn)">En espera: <strong>${esp}</strong></span>` : ''}
-        ${ultima ? `<span>Último seguimiento: ${fechaTxt(ultima)}</span>` : ''}
-        ${co.notas ? `<span title="${esc(co.notas)}">📝 ${esc(co.notas.slice(0, 40))}${co.notas.length > 40 ? '…' : ''}</span>` : ''}
-      </div>
+      ${co.celular ? `
+        <a class="btn sm" href="https://wa.me/${normalizarWhatsapp(co.celular)}" target="_blank"
+           rel="noopener" title="Escribirle por WhatsApp" onclick="event.stopPropagation()">💬</a>` : ''}
+      ${menuAcciones([
+        ['Nueva tarea para él/ella', `tareaParaPersona('${co.id}')`],
+        ['Editar',   `modalColaborador('${co.id}')`],
+        ['Eliminar', `eliminarColaborador('${co.id}')`, 'peligro']
+      ])}
+      <span class="cfg-chevron">${abierto ? ICO.plegar : ICO.desplegar}</span>
     </div>
-    ${co.celular ? `
-      <a class="btn sm" href="https://wa.me/${normalizarWhatsapp(co.celular)}" target="_blank"
-         rel="noopener" title="Escribirle por WhatsApp" onclick="event.stopPropagation()">💬</a>` : ''}
-    ${menuAcciones([
-      ['Nueva tarea para él/ella', `tareaParaPersona('${co.id}')`],
-      ['Editar',   `modalColaborador('${co.id}')`],
-      ['Eliminar', `eliminarColaborador('${co.id}')`, 'peligro']
-    ])}
+
+    ${abierto ? `
+    <div class="colab-detalle">
+
+      <div class="colab-datos">
+        ${[['Cédula', co.cedula], ['Cargo', co.cargo], ['Área', co.area],
+           ['Ciudad', co.ciudad], ['Celular', co.celular], ['Correo', co.correo]]
+          .filter(([, v]) => v).map(([k, v]) => `
+            <div><span>${k}</span><strong>${esc(v)}</strong></div>`).join('')}
+      </div>
+
+      ${co.notas ? `<div class="tf-notas" style="margin-bottom:13px">${esc(co.notas)}</div>` : ''}
+
+      <div class="colab-cifras">
+        ${[[pend.length, 'Pendientes', ''],
+           [ven, 'Vencidas', ven ? 'var(--danger)' : ''],
+           [esp, 'En espera', esp ? 'var(--warn)' : ''],
+           [hechas.length, 'Completadas', hechas.length ? 'var(--ok)' : ''],
+           [novs.length, 'Novedades', novAbiertas ? 'var(--danger)' : '']
+          ].map(([v, l, c]) => `
+          <div><strong style="${c ? `color:${c}` : ''}">${v}</strong><span>${l}</span></div>`).join('')}
+      </div>
+
+      ${ultima ? `<div class="colab-ultimo">Último seguimiento: ${fechaTxt(ultima)}</div>` : ''}
+
+      ${pend.length ? `
+        <div class="tf-tit" style="margin-top:16px"><span>Tareas pendientes</span></div>
+        <div class="colab-lista">${pend.sort(ordenTareas).map(rowTarea).join('')}</div>` : ''}
+
+      ${novs.length ? `
+        <div class="tf-tit"><span>Novedades relacionadas</span></div>
+        <div class="colab-lista">${novs.slice(0, 5).map(filaNovedad).join('')}</div>` : ''}
+
+      ${evs.length ? `
+        <div class="tf-tit"><span>En el calendario</span></div>
+        <div class="colab-lista">
+          ${evs.map(ev => {
+            const prox = proximaOcurrencia(ev);
+            return `<div class="row" style="cursor:pointer" onclick="verEvento('${ev.id}')">
+              <span style="font-size:18px">${tipoEvento(ev.tipo).ico}</span>
+              <div class="row-main">
+                <div class="row-t">${esc(ev.titulo)}</div>
+                <div class="row-s"><span>${prox ? fechaTxt(prox) : 'Ya pasó'}</span></div>
+              </div>
+            </div>`;
+          }).join('')}
+        </div>` : ''}
+
+      <div class="colab-acciones">
+        <button class="btn" onclick="modalColaborador('${co.id}')">✎ Editar datos</button>
+        ${co.celular ? `<a class="btn" href="https://wa.me/${normalizarWhatsapp(co.celular)}"
+           target="_blank" rel="noopener">💬 Escribirle</a>` : ''}
+        ${co.correo ? `<a class="btn" href="mailto:${esc(co.correo)}">✉ Correo</a>` : ''}
+        <button class="btn pri" onclick="tareaParaPersona('${co.id}')">+ Tarea</button>
+      </div>
+    </div>` : ''}
   </div>`;
 }

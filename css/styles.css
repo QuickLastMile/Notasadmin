@@ -722,16 +722,17 @@ tbody tr:hover{background:var(--surface-2)}
 .btn.peligro{background:var(--danger);border-color:var(--danger);color:#fff}
 .btn.peligro:hover{filter:brightness(1.08);color:#fff}
 
-/* ---- Menú de acciones (⋮) --------------------------------- */
-.pop-wrap{position:relative;flex-shrink:0}
+/* ---- Menú de acciones (⋮) ---------------------------------
+   El menú vive pegado al <body> con position:fixed. Dentro de la fila
+   quedaba recortado por el overflow:hidden de las tarjetas.
+   ------------------------------------------------------------ */
 .pop-btn{width:30px;height:30px;border-radius:9px;color:var(--text-3);font-size:17px;
-  display:grid;place-items:center;transition:.13s;line-height:1}
+  display:grid;place-items:center;transition:.13s;line-height:1;flex-shrink:0}
 .pop-btn:hover{background:var(--surface-2);color:var(--text)}
-.pop{position:absolute;right:0;top:calc(100% + 5px);z-index:60;min-width:168px;
+.pop{position:fixed;z-index:300;min-width:190px;
   background:var(--surface);border:1px solid var(--border);border-radius:12px;
   box-shadow:var(--shadow-lg);padding:5px;display:none}
 .pop.on{display:block}
-.pop.arriba{top:auto;bottom:calc(100% + 5px)}
 .pop-item{display:block;width:100%;text-align:left;padding:9px 12px;border-radius:8px;
   font-size:13.5px;color:var(--text);transition:.12s}
 .pop-item:hover{background:var(--surface-2)}
@@ -807,6 +808,49 @@ tbody tr:hover{background:var(--surface-2)}
 /* En táctil no hay hover: las acciones se ven siempre */
 @media(max-width:860px){
   .tf-paso .btn,.tf-nota-pie .btn{opacity:1}
+}
+
+/* ============================================================
+   13c-quater. COLABORADOR EXPANDIBLE
+   ============================================================ */
+.colab{border-bottom:1px solid var(--border);transition:background .14s}
+.colab:last-child{border-bottom:none}
+.colab > .row{border-bottom:none}
+.colab.abierto{background:var(--surface-2)}
+.colab.abierto > .row{background:transparent}
+.colab.inactivo{opacity:.55}
+
+.colab-detalle{padding:2px 18px 18px;animation:desplegar .18s ease}
+@keyframes desplegar{from{opacity:0;transform:translateY(-5px)}to{opacity:1;transform:none}}
+
+.colab-datos{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));
+  gap:10px;margin-bottom:13px}
+.colab-datos > div{background:var(--surface);border:1px solid var(--border);
+  border-radius:11px;padding:9px 12px;min-width:0}
+.colab-datos span{display:block;font-size:9.5px;text-transform:uppercase;
+  letter-spacing:.6px;color:var(--text-3);font-weight:700}
+.colab-datos strong{display:block;font-size:13px;margin-top:2px;
+  overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+.colab-cifras{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;text-align:center;
+  background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 8px}
+.colab-cifras strong{display:block;font-size:19px;font-weight:750;line-height:1.1}
+.colab-cifras span{display:block;font-size:9.5px;text-transform:uppercase;
+  letter-spacing:.4px;color:var(--text-3);font-weight:700;margin-top:3px}
+
+.colab-ultimo{font-size:12px;color:var(--text-3);margin-top:10px;text-align:center}
+
+.colab-lista{background:var(--surface);border:1px solid var(--border);
+  border-radius:12px;overflow:hidden}
+.colab-lista .row:last-child{border-bottom:none}
+
+.colab-acciones{display:flex;gap:8px;margin-top:16px;flex-wrap:wrap}
+.colab-acciones .btn{flex:1;text-align:center;min-width:110px}
+
+@media(max-width:860px){
+  .colab-detalle{padding:2px 14px 16px}
+  .colab-cifras{grid-template-columns:repeat(3,1fr);gap:10px}
+  .colab-datos{grid-template-columns:1fr 1fr}
 }
 
 /* ============================================================

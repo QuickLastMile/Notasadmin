@@ -71,30 +71,69 @@ async function ejecutarPeligro(){
   if(fn) await fn();
 }
 
-/* ---- Menú de acciones (⋮) ------------------------------------------------ */
+/* ---- Menú de acciones (⋮) ------------------------------------------------
+   El menú se dibuja en una capa suelta pegada al <body>, no dentro de la
+   fila. Si viviera dentro, cualquier ancestro con `overflow:hidden` —y casi
+   todas las tarjetas lo tienen, para redondear sus esquinas— lo recortaría.
+   Las acciones viajan en un atributo, así sobreviven a cada repintado.
+   -------------------------------------------------------------------------- */
+
 /** @param acciones  [[etiqueta, llamada, 'peligro'?], …] */
 function menuAcciones(acciones){
-  const items = acciones.map(([l, fn, tono]) =>
-    `<button class="pop-item ${tono || ''}" onclick="cerrarPop();${fn}">${esc(l)}</button>`).join('');
-  return `<div class="pop-wrap">
-    <button class="pop-btn" onclick="abrirPop(this)" aria-label="Acciones">⋮</button>
-    <div class="pop">${items}</div>
-  </div>`;
+  return `<button class="pop-btn" aria-label="Acciones"
+    data-acc="${esc(JSON.stringify(acciones))}"
+    onclick="event.stopPropagation();abrirPop(this)">⋮</button>`;
 }
 
+let _popBtn = null;
+
 function abrirPop(btn){
-  const pop = btn.nextElementSibling;
-  const yaAbierto = pop.classList.contains('on');
+  // Volver a pulsar el mismo botón cierra
+  if(_popBtn === btn){ cerrarPop(); return; }
   cerrarPop();
-  if(!yaAbierto){
-    pop.classList.add('on');
-    // Si no cabe abajo, se abre hacia arriba
-    const r = pop.getBoundingClientRect();
-    if(r.bottom > innerHeight - 8) pop.classList.add('arriba');
+
+  let acciones;
+  try{ acciones = JSON.parse(btn.dataset.acc); }catch{ return; }
+
+  let capa = $('#popMenu');
+  if(!capa){
+    capa = document.createElement('div');
+    capa.id = 'popMenu';
+    capa.className = 'pop';
+    document.body.appendChild(capa);
   }
+
+  capa.innerHTML = acciones.map(([l, fn, tono]) =>
+    `<button class="pop-item ${tono || ''}" onclick="cerrarPop();${fn}">${esc(l)}</button>`).join('');
+  capa.classList.add('on');
+
+  const r = btn.getBoundingClientRect();
+  const m = capa.getBoundingClientRect();
+  const margen = 8;
+
+  // Alineado a la derecha del botón, y hacia arriba si abajo no cabe
+  let izq = r.right - m.width;
+  let arr = r.bottom + 5;
+  if(arr + m.height > innerHeight - margen) arr = r.top - m.height - 5;
+  if(arr < margen) arr = margen;
+  izq = Math.max(margen, Math.min(izq, innerWidth - m.width - margen));
+
+  capa.style.left = izq + 'px';
+  capa.style.top  = arr + 'px';
+  _popBtn = btn;
 }
-const cerrarPop = () => $$('.pop.on').forEach(p => p.classList.remove('on', 'arriba'));
-document.addEventListener('click', e => { if(!e.target.closest('.pop-wrap')) cerrarPop(); });
+
+function cerrarPop(){
+  $('#popMenu')?.classList.remove('on');
+  _popBtn = null;
+}
+
+document.addEventListener('click', e => {
+  if(!e.target.closest('.pop-btn') && !e.target.closest('#popMenu')) cerrarPop();
+});
+// Al ser una capa fija, si la página se mueve el menú quedaría desalineado
+addEventListener('scroll', cerrarPop, true);
+addEventListener('resize', cerrarPop);
 
 /* ---- Fragmentos comunes -------------------------------------------------- */
 
