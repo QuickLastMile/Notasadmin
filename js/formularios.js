@@ -61,7 +61,9 @@ function verFormularioAdmin(id){
         <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn pri" onclick="copiarLinkFormulario('${f.id}')">Copiar enlace</button>
         <a class="btn" href="${esc(urlFormulario(f))}" target="_blank" rel="noopener">Abrir formulario ↗</a></div></div>`:
         `<div class="cfg-nota"><b>Publica el formulario para generar su enlace.</b></div>`}
-      <div class="tf-tit"><span>Preguntas</span><button class="btn sm pri" onclick="closeModal();modalPregunta(null,'${f.id}')">+ Pregunta</button></div>
+      <div class="tf-tit"><span>Preguntas</span><div style="display:flex;gap:7px;flex-wrap:wrap">
+        <button class="btn sm" onclick="agregarDesdeBanco('${f.id}')">＋ Desde el banco</button>
+        <button class="btn sm pri" onclick="closeModal();modalPregunta(null,'${f.id}')">+ Nueva pregunta</button></div></div>
       <div class="tf-lista">${qs.length?qs.map((q,i)=>`<button class="form-pregunta-admin ${q.tipo==='encabezado'?'encabezado':''}" onclick="closeModal();modalPregunta('${q.id}')">
         <span class="orden">${q.tipo==='encabezado'?'§':qs.slice(0,i+1).filter(x=>x.tipo!=='encabezado').length}</span><span><b>${esc(q.texto)}</b><small style="display:block;color:var(--text-3);margin-top:3px">${esc(TIPOS_RESPUESTA[q.tipo]?.l||q.tipo)}${q.obligatoria?' · OBLIGATORIA':''}</small></span><span>✎</span></button>`).join(''):'<div class="tf-vacio">Agrega preguntas o encabezados para organizar el formulario.</div>'}</div>
       <div class="tf-tit"><span>Respuestas recientes</span><div><button class="btn sm" onclick="recargarRespuestas('${f.id}')">↻ Actualizar</button> <button class="btn sm" onclick="exportarRespuestas('${f.id}')" ${rs.length?'':'disabled'}>⬇ Excel CSV</button></div></div>
@@ -72,6 +74,32 @@ function verFormularioAdmin(id){
 
 async function copiarLinkFormulario(id){const f=S.formularios.find(x=>x.id===id);await navigator.clipboard.writeText(urlFormulario(f));toast('Enlace copiado');}
 async function recargarRespuestas(id){if(NUBE){const {data,error}=await sb.from('respuestas').select('*').eq('formulario_id',id);if(error){toast(error.message);return;}S.respuestas=S.respuestas.filter(r=>r.formulario_id!==id).concat(data||[]);}verFormularioAdmin(id);toast('Respuestas actualizadas');}
+
+function agregarDesdeBanco(formularioId){
+  const f=S.formularios.find(x=>x.id===formularioId),actuales=new Set(preguntasForm(formularioId).map(q=>q.texto.trim().toLowerCase()));
+  const banco=S.preguntas.filter(q=>q.activa!==false&&q.formulario_id!==formularioId&&!actuales.has(q.texto.trim().toLowerCase()))
+    .sort((a,b)=>(a.categoria||'').localeCompare(b.categoria||'')||(a.orden||0)-(b.orden||0));
+  openModal(`<div class="modal-h"><h3 style="flex:1">Agregar desde el banco</h3><button class="btn sm" onclick="closeModal();verFormularioAdmin('${formularioId}')">✕</button></div>
+    <div class="modal-b"><p style="color:var(--text-2);font-size:13px">Selecciona preguntas ya creadas. Se copiarán a <b>${esc(f.nombre)}</b> sin modificar las originales.</p>
+      ${banco.length?`<div class="tf-lista">${banco.map(q=>`<label class="form-pregunta-admin ${q.tipo==='encabezado'?'encabezado':''}" style="cursor:pointer">
+        <input type="checkbox" class="banco-check" value="${q.id}" style="width:18px;height:18px">
+        <span><b>${esc(q.texto)}</b><small style="display:block;color:var(--text-3);margin-top:3px">${esc(q.categoria||'Sin categoría')} · ${esc(TIPOS_RESPUESTA[q.tipo]?.l||q.tipo)}</small></span><span></span></label>`).join('')}</div>`:
+        '<div class="tf-vacio">No hay preguntas disponibles en el banco, o todas ya están en este formulario.</div>'}
+    </div><div class="modal-f"><button class="btn" onclick="closeModal();verFormularioAdmin('${formularioId}')">Cancelar</button>
+      <button class="btn pri" onclick="confirmarBanco('${formularioId}')" ${banco.length?'':'disabled'}>Agregar seleccionadas</button></div>`,'modal-proyecto');
+}
+
+async function confirmarBanco(formularioId){
+  const ids=[...document.querySelectorAll('.banco-check:checked')].map(x=>x.value);
+  if(!ids.length){toast('Selecciona al menos una pregunta');return;}
+  const f=S.formularios.find(x=>x.id===formularioId);let orden=Math.max(0,...preguntasForm(formularioId).map(q=>q.orden||0));
+  for(const id of ids){
+    const q=S.preguntas.find(x=>x.id===id);if(!q)continue;
+    await db.insert('preguntas',{texto:q.texto,tipo:q.tipo,opciones:[...(q.opciones||[])],proyecto_id:f.proyecto_id,
+      formulario_id:formularioId,categoria:q.categoria||null,orden:++orden,activa:true,obligatoria:q.tipo==='encabezado'?false:!!q.obligatoria});
+  }
+  verFormularioAdmin(formularioId);toast(`${ids.length} pregunta${ids.length===1?'':'s'} agregada${ids.length===1?'':'s'}`);
+}
 
 function exportarRespuestas(id){
   const f=S.formularios.find(x=>x.id===id),qs=preguntasForm(id),rs=respuestasForm(id),sep=';';
