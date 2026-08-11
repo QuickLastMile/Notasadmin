@@ -19,6 +19,7 @@ const ICO = {
   clientes:  svg('<circle cx="9" cy="8" r="3.4"/><path d="M2.8 20a6.2 6.2 0 0 1 12.4 0"/><path d="M16.2 5.2a3.4 3.4 0 0 1 0 5.6"/><path d="M17.6 14.4A6.2 6.2 0 0 1 21.2 20"/>'),
   enlaces:   svg('<rect x="3" y="3.5" width="7.5" height="7.5" rx="1.8"/><rect x="13.5" y="3.5" width="7.5" height="7.5" rx="1.8"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.8"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.8"/>'),
   config:    svg('<path d="M4 6.5h6M14 6.5h6M4 12h10M18 12h2M4 17.5h4M12 17.5h8"/><circle cx="12" cy="6.5" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="10" cy="17.5" r="2"/>'),
+  calendario: svg('<rect x="3" y="5" width="18" height="16" rx="2.4"/><path d="M3 10h18M8 3v4M16 3v4"/><circle cx="8.5" cy="14.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="12" cy="14.5" r="1.1" fill="currentColor" stroke="none"/>'),
   mas:       svg('<circle cx="5" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.4" fill="currentColor" stroke="none"/>'),
 
   // Configuración

@@ -11,13 +11,13 @@
      hoy | mañana | viernes | +3d  →  fecha de vencimiento
    ========================================================================== */
 
-const TIPOS = { t:'tarea', g:'gasto', i:'ingreso', n:'novedad', l:'enlace', p:'proyecto' };
+const TIPOS = { t:'tarea', g:'gasto', i:'ingreso', n:'novedad', l:'enlace', p:'proyecto', e:'evento' };
 const DIAS  = { domingo:0, lunes:1, martes:2, miercoles:3, 'miércoles':3,
                 jueves:4, viernes:5, sabado:6, 'sábado':6 };
 
 const ICONO_TIPO = {
   tarea:'✓ Tarea', gasto:'💸 Gasto', ingreso:'💰 Ingreso',
-  novedad:'⚠️ Novedad', enlace:'🔗 Enlace', proyecto:'📁 Proyecto'
+  novedad:'⚠️ Novedad', enlace:'🔗 Enlace', proyecto:'📁 Proyecto', evento:'📅 Evento'
 };
 
 /** Convierte el texto libre en un objeto estructurado. Devuelve null si no hay nada. */
@@ -26,7 +26,7 @@ function parse(entrada){
   if(!t) return null;
 
   // Prefijo de tipo
-  const mt = t.match(/^([tgnilp])\s*:\s*/i);
+  const mt = t.match(/^([tgnilpe])\s*:\s*/i);
   const tipo = mt ? TIPOS[mt[1].toLowerCase()] : 'tarea';
   if(mt) t = t.slice(mt[0].length);
 
@@ -88,7 +88,7 @@ function parse(entrada){
 
   r.texto = t.replace(/\s{2,}/g, ' ').trim();
   if(!r.texto && !r.monto) return null;
-  if(!r.vence && tipo === 'tarea') r.vence = hoyISO();
+  if(!r.vence && (tipo === 'tarea' || tipo === 'evento')) r.vence = hoyISO();
   return r;
 }
 
@@ -153,6 +153,16 @@ async function commitCap(){
     case 'proyecto':
       await db.insert('proyectos', { nombre:p.texto, cliente_id:cid,
         estado:'propuesta', avance:0, vence:p.vence });
+      break;
+    case 'evento':
+      // Captura mínima: recordatorio en la fecha indicada. El tipo y lo
+      // demás se ajustan después desde el calendario.
+      await db.insert('eventos', {
+        tipo:'recordatorio', titulo:p.texto, fecha: p.vence || hoyISO(),
+        fecha_fin:null, hora:'', hora_fin:'', lugar:'', asistentes:'', agenda:'',
+        monto:0, persona_id:null, beneficiario_id:null, cliente_id: p.cliente_id || null,
+        aviso:1, notas:''
+      });
       break;
   }
 

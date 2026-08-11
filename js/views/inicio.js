@@ -16,6 +16,16 @@ function alertasDelDia(m){
       titulo:`${m.novCriticas.length} novedad${m.novCriticas.length > 1 ? 'es' : ''} crítica${m.novCriticas.length > 1 ? 's' : ''} sin cerrar`,
       sub: m.novCriticas[0].titulo, ir:'novedades' });
 
+  if(m.eventosAviso.length)
+    a.push({ tono: m.eventosAviso.some(x => x.faltan === 0) ? 'd' : 'w', ico:'🔔',
+      titulo: m.eventosAviso.length === 1
+        ? `${tipoEvento(m.eventosAviso[0].ev.tipo).l}: ${m.eventosAviso[0].ev.titulo}`
+        : `${m.eventosAviso.length} fechas se vienen`,
+      sub: m.eventosAviso.slice(0, 2).map(x =>
+        `${x.ev.titulo} ${x.faltan === 0 ? 'hoy' : x.faltan === 1 ? 'mañana' : `en ${x.faltan} días`}`
+      ).join(' · '),
+      ir:'calendario' });
+
   if(m.esperaAtrasada.length)
     a.push({ tono:'w', ico:'⏳',
       titulo:`${m.esperaAtrasada.length} seguimiento${m.esperaAtrasada.length > 1 ? 's' : ''} atrasado${m.esperaAtrasada.length > 1 ? 's' : ''}`,

@@ -10,6 +10,8 @@ const MENU = [
   { id:'inicio',    ico:ICO.inicio,    lbl:'Inicio',      vista:m => vInicio(m) },
   { id:'tareas',    ico:ICO.tareas,    lbl:'Tareas',      vista:m => vTareas(m),    badge:m => m.vencidas.length },
   { id:'novedades', ico:ICO.novedades, lbl:'Novedades',   vista:m => vNovedades(m), badge:m => m.novCriticas.length },
+  { id:'calendario',ico:ICO.calendario,lbl:'Calendario',  vista:m => vCalendario(m),
+    badge:m => m.eventosHoy.length },
   { sec:'Gestión' },
   { id:'caja',      ico:ICO.caja,      lbl:'Caja menor',  lblCorto:'Caja',
     vista:m => vCaja(m), badge:m => m.arqueo.sinLegalizar.length },
@@ -22,7 +24,7 @@ const MENU = [
 ];
 
 /* En celular solo caben cuatro: el resto vive en la hoja "Más". */
-const TABBAR = ['inicio', 'tareas', 'caja', 'novedades'];
+const TABBAR = ['inicio', 'tareas', 'calendario', 'caja'];
 const modulo = id => MENU.find(i => i.id === id);
 
 function renderNav(m){

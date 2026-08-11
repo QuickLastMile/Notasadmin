@@ -5,7 +5,7 @@
 let S = null;   // estado global
 
 const COLECCIONES = ['clientes','beneficiarios','periodos','presupuestos','caja',
-                     'proyectos','tareas','novedades','dashboards','rutina','listas','preguntas','colaboradores'];
+                     'proyectos','tareas','novedades','dashboards','rutina','listas','preguntas','colaboradores','eventos'];
 
 /* ---- Persistencia -------------------------------------------------------- */
 const save = () => localStorage.setItem(CFG.storageKey, JSON.stringify(S));
@@ -128,6 +128,11 @@ function metricas(){
   const esperaAtrasada = enEspera.filter(t => t.espera_fecha && diasDesde(t.espera_fecha) < 0);
   const altaPendiente  = pendientes.filter(t => t.prioridad === 'alta');
 
+  /* Eventos: los de hoy para el contador del menú, y los que ya entraron
+     en su ventana de aviso para las alertas de Inicio. */
+  const eventosHoy   = S.eventos.filter(ev => eventoEnFecha(ev, hoyISO()));
+  const eventosAviso = eventosEnAviso();
+
   const novAbiertas = S.novedades.filter(n => n.estado === 'abierta');
   const novCriticas = novAbiertas.filter(n => n.criticidad === 'alta');
 
@@ -137,6 +142,7 @@ function metricas(){
 
   return { pendientes, vencidas, hoy, semana,
            enEspera, esperaAtrasada, altaPendiente,
+           eventosHoy, eventosAviso,
            periodo: pa, arqueo: a, presupuestosExcedidos,
            novAbiertas, novCriticas, proyActivos, proyRiesgo };
 }

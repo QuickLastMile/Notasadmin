@@ -220,6 +220,31 @@ function seed(){
     {id:'r5', texto:'Planear las 3 tareas clave de mañana',           orden:5, hecho_el:null}
   ];
 
+  /* ---- Agenda: cumpleaños, reuniones y vencimientos ---------------------- */
+  const EV = (o) => Object.assign(
+    { fecha_fin:null, hora:'', hora_fin:'', lugar:'', asistentes:'', agenda:'',
+      monto:0, persona_id:null, beneficiario_id:null, cliente_id:null,
+      aviso:1, notas:'' }, o);
+
+  const eventos = [
+    EV({ id:'ev1', tipo:'cumple', titulo:'Cumpleaños de Carlos Pérez',
+         fecha:'1988-' + t(3).slice(5), persona_id:'co1', cliente_id:'c1',
+         aviso:3, notas:'Le gusta el ponqué de zanahoria' }),
+    EV({ id:'ev2', tipo:'reunion', titulo:'Comité mensual con Cafam',
+         fecha:t(5), hora:'09:00', hora_fin:'10:30', cliente_id:'c1',
+         lugar:'Sede Cafam calle 51', asistentes:'Carlos Pérez, coordinadores de zona',
+         agenda:'Indicadores del mes\nNovedades de las motos\nPlan de agosto', aviso:1 }),
+    EV({ id:'ev3', tipo:'vencimiento', titulo:'Pago parqueadero El Dorado',
+         fecha:t(8), monto:96000, beneficiario_id:'b4', cliente_id:'c1', aviso:3 }),
+    EV({ id:'ev4', tipo:'evento', titulo:'Capacitación de seguridad vial',
+         fecha:t(12), fecha_fin:t(13), lugar:'Auditorio principal',
+         cliente_id:'c1', aviso:7 }),
+    EV({ id:'ev5', tipo:'cumple', titulo:'Cumpleaños de Diana Rojas',
+         fecha:'1992-' + t(20).slice(5), persona_id:'co2', cliente_id:'c2', aviso:7 }),
+    EV({ id:'ev6', tipo:'recordatorio', titulo:'Renovar el SOAT de la moto 3',
+         fecha:t(0), cliente_id:'c1', aviso:7 })
+  ];
+
   /* ---- Banco de preguntas ------------------------------------------------ */
   const preguntas = [
     { id:'q1', texto:'¿El mensajero realizó correctamente la entrega?', tipo:'sino',
@@ -243,5 +268,6 @@ function seed(){
   ];
 
   return { clientes, colaboradores, beneficiarios, periodos, presupuestos, caja,
-           preguntas, proyectos, tareas, novedades, dashboards, rutina, listas: [] };
+           preguntas, proyectos, tareas, eventos, novedades, dashboards,
+           rutina, listas: [] };
 }
