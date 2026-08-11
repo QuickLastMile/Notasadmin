@@ -130,7 +130,7 @@ async function guardarPregunta(id = null){
     categoria:   $('#qCat').value || null,
     orden:       +$('#qOrden').value || 0,
     activa:      $('#qActiva').value === '1',
-    obligatoria: $('#qObl').checked
+    obligatoria: tipo === 'encabezado' ? false : $('#qObl').checked
   };
 
   if(id) await db.update('preguntas', id, fila);

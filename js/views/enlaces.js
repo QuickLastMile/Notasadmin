@@ -50,13 +50,14 @@ function vEnlaces(){
               <div class="row-main">
                 <div class="row-t">${esc(d.nombre)}</div>
                 <div class="row-s">
-                  <span style="font-family:var(--mono);font-size:11px">${esc(dominio(d.url))}</span>
+                  <span style="font-family:var(--mono);font-size:11px;word-break:break-all">${esc(d.url)}</span>
                 </div>
               </div>
               <a class="btn sm pri" href="${esc(d.url)}" target="_blank" rel="noopener">Abrir ↗</a>
-              <div class="row-act">
-                <button class="btn sm" onclick="modalEnlace('${d.id}')">✎</button>
-                <button class="btn sm dgr" onclick="borrar('dashboards','${d.id}')">✕</button>
+              <div style="display:flex;gap:6px">
+                <button class="btn sm" onclick="copiarEnlace('${d.id}')" title="Copiar enlace">⧉</button>
+                <button class="btn sm" onclick="modalEnlace('${d.id}')" title="Editar">✎</button>
+                <button class="btn sm dgr" onclick="eliminarEnlace('${d.id}')" title="Eliminar">✕</button>
               </div>
             </div>`).join('')}
         </div>
@@ -74,3 +75,24 @@ function dominio(url){
   try{ return new URL(url).hostname.replace(/^www\./, ''); }
   catch{ return url; }
 }
+
+function modalEnlace(id = null){
+  const d=id?S.dashboards.find(x=>x.id===id):null;
+  openModal(formModal(id?'Editar acceso rápido':'Nuevo acceso rápido',`
+    <div><label>Nombre</label><input id="enNombre" placeholder="Ej. Dashboard HSEQ" value="${esc(d?.nombre||'')}"></div>
+    <div><label>URL</label><input id="enUrl" type="url" placeholder="https://…" value="${esc(d?.url||'')}"></div>
+    <div><label>Cliente (opcional)</label><select id="enCliente">${optsCli(d?.cliente_id)}</select></div>`,
+    `guardarEnlace(${id?`'${id}'`:'null'})`,id?'Guardar cambios':'Crear enlace'));
+}
+
+async function guardarEnlace(id=null){
+  const nombre=$('#enNombre').value.trim(),url=$('#enUrl').value.trim();
+  if(!nombre){toast('Escribe el nombre');return;}
+  if(!/^https?:\/\/[^\s]+$/i.test(url)){toast('Escribe una URL válida con https://');return;}
+  const fila={nombre,url,cliente_id:$('#enCliente').value||null};
+  if(id)await db.update('dashboards',id,fila);else await db.insert('dashboards',fila);
+  closeModal();render();toast(id?'Acceso actualizado':'Acceso creado');
+}
+
+async function copiarEnlace(id){const d=S.dashboards.find(x=>x.id===id);await navigator.clipboard.writeText(d.url);toast('Enlace copiado');}
+function eliminarEnlace(id){const d=S.dashboards.find(x=>x.id===id);confirmarPeligro('¿Eliminar este acceso?',`Se eliminará "${d.nombre}".`,async()=>{await db.remove('dashboards',id);render();toast('Acceso eliminado');});}

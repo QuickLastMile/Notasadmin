@@ -85,6 +85,7 @@ const ESTADOS_TAREA = {
    pueden inventar valores nuevos sin código que sepa pintarlos.
    -------------------------------------------------------------------------- */
 const TIPOS_RESPUESTA = {
+  encabezado:{ l:'Encabezado / sección',  ico:'§',  opciones:false },
   texto:    { l:'Texto',              ico:'📝', opciones:false },
   numero:   { l:'Número',             ico:'#',  opciones:false },
   sino:     { l:'Sí / No',            ico:'✓',  opciones:false },
