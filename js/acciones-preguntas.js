@@ -122,10 +122,11 @@ async function guardarPregunta(id = null){
     toast('Una selección necesita al menos dos opciones'); return;
   }
 
+  const formularioId = $('#qForm').value || null;
   const fila = {
     texto, tipo, opciones,
     proyecto_id: $('#qProy').value || null,
-    formulario_id: $('#qForm').value || null,
+    formulario_id: formularioId,
     categoria:   $('#qCat').value || null,
     orden:       +$('#qOrden').value || 0,
     activa:      $('#qActiva').value === '1',
@@ -137,6 +138,7 @@ async function guardarPregunta(id = null){
 
   cerrarDrawer(); render();
   toast(id ? 'Pregunta actualizada ✓' : 'Pregunta creada ✓');
+  if(formularioId) setTimeout(() => verFormularioAdmin(formularioId), 280);
 }
 
 async function duplicarPregunta(id){

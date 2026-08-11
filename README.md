@@ -178,6 +178,7 @@ Settings → Pages → Branch `main` / carpeta `/ (root)` → Save.
 | Diseño general | 🔧 Por revisar con el usuario |
 | Menú / módulos | 🔧 Por revisar con el usuario |
 | Proyectos | ✅ Ficha operativa: edición, tareas, avance, seguimiento y enlaces |
+| Formularios | ✅ Formularios públicos por proyecto, respuestas, indicadores y exportación CSV |
 | Clientes | ✅ Solo lectura — falta editar |
 | Dashboards | ✅ Funcionando |
 | Supabase | 🔌 Integración escrita y probada — falta pegar las credenciales |
