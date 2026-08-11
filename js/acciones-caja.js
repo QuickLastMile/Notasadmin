@@ -339,91 +339,144 @@ function modalReembolso(periodoId){
       const falta = g.monto - (g.reembolsado || 0);
       const b = ben(g.beneficiario_id);
       return `
-      <label class="reem-fila">
-        <input type="checkbox" value="${g.id}" data-monto="${falta}"
-               onchange="sumarSeleccion()">
+      <div class="reem-fila" data-id="${g.id}" data-monto="${falta}" data-estado="">
         <span class="reem-txt">
           <strong>${esc(g.concepto)}</strong>
           <small>${fechaCorta(g.fecha)} · ${esc(g.categoria)}${b ? ' · ' + esc(b.nombre) : ''}</small>
         </span>
         <span class="reem-monto">${cop(falta)}</span>
-      </label>`;
+        <span class="reem-voto">
+          <button type="button" class="ok" onclick="votarGasto('${g.id}','ok')"
+                  title="Te lo aprobaron y consignaron">✓</button>
+          <button type="button" class="no" onclick="votarGasto('${g.id}','no')"
+                  title="Lo rechazaron: se vuelve pérdida">✕</button>
+        </span>
+      </div>`;
     }).join('');
 
-  openModal(formModal('Registrar reembolso recibido', `
+  openModal(formModal('Registrar consignación recibida', `
     <p style="font-size:13px;color:var(--text-2)">
-      Marca los gastos que te devolvieron. Cada uno marcado queda saldado
-      y pasa a "reembolsado".
+      Marca cada gasto según lo que resolvió la revisión.
+      <strong style="color:var(--ok)">✓ aprobado</strong> queda saldado;
+      <strong style="color:var(--danger)">✕ rechazado</strong> pasa a pérdidas
+      porque esa plata la pusiste tú.
     </p>
 
     <div class="reem-acciones">
-      <button type="button" class="btn sm" onclick="marcarTodosReembolso(true)">Marcar todos</button>
-      <button type="button" class="btn sm" onclick="marcarTodosReembolso(false)">Ninguno</button>
+      <button type="button" class="btn sm" onclick="votarTodos('ok')">✓ Todos aprobados</button>
+      <button type="button" class="btn sm" onclick="votarTodos('')">Limpiar</button>
       <span style="margin-left:auto;font-size:12px;color:var(--text-3)">
-        ${a.porCobrar.length} por cobrar · ${cop(a.cobrable)}</span>
+        ${a.porCobrar.length} pasados · ${cop(a.cobrable)}</span>
     </div>
 
     <div class="reem-lista" id="reemLista">${filas}</div>
 
-    <div class="reem-total">
-      <span>Seleccionado</span>
-      <strong id="reemTotal">$ 0</strong>
+    <div class="reem-resumen">
+      <div><span>Te consignaron</span><strong id="reemOk" style="color:var(--ok)">$ 0</strong></div>
+      <div><span>Rechazado (pérdida)</span><strong id="reemNo" style="color:var(--danger)">$ 0</strong></div>
     </div>
 
     <div class="f2">
-      <div><label>Fecha del reembolso</label>
+      <div><label>Fecha de la consignación</label>
         <input type="date" id="rF" value="${hoyISO()}"></div>
       <div><label>Observación</label>
-        <input id="rO" placeholder="Ej. Transferencia del 15"></div>
-    </div>`,
-    `aplicarReembolso('${periodoId}')`, 'Marcar como reembolsados'));
+        <input id="rO" placeholder="Ej. Aprobado por el bot"></div>
+    </div>
+
+    <div class="f-check">
+      <label><input type="checkbox" id="rRepone" checked>
+        Esta consignación repone mi base para seguir gastando</label>
+    </div>
+    <p style="font-size:11.5px;color:var(--text-2);margin-top:-4px">
+      Se registrará como ingreso, así el saldo disponible vuelve a subir.
+      Desmárcalo si la plata no entró a la caja.
+    </p>`,
+    `aplicarReembolso('${periodoId}')`, 'Registrar'));
 
   sumarSeleccion();
 }
 
-/** Total en vivo de lo marcado, para cuadrar contra lo que llegó al banco. */
+/** Marca un gasto como aprobado, rechazado, o sin decidir (al volver a pulsar). */
+function votarGasto(id, voto){
+  const fila = document.querySelector(`.reem-fila[data-id="${id}"]`);
+  fila.dataset.estado = fila.dataset.estado === voto ? '' : voto;
+  sumarSeleccion();
+}
+
+function votarTodos(voto){
+  document.querySelectorAll('.reem-fila').forEach(f => f.dataset.estado = voto);
+  sumarSeleccion();
+}
+
+/** Totales en vivo, para cuadrarlos contra lo que llegó al banco. */
 function sumarSeleccion(){
-  const marcadas = [...document.querySelectorAll('#reemLista input:checked')];
-  const total = marcadas.reduce((a, c) => a + (+c.dataset.monto || 0), 0);
-  const el = $('#reemTotal');
-  if(el){
-    el.textContent = cop(total);
-    el.style.color = total ? 'var(--ok)' : 'var(--text-3)';
-  }
-}
-
-function marcarTodosReembolso(valor){
-  document.querySelectorAll('#reemLista input').forEach(c => c.checked = valor);
-  sumarSeleccion();
+  let ok = 0, no = 0;
+  document.querySelectorAll('.reem-fila').forEach(f => {
+    const m = +f.dataset.monto || 0;
+    if(f.dataset.estado === 'ok') ok += m;
+    if(f.dataset.estado === 'no') no += m;
+  });
+  if($('#reemOk')) $('#reemOk').textContent = cop(ok);
+  if($('#reemNo')) $('#reemNo').textContent = cop(no);
 }
 
 async function aplicarReembolso(periodoId){
-  const marcadas = [...document.querySelectorAll('#reemLista input:checked')];
-  if(!marcadas.length){ toast('Marca al menos un gasto'); return; }
+  const filas = [...document.querySelectorAll('.reem-fila')].filter(f => f.dataset.estado);
+  if(!filas.length){ toast('Marca al menos un gasto como aprobado o rechazado'); return; }
 
-  const obs   = $('#rO').value.trim();
-  const fecha = $('#rF').value;
-  let total = 0;
+  const obs    = $('#rO').value.trim();
+  const fecha  = $('#rF').value;
+  const repone = $('#rRepone').checked;
+  let totalOk = 0, totalNo = 0, nOk = 0, nNo = 0;
 
-  for(const c of marcadas){
-    const g = S.caja.find(x => x.id === c.value);
+  for(const f of filas){
+    const g = S.caja.find(x => x.id === f.dataset.id);
     if(!g) continue;
-    total += g.monto - (g.reembolsado || 0);
-    await db.update('caja', g.id, {
-      reembolsado: g.monto,                    // marcado = saldado por completo
-      estado: 'finalizado',
-      observacion: obs
-        ? [g.observacion, `Reembolsado ${fechaCorta(fecha)}: ${obs}`].filter(Boolean).join(' · ')
-        : g.observacion
+    const falta = g.monto - (g.reembolsado || 0);
+
+    if(f.dataset.estado === 'ok'){
+      totalOk += falta; nOk++;
+      await db.update('caja', g.id, {
+        reembolsado: g.monto,               // aprobado = saldado por completo
+        estado: 'finalizado',
+        observacion: [g.observacion, `Consignado ${fechaCorta(fecha)}${obs ? ': ' + obs : ''}`]
+          .filter(Boolean).join(' · ')
+      });
+    } else {
+      totalNo += falta; nNo++;
+      await db.update('caja', g.id, {
+        perdida: true,
+        motivo_perdida: 'Rechazado en la revisión' + (obs ? ` — ${obs}` : ''),
+        estado: 'finalizado'
+      });
+    }
+  }
+
+  /* La consignación repone la base: es una sola transferencia que salda lo
+     que te debían Y te devuelve saldo para seguir gastando. Sin este ingreso
+     el saldo disponible se quedaría corto y parecería que no tienes plata. */
+  if(repone && totalOk > 0){
+    await db.insert('caja', {
+      tipo:'ingreso', monto: totalOk,
+      concepto:'Reposición de base — consignación recibida',
+      categoria:'Base', cliente_id:null, periodo_id: periodoId, fecha,
+      beneficiario_id:null, metodo_pago:'Transferencia',
+      comprobante_pago:'', factura_num:'', comprobante_url:'', factura_url:'',
+      tiene_comprobante:true, tiene_factura:true,
+      estado:'finalizado', legalizado:true, legalizado_el:fecha,
+      reembolsado:0, perdida:false, motivo_perdida:'',
+      observacion: obs || `Cubre ${nOk} gasto${nOk > 1 ? 's' : ''} aprobado${nOk > 1 ? 's' : ''}`
     });
   }
 
   const p = per(periodoId);
   if(p) await db.update('periodos', periodoId,
-    { reembolso_recibido: (p.reembolso_recibido || 0) + total });
+    { reembolso_recibido: (p.reembolso_recibido || 0) + totalOk });
 
   closeModal(); render();
-  toast(`${marcadas.length} gasto${marcadas.length > 1 ? 's' : ''} reembolsado${marcadas.length > 1 ? 's' : ''} · ${cop(total)} ✓`);
+  toast(nNo
+    ? `${nOk} aprobados (${cop(totalOk)}) · ${nNo} rechazados (${cop(totalNo)} en pérdidas)`
+    : `${nOk} gasto${nOk > 1 ? 's' : ''} consignado${nOk > 1 ? 's' : ''} · ${cop(totalOk)} ✓`);
 }
 
 /* ---- Pérdidas ------------------------------------------------------------

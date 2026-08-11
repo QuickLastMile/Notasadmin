@@ -141,16 +141,32 @@ function seed(){
     {id:'p6', nombre:'Control transferencias',     cliente_id:'c1', estado:'propuesta', avance:15,  vence:t(20)}
   ];
 
+  const T = (o) => Object.assign(
+    { repite:'', notas:'', completada_el:null, proyecto_id:null }, o);
+
   const tareas = [
-    {id:'t1', titulo:'Legalizar gastos de caja menor de la semana', cliente_id:'c5', proyecto_id:null, prioridad:'alta',  estado:'pendiente', vence:t(-2)},
-    {id:'t2', titulo:'Enviar informe de gestión a Diebold',         cliente_id:'c2', proyecto_id:'p3', prioridad:'alta',  estado:'pendiente', vence:t(-1)},
-    {id:'t3', titulo:'Activar GitHub Pages en DASHALFAGRES',        cliente_id:'c3', proyecto_id:'p4', prioridad:'media', estado:'pendiente', vence:t(0)},
-    {id:'t4', titulo:'Reunión seguimiento coordinadores Cafam',     cliente_id:'c1', proyecto_id:'p1', prioridad:'alta',  estado:'pendiente', vence:t(0)},
-    {id:'t5', titulo:'Revisar registros HSQ de motos del mes',      cliente_id:'c1', proyecto_id:null, prioridad:'media', estado:'pendiente', vence:t(1)},
-    {id:'t6', titulo:'Cotizar reposición de neveras portátiles',    cliente_id:'c1', proyecto_id:'p2', prioridad:'media', estado:'pendiente', vence:t(3)},
-    {id:'t7', titulo:'Solicitar reembolso de caja menor',           cliente_id:'c5', proyecto_id:null, prioridad:'alta',  estado:'pendiente', vence:t(4)},
-    {id:'t8', titulo:'Actualizar Sheet maestro del Centro de Dash', cliente_id:'c5', proyecto_id:null, prioridad:'baja',  estado:'pendiente', vence:t(6)},
-    {id:'t9', titulo:'Subir cambios del dash L.I.H',                cliente_id:'c4', proyecto_id:'p5', prioridad:'baja',  estado:'hecho',     vence:t(-3)}
+    T({id:'t1', titulo:'Pasar las facturas al bot de WhatsApp', cliente_id:'c5',
+       prioridad:'alta',  estado:'pendiente', vence:t(-2), repite:'semanal',
+       notas:'Subir una por una y anotar el total que reporta el bot'}),
+    T({id:'t2', titulo:'Enviar informe de gestión a Diebold', cliente_id:'c2',
+       proyecto_id:'p3', prioridad:'alta',  estado:'pendiente', vence:t(-1)}),
+    T({id:'t3', titulo:'Activar GitHub Pages en DASHALFAGRES', cliente_id:'c3',
+       proyecto_id:'p4', prioridad:'media', estado:'pendiente', vence:t(0)}),
+    T({id:'t4', titulo:'Reunión seguimiento coordinadores Cafam', cliente_id:'c1',
+       proyecto_id:'p1', prioridad:'alta',  estado:'pendiente', vence:t(0)}),
+    T({id:'t5', titulo:'Revisar registros HSQ de motos del mes', cliente_id:'c1',
+       prioridad:'media', estado:'pendiente', vence:t(1), repite:'mensual'}),
+    T({id:'t6', titulo:'Cotizar reposición de neveras portátiles', cliente_id:'c1',
+       proyecto_id:'p2', prioridad:'media', estado:'pendiente', vence:t(3)}),
+    T({id:'t7', titulo:'Revisar si ya consignaron lo aprobado', cliente_id:'c5',
+       prioridad:'alta',  estado:'pendiente', vence:t(4),
+       notas:'Suelen consignar unos 4 días después de pasar las facturas'}),
+    T({id:'t8', titulo:'Actualizar Sheet maestro del Centro de Dash', cliente_id:'c5',
+       prioridad:'baja',  estado:'pendiente', vence:t(6), repite:'quincenal'}),
+    T({id:'t9', titulo:'Llamar al proveedor del parqueadero', cliente_id:'c1',
+       prioridad:'media', estado:'pendiente', vence:null}),
+    T({id:'t10', titulo:'Subir cambios del dash L.I.H', cliente_id:'c4',
+       proyecto_id:'p5', prioridad:'baja',  estado:'hecho', vence:t(-3), completada_el:t(-3)})
   ];
 
   const novedades = [

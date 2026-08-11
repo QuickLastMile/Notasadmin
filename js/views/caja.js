@@ -122,7 +122,8 @@ function tarjetasArqueo(a){
                      : a.pctUsado >= .75 ? 'var(--warn)' : 'var(--ok)';
   return `
   <div class="grid g4" style="margin-bottom:14px">
-    ${kpi('Base del período', cop(a.base), 'Lo que te asignaron', 'o')}
+    ${kpi('Base recibida', cop(a.base),
+          'Asignación inicial más reposiciones', 'o')}
     ${kpi('Gastado', cop(a.gastado), `${a.gastos.length} movimientos`, 'd')}
     ${kpi('Saldo en caja', cop(a.saldo), `${Math.round((1 - a.pctUsado) * 100)}% de la base`,
           a.saldo < a.base * .25 ? 'w' : 'p')}

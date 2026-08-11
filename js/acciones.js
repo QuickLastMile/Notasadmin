@@ -4,48 +4,151 @@
    ========================================================================== */
 
 /* ---- Tareas -------------------------------------------------------------- */
+
+/** Cada cuánto se repite una tarea. Al completarla se crea la siguiente. */
+const REPETICIONES = {
+  '':          { l:'No se repite',   dias:0  },
+  'diaria':    { l:'Cada día',       dias:1  },
+  'semanal':   { l:'Cada semana',    dias:7  },
+  'quincenal': { l:'Cada 15 días',   dias:15 },
+  'mensual':   { l:'Cada mes',       dias:30 }
+};
+
 async function toggleTarea(id){
   const t = S.tareas.find(x => x.id === id);
-  const nuevo = t.estado === 'hecho' ? 'pendiente' : 'hecho';
-  await db.update('tareas', id, { estado: nuevo });
+  const completando = t.estado !== 'hecho';
+
+  await db.update('tareas', id, {
+    estado: completando ? 'hecho' : 'pendiente',
+    completada_el: completando ? hoyISO() : null
+  });
+
+  /* Si se repite, al completarla nace la siguiente. Así una tarea semanal
+     no hay que volver a escribirla cada lunes. */
+  if(completando && t.repite && REPETICIONES[t.repite]){
+    const base = t.vence && diasDesde(t.vence) > 0 ? new Date(t.vence + 'T00:00:00') : new Date();
+    const prox = dISO(new Date(base.getTime() + REPETICIONES[t.repite].dias * 86400000));
+    const { id:_, created_at, updated_at, completada_el, ...resto } = t;
+    await db.insert('tareas', { ...resto, estado:'pendiente', vence: prox, completada_el:null });
+    render();
+    toast(`Hecha ✓ — la próxima queda para ${fechaTxt(prox)}`);
+    return;
+  }
+
   render();
-  if(nuevo === 'hecho') toast('Tarea completada ✓');
+  if(completando) toast('Tarea completada ✓');
 }
 
-async function posponer(id){
+/** Reprograma a una fecha concreta, no solo "mañana". */
+async function reprogramar(id, cuando){
   const t = S.tareas.find(x => x.id === id);
-  const base = (t.vence && diasDesde(t.vence) > 0) ? new Date(t.vence + 'T00:00:00') : new Date();
-  await db.update('tareas', id, { vence: dISO(new Date(base.getTime() + 86400000)) });
+  let fecha;
+
+  if(cuando === 'hoy')          fecha = hoyISO();
+  else if(cuando === 'manana')  fecha = masDias(1);
+  else if(cuando === 'semana')  fecha = masDias(7);
+  else if(cuando === 'quitar')  fecha = null;
+  else if(cuando === '1d'){
+    const base = (t.vence && diasDesde(t.vence) > 0) ? new Date(t.vence + 'T00:00:00') : new Date();
+    fecha = dISO(new Date(base.getTime() + 86400000));
+  }
+  else fecha = cuando;   // una fecha ISO concreta
+
+  await db.update('tareas', id, { vence: fecha });
   render();
-  toast('Movida a mañana');
+  toast(fecha ? `Movida a ${fechaTxt(fecha)}` : 'Sin fecha');
 }
 
-function modalTarea(){
-  openModal(formModal('Nueva tarea', `
-    <div><label>¿Qué hay que hacer?</label>
-      <input id="mT" placeholder="Ej. Enviar informe mensual"></div>
-    <div class="f2">
-      <div><label>Cliente</label><select id="mC">${optsCli('c5')}</select></div>
-      <div><label>Prioridad</label><select id="mP">
-        <option value="alta">Alta</option>
-        <option value="media" selected>Media</option>
-        <option value="baja">Baja</option></select></div>
+/** Atajo de la fila: empujar un día. */
+const posponer = id => reprogramar(id, '1d');
+
+function modalFecha(id){
+  const t = S.tareas.find(x => x.id === id);
+  openModal(formModal('Reprogramar', `
+    <p style="font-size:13px;color:var(--text-2)">${esc(t.titulo)}</p>
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <button class="btn" onclick="closeModal();reprogramar('${id}','hoy')">Hoy</button>
+      <button class="btn" onclick="closeModal();reprogramar('${id}','manana')">Mañana</button>
+      <button class="btn" onclick="closeModal();reprogramar('${id}','semana')">En una semana</button>
+      <button class="btn" onclick="closeModal();reprogramar('${id}','quitar')">Quitar fecha</button>
     </div>
-    <div class="f2">
-      <div><label>Vence</label><input type="date" id="mV" value="${hoyISO()}"></div>
-      <div><label>Proyecto</label><select id="mPr">
-        <option value="">— Ninguno —</option>${optsProy()}</select></div>
-    </div>`, 'guardarTarea()'));
+    <div><label>O una fecha concreta</label>
+      <input type="date" id="fFecha" value="${t.vence || hoyISO()}"></div>`,
+    `closeModal();reprogramar('${id}', document.getElementById('fFecha')?.value || '${hoyISO()}')`,
+    'Guardar'));
 }
 
-async function guardarTarea(){
+function modalTarea(id = null){
+  const t = id ? S.tareas.find(x => x.id === id) : null;
+
+  openModal(formModal(id ? 'Editar tarea' : 'Nueva tarea', `
+    <div><label>¿Qué hay que hacer?</label>
+      <input id="mT" placeholder="Ej. Enviar informe mensual" value="${esc(t?.titulo || '')}"></div>
+
+    <div class="f2">
+      <div><label>Cliente</label><select id="mC">${optsCli(t?.cliente_id)}</select></div>
+      <div><label>Prioridad</label><select id="mP">
+        ${['alta','media','baja'].map(x =>
+          `<option value="${x}" ${(t?.prioridad || 'media') === x ? 'selected' : ''}>${PRI[x].l}</option>`).join('')}
+      </select></div>
+    </div>
+
+    <div class="f2">
+      <div><label>Vence</label>
+        <input type="date" id="mV" value="${t?.vence || (id ? '' : hoyISO())}"></div>
+      <div><label>Proyecto</label><select id="mPr">
+        <option value="">— Ninguno —</option>${optsProy(t?.proyecto_id)}</select></div>
+    </div>
+
+    <div><label>Se repite</label>
+      <select id="mR">${Object.entries(REPETICIONES).map(([k, v]) =>
+        `<option value="${k}" ${(t?.repite || '') === k ? 'selected' : ''}>${v.l}</option>`).join('')}</select>
+      <div style="font-size:11.5px;color:var(--text-2);margin-top:5px">
+        Al marcarla como hecha se crea sola la siguiente.</div>
+    </div>
+
+    <div><label>Notas</label>
+      <textarea id="mN" placeholder="Detalles, contactos, lo que no cabe en el título">${esc(t?.notas || '')}</textarea></div>`,
+    `guardarTarea(${id ? `'${id}'` : 'null'})`, id ? 'Guardar cambios' : 'Crear tarea'));
+}
+
+async function guardarTarea(id = null){
   const titulo = $('#mT').value.trim();
   if(!titulo){ toast('Escribe el título'); return; }
-  await db.insert('tareas', {
-    titulo, cliente_id:$('#mC').value, proyecto_id:$('#mPr').value || null,
-    prioridad:$('#mP').value, estado:'pendiente', vence:$('#mV').value
-  });
-  closeModal(); render(); toast('Tarea creada ✓');
+
+  const fila = {
+    titulo,
+    cliente_id:  $('#mC').value || null,
+    proyecto_id: $('#mPr').value || null,
+    prioridad:   $('#mP').value,
+    vence:       $('#mV').value || null,
+    repite:      $('#mR').value || '',
+    notas:       $('#mN').value.trim()
+  };
+  if(!id) Object.assign(fila, { estado:'pendiente', completada_el:null });
+
+  if(id) await db.update('tareas', id, fila);
+  else    await db.insert('tareas', fila);
+
+  closeModal(); render();
+  toast(id ? 'Tarea actualizada ✓' : 'Tarea creada ✓');
+}
+
+async function duplicarTarea(id){
+  const t = S.tareas.find(x => x.id === id);
+  const { id:_, created_at, updated_at, ...resto } = t;
+  await db.insert('tareas', { ...resto, titulo: t.titulo + ' (copia)',
+                              estado:'pendiente', completada_el:null });
+  render(); toast('Tarea duplicada');
+}
+
+function eliminarTarea(id){
+  const t = S.tareas.find(x => x.id === id);
+  confirmarPeligro('¿Eliminar esta tarea?',
+    `"${t.titulo}"
+
+Esta acción no se puede deshacer.`,
+    async () => { await db.remove('tareas', id); render(); toast('Tarea eliminada'); });
 }
 
 /* ---- Caja menor: está en js/acciones-caja.js ------------------------------ */

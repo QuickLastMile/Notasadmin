@@ -160,27 +160,39 @@ function rowTarea(t){
 
   let chipFecha = '';
   if(!hecho && d !== null){
-    if(d < 0)       chipFecha = `<span class="chip d">${fechaTxt(t.vence)}</span>`;
+    if(d < 0)        chipFecha = `<span class="chip d">${fechaTxt(t.vence)}</span>`;
     else if(d === 0) chipFecha = `<span class="chip w">Hoy</span>`;
   }
 
   return `
   <div class="row ${hecho ? 'done' : ''}">
-    <button class="chk ${hecho ? 'on' : ''}" onclick="toggleTarea('${t.id}')" title="Marcar">✓</button>
-    <div class="row-main">
+    <button class="chk ${hecho ? 'on' : ''}" onclick="toggleTarea('${t.id}')"
+            title="${hecho ? 'Reabrir' : 'Marcar como hecha'}">✓</button>
+
+    <div class="row-main" style="cursor:pointer" onclick="modalTarea('${t.id}')">
       <div class="row-t">${esc(t.titulo)}
         ${!hecho && t.prioridad === 'alta' ? '<span class="chip d">Alta</span>' : ''}
         ${chipFecha}
+        ${t.repite ? `<span class="chip n" title="${esc(REPETICIONES[t.repite]?.l || '')}">🔁</span>` : ''}
       </div>
       <div class="row-s">
-        <span>${cliTag(t.cliente_id)}</span>
+        ${t.cliente_id ? `<span>${cliTag(t.cliente_id)}</span>` : ''}
         ${p ? `<span>📁 ${esc(p.nombre)}</span>` : ''}
         ${d !== null && d > 0 ? `<span>${fechaTxt(t.vence)}</span>` : ''}
+        ${!hecho && d === null ? '<span>Sin fecha</span>' : ''}
+        ${hecho && t.completada_el ? `<span>Hecha ${fechaTxt(t.completada_el)}</span>` : ''}
+        ${t.notas ? `<span title="${esc(t.notas)}">📝 ${esc(t.notas.slice(0, 40))}${t.notas.length > 40 ? '…' : ''}</span>` : ''}
       </div>
     </div>
-    <div class="row-act">
-      <button class="btn sm" onclick="posponer('${t.id}')" title="Mover a mañana">→ 1d</button>
-      <button class="btn sm dgr" onclick="borrar('tareas','${t.id}')" title="Eliminar">✕</button>
-    </div>
+
+    ${hecho ? '' : `<button class="btn sm row-rapida" onclick="posponer('${t.id}')"
+                            title="Empujar un día">→ 1d</button>`}
+    ${menuAcciones([
+      ['Editar',           `modalTarea('${t.id}')`],
+      ['Reprogramar',      `modalFecha('${t.id}')`],
+      ['Duplicar',         `duplicarTarea('${t.id}')`],
+      [hecho ? 'Reabrir' : 'Marcar hecha', `toggleTarea('${t.id}')`],
+      ['Eliminar',         `eliminarTarea('${t.id}')`, 'peligro']
+    ])}
   </div>`;
 }
