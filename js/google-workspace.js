@@ -7,16 +7,26 @@ const GOOGLE_SCOPES = [
 ].join(' ');
 
 const googleToken = () => sesionNube?.provider_token || '';
-const googleWorkspaceConectado = () => !!googleToken() && localStorage.getItem('nexa_google_workspace') === '1';
+const googleWorkspaceConectado = () => !!googleToken() && localStorage.getItem('nexa_google_workspace') === '2';
+
+function procesarRetornoGoogleWorkspace(){
+  const url=new URL(location.href);
+  if(url.searchParams.get('google_workspace')==='ok' && googleToken()){
+    localStorage.setItem('nexa_google_workspace','2');
+    url.searchParams.delete('google_workspace');
+    history.replaceState({},'',url.pathname+(url.search||'')+(url.hash||''));
+    setTimeout(()=>toast('Google Workspace conectado ✓'),500);
+  }
+}
 
 async function conectarGoogleWorkspace(){
   if(!NUBE){ toast('Google Workspace requiere iniciar sesión'); return; }
-  localStorage.setItem('nexa_google_workspace','1');
+  localStorage.removeItem('nexa_google_workspace');
   const {error}=await sb.auth.signInWithOAuth({provider:'google',options:{
-    redirectTo:RETORNO(),scopes:GOOGLE_SCOPES,
+    redirectTo:RETORNO()+'?google_workspace=ok',scopes:GOOGLE_SCOPES,
     queryParams:{access_type:'offline',prompt:'consent'}
   }});
-  if(error){localStorage.removeItem('nexa_google_workspace');toast(traducir(error.message));}
+  if(error) toast(traducir(error.message));
 }
 
 function desconectarGoogleWorkspace(){
