@@ -39,11 +39,30 @@ function seed(){
 
   /* ---- Clientes ---------------------------------------------------------- */
   const clientes = [
-    {id:'c1', nombre:'Cafam',              color:'#2563eb', contacto:'Coord. Logística',   activo:true},
-    {id:'c2', nombre:'Diebold Nixdorf',    color:'#7c3aed', contacto:'Gestión Operativa',  activo:true},
-    {id:'c3', nombre:'Alfagres',           color:'#0f9d58', contacto:'Jefe de Despachos',  activo:true},
-    {id:'c4', nombre:'Lab. Inv. Hormonal', color:'#d97706', contacto:'Dirección L.I.H',    activo:true},
-    {id:'c5', nombre:'Interno',            color:'#8a95a3', contacto:'—',                  activo:true}
+    {id:'c1', nombre:'Cafam',              color:'#2563eb', contacto:'Coord. Logística',
+     nit:'860013570-1', ceco:'CAF-1001', notas:'', activo:true},
+    {id:'c2', nombre:'Diebold Nixdorf',    color:'#7c3aed', contacto:'Gestión Operativa',
+     nit:'830037860-2', ceco:'DBN-2001', notas:'', activo:true},
+    {id:'c3', nombre:'Alfagres',           color:'#0f9d58', contacto:'Jefe de Despachos',
+     nit:'860002518-7', ceco:'ALF-3001', notas:'', activo:true},
+    {id:'c4', nombre:'Lab. Inv. Hormonal', color:'#d97706', contacto:'Dirección L.I.H',
+     nit:'', ceco:'LIH-4001', notas:'', activo:true},
+    {id:'c5', nombre:'Interno',            color:'#8a95a3', contacto:'—',
+     nit:'', ceco:'', notas:'', activo:true}
+  ];
+
+  /* ---- Colaboradores: contactos de la operación, no usuarios ------------- */
+  const colaboradores = [
+    {id:'co1', cliente_id:'c1', nombre:'Carlos Pérez',  cedula:'79456123',
+     cargo:'Coordinador', celular:'3114567890', correo:'carlos.perez@cafam.com.co',
+     area:'Logística', ciudad:'Bogotá', activo:true, notas:''},
+    {id:'co2', cliente_id:'c2', nombre:'Diana Rojas',   cedula:'52741963',
+     cargo:'Supervisor', celular:'3129876543', correo:'diana.rojas@dieboldnixdorf.com',
+     area:'Operaciones', ciudad:'Bogotá', activo:true,
+     notas:'Aprueba los informes de gestión'},
+    {id:'co3', cliente_id:'c3', nombre:'Laura Gómez',   cedula:'1020304050',
+     cargo:'Jefe', celular:'3005551234', correo:'lgomez@alfagres.com',
+     area:'Despachos', ciudad:'Bogotá', activo:true, notas:''}
   ];
 
   /* ---- Presupuestos por categoría ---------------------------------------- */
@@ -142,18 +161,27 @@ function seed(){
   ];
 
   const T = (o) => Object.assign(
-    { repite:'', notas:'', completada_el:null, proyecto_id:null }, o);
+    { repite:'', notas:'', completada_el:null, proyecto_id:null,
+      tipo:'', persona_id:null, hora:'', espera_que:'', espera_fecha:null,
+      checklist:[], resultado:'' }, o);
 
   const tareas = [
     T({id:'t1', titulo:'Pasar las facturas al bot de WhatsApp', cliente_id:'c5',
-       prioridad:'alta',  estado:'pendiente', vence:t(-2), repite:'semanal',
+       prioridad:'alta',  estado:'pendiente', vence:t(-2), repite:'semanal', tipo:'Operativa',
+       checklist:[{t:'Reunir las facturas de la semana', ok:true},
+                  {t:'Subirlas una por una al bot', ok:false},
+                  {t:'Anotar el total que reporta', ok:false}],
        notas:'Subir una por una y anotar el total que reporta el bot'}),
     T({id:'t2', titulo:'Enviar informe de gestión a Diebold', cliente_id:'c2',
-       proyecto_id:'p3', prioridad:'alta',  estado:'pendiente', vence:t(-1)}),
+       proyecto_id:'p3', prioridad:'alta', estado:'en_espera', vence:t(2),
+       tipo:'Seguimiento', persona_id:'co2',
+       espera_que:'Aprobación del informe por parte de Diana',
+       espera_fecha:t(-1)}),
     T({id:'t3', titulo:'Activar GitHub Pages en DASHALFAGRES', cliente_id:'c3',
        proyecto_id:'p4', prioridad:'media', estado:'pendiente', vence:t(0)}),
     T({id:'t4', titulo:'Reunión seguimiento coordinadores Cafam', cliente_id:'c1',
-       proyecto_id:'p1', prioridad:'alta',  estado:'pendiente', vence:t(0)}),
+       proyecto_id:'p1', prioridad:'alta',  estado:'pendiente', vence:t(0),
+       tipo:'Reunión', persona_id:'co1', hora:'10:30'}),
     T({id:'t5', titulo:'Revisar registros HSQ de motos del mes', cliente_id:'c1',
        prioridad:'media', estado:'pendiente', vence:t(1), repite:'mensual'}),
     T({id:'t6', titulo:'Cotizar reposición de neveras portátiles', cliente_id:'c1',
@@ -214,6 +242,6 @@ function seed(){
       obligatoria:false, activa:false }
   ];
 
-  return { clientes, beneficiarios, periodos, presupuestos, caja, preguntas,
-           proyectos, tareas, novedades, dashboards, rutina, listas: [] };
+  return { clientes, colaboradores, beneficiarios, periodos, presupuestos, caja,
+           preguntas, proyectos, tareas, novedades, dashboards, rutina, listas: [] };
 }

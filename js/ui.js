@@ -154,38 +154,60 @@ const pageHead = (titulo, sub, acciones = '') => `
 
 /* ---- Fila de tarea (se usa en Inicio y en Tareas) ------------------------- */
 function rowTarea(t){
-  const hecho = t.estado === 'hecho';
+  const hecho     = t.estado === 'hecho';
+  const cancelada = t.estado === 'cancelada';
+  const cerrada   = hecho || cancelada;
   const d = t.vence ? diasDesde(t.vence) : null;
   const p = pro(t.proyecto_id);
+  const persona = colab(t.persona_id);
+  const est = ESTADOS_TAREA[t.estado] || ESTADOS_TAREA.pendiente;
 
   let chipFecha = '';
-  if(!hecho && d !== null){
+  if(!cerrada && d !== null){
     if(d < 0)        chipFecha = `<span class="chip d">${fechaTxt(t.vence)}</span>`;
-    else if(d === 0) chipFecha = `<span class="chip w">Hoy</span>`;
+    else if(d === 0) chipFecha = `<span class="chip w">Hoy${t.hora ? ' ' + esc(t.hora) : ''}</span>`;
   }
 
+  // Progreso del checklist: 2/4 dice más que un icono
+  const chk = t.checklist || [];
+  const chkOk = chk.filter(x => x.ok).length;
+
+  const esperaAtrasada = t.estado === 'en_espera' && t.espera_fecha && diasDesde(t.espera_fecha) < 0;
+
   return `
-  <div class="row ${hecho ? 'done' : ''}">
+  <div class="row ${cerrada ? 'done' : ''}">
     <button class="chk ${hecho ? 'on' : ''}" onclick="toggleTarea('${t.id}')"
             title="${hecho ? 'Reabrir' : 'Marcar como hecha'}">✓</button>
 
     <div class="row-main" style="cursor:pointer" onclick="modalTarea('${t.id}')">
       <div class="row-t">${esc(t.titulo)}
-        ${!hecho && t.prioridad === 'alta' ? '<span class="chip d">Alta</span>' : ''}
+        ${t.estado === 'en_proceso' || t.estado === 'en_espera' || cancelada
+          ? `<span class="chip ${est.c}">${est.l}</span>` : ''}
+        ${!cerrada && t.prioridad === 'alta' ? '<span class="chip d">Alta</span>' : ''}
         ${chipFecha}
+        ${chk.length ? `<span class="chip ${chkOk === chk.length ? 'o' : 'n'}">☑ ${chkOk}/${chk.length}</span>` : ''}
         ${t.repite ? `<span class="chip n" title="${esc(REPETICIONES[t.repite]?.l || '')}">🔁</span>` : ''}
       </div>
       <div class="row-s">
+        ${t.tipo ? `<span>${esc(t.tipo)}</span>` : ''}
+        ${persona ? `<span>👤 ${esc(persona.nombre)}${persona.cargo ? ' · ' + esc(persona.cargo) : ''}</span>` : ''}
         ${t.cliente_id ? `<span>${cliTag(t.cliente_id)}</span>` : ''}
         ${p ? `<span>📁 ${esc(p.nombre)}</span>` : ''}
-        ${d !== null && d > 0 ? `<span>${fechaTxt(t.vence)}</span>` : ''}
-        ${!hecho && d === null ? '<span>Sin fecha</span>' : ''}
+        ${d !== null && d > 0 ? `<span>${fechaTxt(t.vence)}${t.hora ? ' · ' + esc(t.hora) : ''}</span>` : ''}
+        ${!cerrada && d === null ? '<span>Sin fecha</span>' : ''}
         ${hecho && t.completada_el ? `<span>Hecha ${fechaTxt(t.completada_el)}</span>` : ''}
         ${t.notas ? `<span title="${esc(t.notas)}">📝 ${esc(t.notas.slice(0, 40))}${t.notas.length > 40 ? '…' : ''}</span>` : ''}
       </div>
+      ${t.estado === 'en_espera' && (t.espera_que || t.espera_fecha) ? `
+        <div class="row-s" style="color:${esperaAtrasada ? 'var(--danger)' : 'var(--warn)'};margin-top:3px">
+          <span>⏳ ${esc(t.espera_que || 'En espera')}${t.espera_fecha
+            ? ` · esperado ${fechaTxt(t.espera_fecha)}${esperaAtrasada ? ' — ¡vuelve a cobrar!' : ''}` : ''}</span>
+        </div>` : ''}
+      ${hecho && t.resultado ? `
+        <div class="row-s" style="margin-top:3px"><span>✎ ${esc(t.resultado.slice(0, 60))}${t.resultado.length > 60 ? '…' : ''}</span></div>` : ''}
     </div>
 
-    ${hecho ? '' : `<button class="btn sm row-rapida" onclick="posponer('${t.id}')"
+    ${cerrada ? '' : `<button class="btn sm row-rapida" onclick="posponer('${t.id}')"
                             title="Empujar un día">→ 1d</button>`}
     ${menuAcciones([
       ['Editar',           `modalTarea('${t.id}')`],

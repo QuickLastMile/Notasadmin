@@ -80,13 +80,17 @@ function modalFecha(id){
 
 function modalTarea(id = null){
   const t = id ? S.tareas.find(x => x.id === id) : null;
+  const estado = t?.estado || 'pendiente';
 
   openModal(formModal(id ? 'Editar tarea' : 'Nueva tarea', `
     <div><label>¿Qué hay que hacer?</label>
       <input id="mT" placeholder="Ej. Enviar informe mensual" value="${esc(t?.titulo || '')}"></div>
 
     <div class="f2">
-      <div><label>Cliente</label><select id="mC">${optsCli(t?.cliente_id)}</select></div>
+      <div><label>Estado</label><select id="mE" onchange="mostrarEspera()">
+        ${Object.entries(ESTADOS_TAREA).map(([k, v]) =>
+          `<option value="${k}" ${estado === k ? 'selected' : ''}>${v.l}</option>`).join('')}
+      </select></div>
       <div><label>Prioridad</label><select id="mP">
         ${['alta','media','baja'].map(x =>
           `<option value="${x}" ${(t?.prioridad || 'media') === x ? 'selected' : ''}>${PRI[x].l}</option>`).join('')}
@@ -96,36 +100,153 @@ function modalTarea(id = null){
     <div class="f2">
       <div><label>Vence</label>
         <input type="date" id="mV" value="${t?.vence || (id ? '' : hoyISO())}"></div>
+      <div><label>Hora límite</label>
+        <input type="time" id="mH" value="${esc(t?.hora || '')}"></div>
+    </div>
+
+    <div class="f2">
+      <div><label>Tipo</label><select id="mTipo">
+        <option value="">— Sin tipo —</option>
+        ${lista('tipo_tarea').map(x =>
+          `<option ${(t?.tipo || '') === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}
+      </select></div>
+      <div><label>Se repite</label><select id="mR">
+        ${Object.entries(REPETICIONES).map(([k, v]) =>
+          `<option value="${k}" ${(t?.repite || '') === k ? 'selected' : ''}>${v.l}</option>`).join('')}
+      </select></div>
+    </div>
+
+    <!-- Contexto: todo opcional. La pregunta es qué hay que hacer,
+         no a qué cliente pertenece. -->
+    <div><label>Persona relacionada (opcional)</label>
+      <select id="mPersona" onchange="sincronizarPersona()">
+        <option value="">— Ninguna —</option>
+        ${S.colaboradores.filter(c => c.activo !== false).map(c =>
+          `<option value="${c.id}" ${t?.persona_id === c.id ? 'selected' : ''}>${esc(c.nombre)}</option>`).join('')}
+      </select>
+      <div id="mPersonaInfo" style="font-size:11.5px;color:var(--text-2);margin-top:5px"></div>
+    </div>
+
+    <div class="f2">
+      <div><label>Cliente (opcional)</label><select id="mC" onchange="sincronizarCeco()">${optsCli(t?.cliente_id)}</select>
+        <div id="mCecoInfo" style="font-size:11.5px;color:var(--text-2);margin-top:5px"></div></div>
       <div><label>Proyecto</label><select id="mPr">
         <option value="">— Ninguno —</option>${optsProy(t?.proyecto_id)}</select></div>
     </div>
 
-    <div><label>Se repite</label>
-      <select id="mR">${Object.entries(REPETICIONES).map(([k, v]) =>
-        `<option value="${k}" ${(t?.repite || '') === k ? 'selected' : ''}>${v.l}</option>`).join('')}</select>
-      <div style="font-size:11.5px;color:var(--text-2);margin-top:5px">
-        Al marcarla como hecha se crea sola la siguiente.</div>
+    <!-- Solo aparece cuando el estado es "En espera" -->
+    <div id="mEsperaBox" style="display:none;border:1px dashed var(--warn);border-radius:12px;
+         padding:13px;background:var(--warn-soft)">
+      <div><label>¿Qué estoy esperando?</label>
+        <input id="mEsQue" placeholder="Ej. La cuenta de cobro del recorrido"
+               value="${esc(t?.espera_que || '')}"></div>
+      <div style="margin-top:11px"><label>Lo espero para</label>
+        <input type="date" id="mEsFecha" value="${t?.espera_fecha || ''}"></div>
+      <p style="font-size:11.5px;color:var(--text-2);margin-top:8px">
+        Si esa fecha pasa y sigue en espera, la app te avisa que toca volver a cobrar.</p>
+    </div>
+
+    <!-- Checklist: pasos dentro de la misma tarea -->
+    <div id="mChkBox">
+      <label>Checklist (opcional)</label>
+      <div id="mChkLista" style="display:grid;gap:7px"></div>
+      <div style="display:flex;gap:8px;margin-top:8px">
+        <input id="mChkNuevo" placeholder="Agregar paso…" style="flex:1"
+               onkeydown="if(event.key==='Enter'){event.preventDefault();agregarChk();}">
+        <button type="button" class="btn sm" onclick="agregarChk()">+ Paso</button>
+      </div>
     </div>
 
     <div><label>Notas</label>
-      <textarea id="mN" placeholder="Detalles, contactos, lo que no cabe en el título">${esc(t?.notas || '')}</textarea></div>`,
+      <textarea id="mN" placeholder="Detalles, contactos, lo que no cabe en el título">${esc(t?.notas || '')}</textarea></div>
+
+    ${id ? `<div><label>Resultado / comentario al cerrar</label>
+      <textarea id="mRes" placeholder="Cómo quedó, qué se decidió…">${esc(t?.resultado || '')}</textarea></div>` : ''}`,
     `guardarTarea(${id ? `'${id}'` : 'null'})`, id ? 'Guardar cambios' : 'Crear tarea'));
+
+  _chk = (t?.checklist || []).map(x => ({ ...x }));
+  pintarChk();
+  sincronizarPersona(true);
+  sincronizarCeco();
+  mostrarEspera();
+}
+
+/* La sección de espera solo estorba si el estado es otro. */
+function mostrarEspera(){
+  const box = $('#mEsperaBox');
+  if(box) box.style.display = $('#mE').value === 'en_espera' ? 'block' : 'none';
+}
+
+/** Al elegir persona: muestra cargo y datos, y hereda su cliente si falta. */
+function sincronizarPersona(inicial = false){
+  const sel = $('#mPersona'), info = $('#mPersonaInfo');
+  if(!sel || !info) return;
+  const c = colab(sel.value);
+  if(!c){ info.textContent = ''; return; }
+  const partes = [c.cargo, c.cliente_id ? cli(c.cliente_id).nombre : null,
+                  c.celular, c.correo].filter(Boolean);
+  info.innerHTML = '👤 ' + partes.map(esc).join(' · ');
+  if(!inicial && c.cliente_id && !$('#mC').value){
+    $('#mC').value = c.cliente_id;
+    sincronizarCeco();
+  }
+}
+
+/** El CECO sale solo del cliente elegido: no se duplica a mano. */
+function sincronizarCeco(){
+  const sel = $('#mC'), info = $('#mCecoInfo');
+  if(!sel || !info) return;
+  const c = S.clientes.find(x => x.id === sel.value);
+  info.textContent = c?.ceco ? `CECO ${c.ceco}` : '';
+}
+
+/* ---- Checklist de la tarea ---- */
+let _chk = [];
+
+function pintarChk(){
+  const box = $('#mChkLista');
+  if(!box) return;
+  box.innerHTML = _chk.map((p, i) => `
+    <div style="display:flex;gap:9px;align-items:center">
+      <button type="button" class="chk ${p.ok ? 'on' : ''}" onclick="_chk[${i}].ok=!_chk[${i}].ok;pintarChk()">✓</button>
+      <input value="${esc(p.t)}" style="flex:1" oninput="_chk[${i}].t=this.value">
+      <button type="button" class="btn sm dgr" onclick="_chk.splice(${i},1);pintarChk()">✕</button>
+    </div>`).join('');
+}
+
+function agregarChk(){
+  const inp = $('#mChkNuevo');
+  const v = inp.value.trim();
+  if(!v) return;
+  _chk.push({ t:v, ok:false });
+  inp.value = '';
+  pintarChk();
+  inp.focus();
 }
 
 async function guardarTarea(id = null){
   const titulo = $('#mT').value.trim();
   if(!titulo){ toast('Escribe el título'); return; }
 
+  const estado = $('#mE').value;
   const fila = {
     titulo,
+    estado,
     cliente_id:  $('#mC').value || null,
     proyecto_id: $('#mPr').value || null,
+    persona_id:  $('#mPersona').value || null,
     prioridad:   $('#mP').value,
+    tipo:        $('#mTipo').value || '',
     vence:       $('#mV').value || null,
+    hora:        $('#mH').value || '',
     repite:      $('#mR').value || '',
+    espera_que:   estado === 'en_espera' ? $('#mEsQue').value.trim() : '',
+    espera_fecha: estado === 'en_espera' ? ($('#mEsFecha').value || null) : null,
+    checklist:   _chk.filter(p => p.t.trim()),
     notas:       $('#mN').value.trim()
   };
-  if(!id) Object.assign(fila, { estado:'pendiente', completada_el:null });
+  if($('#mRes')) fila.resultado = $('#mRes').value.trim();
+  if(!id) Object.assign(fila, { completada_el: estado === 'hecho' ? hoyISO() : null, resultado:'' });
 
   if(id) await db.update('tareas', id, fila);
   else    await db.insert('tareas', fila);
@@ -228,51 +349,140 @@ async function guardarProyecto(){
 }
 
 /* ---- Clientes ------------------------------------------------------------ */
-function modalCliente(){
-  openModal(formModal('Nuevo cliente', `
-    <div><label>Nombre</label><input id="cN" placeholder="Ej. Nueva Empresa S.A.S"></div>
+function modalCliente(id = null){
+  const c = id ? S.clientes.find(x => x.id === id) : null;
+  openModal(formModal(id ? 'Editar cliente' : 'Nuevo cliente', `
+    <div><label>Nombre</label>
+      <input id="cN" placeholder="Ej. Nueva Empresa S.A.S" value="${esc(c?.nombre || '')}"></div>
     <div class="f2">
-      <div><label>Contacto</label><input id="cCo" placeholder="Nombre o cargo"></div>
-      <div><label>Color</label><input type="color" id="cCol" value="#2563eb" style="height:38px"></div>
-    </div>`, 'guardarCliente()', 'Crear'));
+      <div><label>NIT (opcional)</label>
+        <input id="cNit" placeholder="900123456-1" value="${esc(c?.nit || '')}"></div>
+      <div><label>CECO</label>
+        <input id="cCeco" placeholder="Ej. CAF-1001" value="${esc(c?.ceco || '')}"></div>
+    </div>
+    <div class="f2">
+      <div><label>Contacto</label>
+        <input id="cCo" placeholder="Nombre o cargo" value="${esc(c?.contacto || '')}"></div>
+      <div><label>Color</label>
+        <input type="color" id="cCol" value="${c?.color || '#800000'}" style="height:42px"></div>
+    </div>
+    <div><label>Estado</label><select id="cAct">
+      <option value="1" ${c?.activo !== false ? 'selected' : ''}>Activo</option>
+      <option value="0" ${c?.activo === false ? 'selected' : ''}>Inactivo</option>
+    </select></div>
+    <div><label>Notas</label>
+      <textarea id="cNotas" placeholder="Acuerdos, particularidades…">${esc(c?.notas || '')}</textarea></div>`,
+    `guardarCliente(${id ? `'${id}'` : 'null'})`, id ? 'Guardar cambios' : 'Crear'));
 }
 
-async function guardarCliente(){
+async function guardarCliente(id = null){
   const nombre = $('#cN').value.trim();
   if(!nombre){ toast('Escribe el nombre'); return; }
-  await db.insert('clientes', {
-    nombre, contacto:$('#cCo').value.trim(), color:$('#cCol').value, activo:true
-  });
-  closeModal(); render(); toast('Cliente creado ✓');
+
+  const fila = {
+    nombre,
+    nit:      $('#cNit').value.trim(),
+    ceco:     $('#cCeco').value.trim(),
+    contacto: $('#cCo').value.trim(),
+    color:    $('#cCol').value,
+    activo:   $('#cAct').value === '1',
+    notas:    $('#cNotas').value.trim()
+  };
+
+  if(id) await db.update('clientes', id, fila);
+  else    await db.insert('clientes', fila);
+
+  closeModal(); render();
+  toast(id ? 'Cliente actualizado ✓' : 'Cliente creado ✓');
 }
 
-/* ---- Accesos rápidos ----------------------------------------------------- */
-function modalEnlace(id = null){
-  const d = id ? S.dashboards.find(x => x.id === id) : null;
-  openModal(formModal(id ? 'Editar enlace' : 'Nuevo enlace', `
-    <div><label>Nombre</label>
-      <input id="enN" placeholder="Ej. Dashboard institucional Cafam" value="${esc(d?.nombre || '')}"></div>
-    <div><label>Dirección web</label>
-      <input id="enU" type="url" inputmode="url" placeholder="https://…" value="${esc(d?.url || '')}"></div>
-    <div><label>Cliente</label>
-      <select id="enC">${optsCli(d?.cliente_id)}</select></div>
-    <p style="font-size:11.5px;color:var(--text-2)">
-      Pégala tal cual la copias del navegador. Se abrirá en una pestaña nueva.</p>`,
-    `guardarEnlace(${id ? `'${id}'` : 'null'})`, id ? 'Guardar' : 'Guardar enlace'));
+/* ---- Colaboradores --------------------------------------------------------
+   Contactos de la operación (jefes, coordinadores, el señor del parqueadero).
+   NO son usuarios de la app: son la agenda de con quién se trabaja.
+   -------------------------------------------------------------------------- */
+function modalColaborador(id = null, clientePreset = null){
+  const c = id ? colab(id) : null;
+  openModal(formModal(id ? 'Editar colaborador' : 'Nuevo colaborador', `
+    <div><label>Nombre completo</label>
+      <input id="coN" placeholder="Ej. Carlos Pérez" value="${esc(c?.nombre || '')}"></div>
+    <div class="f2">
+      <div><label>Cédula (opcional)</label>
+        <input id="coCed" inputmode="numeric" placeholder="79456123" value="${esc(c?.cedula || '')}"></div>
+      <div><label>Cargo</label><select id="coCargo">
+        ${lista('cargo_colaborador').map(x =>
+          `<option ${(c?.cargo || 'Coordinador') === x ? 'selected' : ''}>${esc(x)}</option>`).join('')}
+      </select></div>
+    </div>
+    <div class="f2">
+      <div><label>Celular</label>
+        <input id="coCel" inputmode="tel" placeholder="3114567890" value="${esc(c?.celular || '')}"></div>
+      <div><label>Correo</label>
+        <input id="coMail" type="email" placeholder="nombre@empresa.com" value="${esc(c?.correo || '')}"></div>
+    </div>
+    <div class="f2">
+      <div><label>Área / dependencia</label>
+        <input id="coArea" placeholder="Ej. Logística" value="${esc(c?.area || '')}"></div>
+      <div><label>Ciudad</label>
+        <input id="coCiudad" placeholder="Bogotá" value="${esc(c?.ciudad || '')}"></div>
+    </div>
+    <div class="f2">
+      <div><label>Cliente</label><select id="coCli">${optsCli(c?.cliente_id ?? clientePreset)}</select></div>
+      <div><label>Estado</label><select id="coAct">
+        <option value="1" ${c?.activo !== false ? 'selected' : ''}>Activo</option>
+        <option value="0" ${c?.activo === false ? 'selected' : ''}>Inactivo</option>
+      </select></div>
+    </div>
+    <div><label>Notas</label>
+      <textarea id="coNotas" placeholder="Ej. Aprueba los informes, responde mejor por WhatsApp">${esc(c?.notas || '')}</textarea></div>`,
+    `guardarColaborador(${id ? `'${id}'` : 'null'})`, id ? 'Guardar cambios' : 'Crear'));
 }
 
-async function guardarEnlace(id = null){
-  const nombre = $('#enN').value.trim();
-  let url = $('#enU').value.trim();
-  if(!nombre){ toast('Ponle un nombre'); return; }
-  if(!url){ toast('Falta la dirección web'); return; }
-  if(!/^https?:\/\//i.test(url)) url = 'https://' + url;   // pegar sin https es lo normal
+async function guardarColaborador(id = null){
+  const nombre = $('#coN').value.trim();
+  if(!nombre){ toast('Escribe el nombre'); return; }
 
-  const fila = { nombre, url, cliente_id: $('#enC').value || null };
-  if(id) await db.update('dashboards', id, fila);
-  else    await db.insert('dashboards', fila);
+  const fila = {
+    nombre,
+    cedula:     $('#coCed').value.trim(),
+    cargo:      $('#coCargo').value,
+    celular:    $('#coCel').value.trim(),
+    correo:     $('#coMail').value.trim(),
+    area:       $('#coArea').value.trim(),
+    ciudad:     $('#coCiudad').value.trim(),
+    cliente_id: $('#coCli').value || null,
+    activo:     $('#coAct').value === '1',
+    notas:      $('#coNotas').value.trim()
+  };
 
-  closeModal(); render(); toast(id ? 'Enlace actualizado ✓' : 'Enlace guardado ✓');
+  if(id) await db.update('colaboradores', id, fila);
+  else    await db.insert('colaboradores', fila);
+
+  closeModal(); render();
+  toast(id ? 'Colaborador actualizado ✓' : 'Colaborador creado ✓');
+}
+
+function eliminarColaborador(id){
+  const c = colab(id);
+  const n = S.tareas.filter(t => t.persona_id === id).length;
+  confirmarPeligro('¿Eliminar este colaborador?',
+    `"${c.nombre}"` +
+    (n ? `\n\nTiene ${n} tarea${n > 1 ? 's' : ''} relacionada${n > 1 ? 's' : ''}: quedarán sin persona.` : '') +
+    `\n\nEsta acción no se puede deshacer.`,
+    async () => {
+      for(const t of S.tareas.filter(x => x.persona_id === id))
+        await db.update('tareas', t.id, { persona_id: null });
+      await db.remove('colaboradores', id);
+      render(); toast('Colaborador eliminado');
+    });
+}
+
+/** Crear una tarea ya apuntando a una persona (desde su ficha). */
+function tareaParaPersona(pid){
+  modalTarea();
+  setTimeout(() => {
+    const sel = $('#mPersona');
+    if(sel){ sel.value = pid; sincronizarPersona(); }
+  }, 80);
 }
 
 /* ---- Rutina diaria ------------------------------------------------------- */

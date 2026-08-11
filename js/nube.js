@@ -358,7 +358,7 @@ function mostrarFaltaEsquema(faltantes){
 async function vaciarNube(){
   // En orden inverso a las dependencias, para no chocar con las llaves foráneas
   const orden = ['caja','tareas','novedades','dashboards','rutina','presupuestos',
-                 'listas','preguntas','periodos','proyectos','beneficiarios','clientes'];
+                 'listas','preguntas','periodos','proyectos','colaboradores','beneficiarios','clientes'];
   for(const t of orden){
     const { error } = await sb.from(t).delete().neq('id', '00000000-0000-0000-0000-000000000000');
     if(error) console.error(`Error vaciando ${t}:`, error.message);

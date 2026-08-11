@@ -56,7 +56,28 @@ const LISTAS = {
     nombre:'Categorías generales', icono:'🏷',
     ayuda:'Agrupan preguntas y campos personalizados.',
     def:['Operación','Seguridad','Vehículos','Entregas','Administrativo','Calidad']
+  },
+  cargo_colaborador: {
+    nombre:'Cargos de colaborador', icono:'👤',
+    ayuda:'El cargo de cada contacto en la ficha del cliente.',
+    def:['Cliente','Jefe','Líder','Coordinador','Supervisor','Otro']
+  },
+  tipo_tarea: {
+    nombre:'Tipos de tarea', icono:'✓',
+    ayuda:'Para distinguir lo personal de lo operativo. Es opcional al crear.',
+    def:['Personal','Operativa','Administrativa','Seguimiento','Reunión','Documentación','Otro']
   }
+};
+
+/* ---- Estados de una tarea ------------------------------------------------
+   Fijos: los KPIs, las alertas y los filtros razonan sobre ellos.
+   -------------------------------------------------------------------------- */
+const ESTADOS_TAREA = {
+  pendiente:  { l:'Pendiente',  c:'n' },
+  en_proceso: { l:'En proceso', c:'b' },
+  en_espera:  { l:'En espera',  c:'w' },
+  hecho:      { l:'Hecha',      c:'o' },
+  cancelada:  { l:'Cancelada',  c:'n' }
 };
 
 /* ---- Tipos de respuesta de una pregunta ----------------------------------

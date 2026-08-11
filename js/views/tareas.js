@@ -10,13 +10,16 @@ let fTarea      = 'pendientes';
 let buscarTarea = '';
 let agruparPor  = 'fecha';      // fecha | cliente | proyecto
 
+const abierta = t => t.estado !== 'hecho' && t.estado !== 'cancelada';
+
 const FILTROS_TAREA = {
-  pendientes: t => t.estado !== 'hecho',
-  vencidas:   t => t.estado !== 'hecho' && t.vence && diasDesde(t.vence) <  0,
-  hoy:        t => t.estado !== 'hecho' && t.vence && diasDesde(t.vence) === 0,
-  semana:     t => t.estado !== 'hecho' && t.vence && diasDesde(t.vence) > 0 && diasDesde(t.vence) <= 7,
-  sinfecha:   t => t.estado !== 'hecho' && !t.vence,
-  hechas:     t => t.estado === 'hecho'
+  pendientes: abierta,
+  vencidas:   t => abierta(t) && t.vence && diasDesde(t.vence) <  0,
+  hoy:        t => abierta(t) && t.vence && diasDesde(t.vence) === 0,
+  semana:     t => abierta(t) && t.vence && diasDesde(t.vence) > 0 && diasDesde(t.vence) <= 7,
+  espera:     t => t.estado === 'en_espera',
+  sinfecha:   t => abierta(t) && !t.vence,
+  hechas:     t => t.estado === 'hecho' || t.estado === 'cancelada'
 };
 
 /* Los grupos por fecha, en el orden en que importan. */
@@ -42,8 +45,11 @@ function buscarTareaAhora(v){
 
 function coincideTarea(t, q){
   if(!q) return true;
-  const texto = [t.titulo, t.notas, cli(t.cliente_id).nombre, pro(t.proyecto_id)?.nombre,
-                 t.prioridad].filter(Boolean).join(' ').toLowerCase();
+  const persona = colab(t.persona_id);
+  const texto = [t.titulo, t.notas, t.tipo, t.espera_que, t.resultado,
+                 cli(t.cliente_id).nombre, pro(t.proyecto_id)?.nombre,
+                 persona?.nombre, persona?.cargo, t.prioridad]
+    .filter(Boolean).join(' ').toLowerCase();
   return q.toLowerCase().split(/\s+/).filter(Boolean).every(p => texto.includes(p));
 }
 
@@ -65,14 +71,29 @@ function vTareas(m){
     ['vencidas',   `Vencidas (${m.vencidas.length})`],
     ['hoy',        `Hoy (${m.hoy.length})`],
     ['semana',     `Esta semana (${m.semana.length})`],
+    ['espera',     `En espera (${m.enEspera.length})`],
     ['sinfecha',   `Sin fecha (${S.tareas.filter(FILTROS_TAREA.sinfecha).length})`],
     ['hechas',     `Hechas (${S.tareas.filter(FILTROS_TAREA.hechas).length})`]
   ];
 
   return `
   ${pageHead('Tareas',
-    'Agrupadas por cuándo tocan. Lo vencido siempre arriba.',
+    'Organiza, prioriza y controla todo lo que requiere tu atención.',
     `<button class="btn pri" onclick="modalTarea()">+ Nueva tarea</button>`)}
+
+  <div class="grid g4" style="margin-bottom:14px">
+    ${kpi('Atrasadas', m.vencidas.length, m.vencidas.length ? 'Resuélvelas primero' : 'Nada vencido',
+          m.vencidas.length ? 'd' : 'o')}
+    ${kpi('Vencen hoy', m.hoy.length, m.hoy.length ? 'Antes de que acabe el día' : 'Día despejado',
+          m.hoy.length ? 'w' : 'o')}
+    ${kpi('En espera', m.enEspera.length,
+          m.esperaAtrasada.length
+            ? `${m.esperaAtrasada.length} atrasada${m.esperaAtrasada.length > 1 ? 's' : ''} — vuelve a cobrar`
+            : 'El balón está en otra cancha',
+          m.esperaAtrasada.length ? 'd' : m.enEspera.length ? 'w' : 'o')}
+    ${kpi('Alta prioridad', m.altaPendiente.length, 'Pendientes marcadas como altas',
+          m.altaPendiente.length ? 'w' : 'o')}
+  </div>
 
   <div class="tabs">
     ${tabs.map(([k, l]) =>

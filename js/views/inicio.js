@@ -16,6 +16,12 @@ function alertasDelDia(m){
       titulo:`${m.novCriticas.length} novedad${m.novCriticas.length > 1 ? 'es' : ''} crítica${m.novCriticas.length > 1 ? 's' : ''} sin cerrar`,
       sub: m.novCriticas[0].titulo, ir:'novedades' });
 
+  if(m.esperaAtrasada.length)
+    a.push({ tono:'w', ico:'⏳',
+      titulo:`${m.esperaAtrasada.length} seguimiento${m.esperaAtrasada.length > 1 ? 's' : ''} atrasado${m.esperaAtrasada.length > 1 ? 's' : ''}`,
+      sub: m.esperaAtrasada.map(t => t.espera_que || t.titulo).slice(0, 2).join(' · ') + ' — vuelve a cobrar',
+      ir:'tareas' });
+
   const q = m.arqueo;
 
   if(q.sinLegalizar.length)

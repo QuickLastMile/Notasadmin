@@ -5,7 +5,7 @@
 let S = null;   // estado global
 
 const COLECCIONES = ['clientes','beneficiarios','periodos','presupuestos','caja',
-                     'proyectos','tareas','novedades','dashboards','rutina','listas','preguntas'];
+                     'proyectos','tareas','novedades','dashboards','rutina','listas','preguntas','colaboradores'];
 
 /* ---- Persistencia -------------------------------------------------------- */
 const save = () => localStorage.setItem(CFG.storageKey, JSON.stringify(S));
@@ -52,6 +52,7 @@ const cli = id => S.clientes.find(c => c.id === id)      || {nombre:'Sin cliente
 const pro = id => S.proyectos.find(p => p.id === id)     || null;
 const ben = id => S.beneficiarios.find(b => b.id === id) || null;
 const per = id => S.periodos.find(p => p.id === id)      || null;
+const colab = id => S.colaboradores.find(c => c.id === id) || null;
 
 /** El período de caja abierto (donde caen los movimientos nuevos). */
 const periodoActivo = () => S.periodos.find(p => p.estado === 'abierto')
@@ -112,7 +113,7 @@ function presupuestoVs(periodoId){
 
 /* ---- Métricas globales: la fuente única de todas las alertas -------------- */
 function metricas(){
-  const pendientes = S.tareas.filter(t => t.estado !== 'hecho');
+  const pendientes = S.tareas.filter(t => t.estado !== 'hecho' && t.estado !== 'cancelada');
   const vencidas = pendientes.filter(t => t.vence && diasDesde(t.vence) <  0);
   const hoy      = pendientes.filter(t => t.vence && diasDesde(t.vence) === 0);
   const semana   = pendientes.filter(t => t.vence && diasDesde(t.vence) > 0 && diasDesde(t.vence) <= 7);
@@ -120,6 +121,12 @@ function metricas(){
   const pa = periodoActivo();
   const a  = arqueo(pa?.id);
   const presupuestosExcedidos = pa ? presupuestoVs(pa.id).filter(p => p.excedido) : [];
+
+  /* En espera: tareas donde el balón está en la cancha de otro. Si la fecha
+     esperada ya pasó, el seguimiento está atrasado y hay que volver a cobrar. */
+  const enEspera       = pendientes.filter(t => t.estado === 'en_espera');
+  const esperaAtrasada = enEspera.filter(t => t.espera_fecha && diasDesde(t.espera_fecha) < 0);
+  const altaPendiente  = pendientes.filter(t => t.prioridad === 'alta');
 
   const novAbiertas = S.novedades.filter(n => n.estado === 'abierta');
   const novCriticas = novAbiertas.filter(n => n.criticidad === 'alta');
@@ -129,6 +136,7 @@ function metricas(){
     p.estado === 'en_riesgo' || (p.vence && diasDesde(p.vence) < 3));
 
   return { pendientes, vencidas, hoy, semana,
+           enEspera, esperaAtrasada, altaPendiente,
            periodo: pa, arqueo: a, presupuestosExcedidos,
            novAbiertas, novCriticas, proyActivos, proyRiesgo };
 }
