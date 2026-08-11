@@ -400,6 +400,8 @@ async function novedadATarea(id){
 function modalProyecto(id = null){
   const p = id ? S.proyectos.find(x => x.id === id) : null;
   const modo = p?.avance_modo || 'automatico';
+  const campos = (S.campos_personalizados || []).filter(c => c.entidad === 'proyectos' && c.activo !== false)
+    .sort((a,b) => (a.orden || 0) - (b.orden || 0));
   openModal(formModal(id ? 'Editar proyecto' : 'Nuevo proyecto', `
     <div><label>Nombre</label>
       <input id="pN" placeholder="Ej. Dashboard de indicadores" value="${esc(p?.nombre || '')}"></div>
@@ -426,8 +428,23 @@ function modalProyecto(id = null){
     <div class="f2">
       <div><label>Repositorio (opcional)</label><input type="url" id="pRepo" placeholder="https://github.com/…" value="${esc(p?.repositorio_url || '')}"></div>
       <div><label>Base de trabajo (opcional)</label><input type="url" id="pBase" placeholder="https://docs.google.com/…" value="${esc(p?.base_url || '')}"></div>
-    </div>`, `guardarProyecto(${id ? `'${id}'` : 'null'})`, id ? 'Guardar cambios' : 'Crear'));
+    </div>
+    ${campos.length ? `<div class="campos-proyecto"><div class="campos-proyecto-tit">Información adicional</div>
+      ${campos.map(c => controlCampoProyecto(c, p?.campos?.[c.id])).join('')}</div>` : ''}`,
+    `guardarProyecto(${id ? `'${id}'` : 'null'})`, id ? 'Guardar cambios' : 'Crear'));
   pintarAvanceProyecto();
+}
+
+function controlCampoProyecto(c, valor){
+  const id = `pc_${c.id}`;
+  const req = c.obligatorio ? 'required' : '';
+  const etiqueta = `${esc(c.nombre)}${c.obligatorio ? ' *' : ''}`;
+  if(c.tipo === 'seleccion') return `<div><label>${etiqueta}</label><select id="${id}" ${req}>
+    <option value="">— Seleccionar —</option>${(c.opciones || []).map(o => `<option value="${esc(o)}" ${valor === o ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select></div>`;
+  if(c.tipo === 'booleano') return `<div><label>${etiqueta}</label><select id="${id}" ${req}>
+    <option value="">— Sin definir —</option><option value="si" ${valor === true ? 'selected' : ''}>Sí</option><option value="no" ${valor === false ? 'selected' : ''}>No</option></select></div>`;
+  const tipo = c.tipo === 'numero' ? 'number' : c.tipo === 'fecha' ? 'date' : 'text';
+  return `<div><label>${etiqueta}</label><input id="${id}" type="${tipo}" value="${esc(valor ?? '')}" placeholder="${esc(c.descripcion || '')}" ${req}></div>`;
 }
 
 function pintarAvanceProyecto(){
@@ -445,11 +462,18 @@ async function guardarProyecto(id = null){
   if(!urlProyectoValida(repositorio_url) || !urlProyectoValida(base_url)){
     toast('Los enlaces deben comenzar por http:// o https://'); return;
   }
+  const campos = {};
+  for(const c of (S.campos_personalizados || []).filter(x => x.entidad === 'proyectos' && x.activo !== false)){
+    const el = $(`#pc_${c.id}`); if(!el) continue;
+    if(c.obligatorio && el.value === ''){ toast(`Completa: ${c.nombre}`); el.focus(); return; }
+    campos[c.id] = c.tipo === 'booleano' ? (el.value === '' ? null : el.value === 'si')
+      : c.tipo === 'numero' && el.value !== '' ? +el.value : el.value;
+  }
   const fila = {
     nombre, cliente_id:$('#pC').value || null, estado:$('#pE').value,
     responsable_id:$('#pR').value || null, vence:$('#pV').value || null,
     avance_modo:$('#pModo').value, avance:+$('#pA').value || 0,
-    notas:$('#pNotas').value.trim(), repositorio_url, base_url
+    notas:$('#pNotas').value.trim(), repositorio_url, base_url, campos
   };
   if(id) await db.update('proyectos', id, fila);
   else await db.insert('proyectos', { ...fila, seguimiento:[] });

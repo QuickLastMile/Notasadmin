@@ -120,8 +120,21 @@ create table if not exists proyectos (
   repositorio_url text default '',
   base_url       text default '',
   seguimiento   jsonb default '[]'::jsonb,
+  campos        jsonb not null default '{}'::jsonb,
   created_at  timestamptz default now(),
   updated_at  timestamptz default now()
+);
+
+create table if not exists campos_personalizados (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade default auth.uid(),
+  nombre text not null,
+  entidad text not null default 'proyectos' check (entidad in ('proyectos')),
+  tipo text not null default 'texto' check (tipo in ('texto','numero','fecha','seleccion','booleano')),
+  descripcion text default '', opciones jsonb not null default '[]'::jsonb,
+  obligatorio boolean not null default false, activo boolean not null default true,
+  orden int not null default 0, created_at timestamptz default now(), updated_at timestamptz default now(),
+  unique(user_id, entidad, nombre)
 );
 
 create table if not exists tareas (
@@ -183,7 +196,7 @@ do $$
 declare t text;
 begin
   foreach t in array array['clientes','beneficiarios','periodos','caja','presupuestos',
-                           'proyectos','tareas','novedades','dashboards','rutina']
+                           'proyectos','campos_personalizados','tareas','novedades','dashboards','rutina']
   loop
     execute format('alter table %I enable row level security', t);
     execute format('drop policy if exists "solo_dueno" on %I', t);
@@ -232,7 +245,7 @@ begin new.updated_at = now(); return new; end $$ language plpgsql;
 do $$
 declare t text;
 begin
-  foreach t in array array['caja','proyectos','tareas','novedades']
+  foreach t in array array['caja','proyectos','campos_personalizados','tareas','novedades']
   loop
     execute format('drop trigger if exists trg_touch on %I', t);
     execute format('create trigger trg_touch before update on %I

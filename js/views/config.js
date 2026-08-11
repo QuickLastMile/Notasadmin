@@ -133,6 +133,29 @@ function cfgPendiente(item){
    ========================================================================== */
 const SECCIONES = {
 
+/* ---- Campos personalizados ---------------------------------------------- */
+campos(){
+  const q = cfgBuscar.toLowerCase();
+  const campos = (S.campos_personalizados || [])
+    .filter(c => !q || c.nombre.toLowerCase().includes(q) || (c.descripcion || '').toLowerCase().includes(q))
+    .sort((a,b) => (a.orden || 0) - (b.orden || 0));
+  const tipos = { texto:'Texto', numero:'Número', fecha:'Fecha', seleccion:'Selección', booleano:'Sí / No' };
+  return `
+    ${cfgHead('Campos personalizados', 'Agrega información propia a todos tus proyectos sin modificar el código.',
+      `<button class="btn pri" onclick="modalCampoPersonalizado()">+ Nuevo campo</button>`)}
+    ${cfgBarra('Buscar campos…')}
+    ${campos.length ? `<div class="cfg-lista">${campos.map(c => `<div class="cfg-fila ${c.activo === false ? 'apagada' : ''}">
+      <div class="cfg-fila-txt"><strong>${esc(c.nombre)}</strong><small>${tipos[c.tipo] || c.tipo} · Proyectos${c.obligatorio ? ' · obligatorio' : ''}${c.descripcion ? ` · ${esc(c.descripcion)}` : ''}</small></div>
+      <span class="chip ${c.activo === false ? 'n' : 'o'}">${c.activo === false ? 'Inactivo' : 'Activo'}</span>
+      ${menuAcciones([
+        ['Editar', `modalCampoPersonalizado('${c.id}')`],
+        [c.activo === false ? 'Activar' : 'Desactivar', `alternarCampoPersonalizado('${c.id}')`],
+        ['Eliminar', `eliminarCampoPersonalizado('${c.id}')`, 'peligro']
+      ])}</div>`).join('')}</div>` : cfgVacio('Aún no hay campos',
+        'Crea datos adicionales como número de contrato, área, presupuesto o tipo de proyecto.',
+        `<button class="btn pri" onclick="modalCampoPersonalizado()">+ Crear el primero</button>`)}`;
+},
+
 /* ---- Preguntas ----------------------------------------------------------- */
 preguntas(){
   const filtro = {
@@ -543,6 +566,57 @@ function filaListado(tipo, def){
 }
 
 function abrirLista(tipo){ listaAbierta = listaAbierta === tipo ? null : tipo; repintarPanel(); }
+
+/* ---- Campos personalizados ---------------------------------------------- */
+function modalCampoPersonalizado(id = null){
+  const c = id ? (S.campos_personalizados || []).find(x => x.id === id) : null;
+  openModal(formModal(id ? 'Editar campo personalizado' : 'Nuevo campo personalizado', `
+    <div><label>Nombre del campo</label><input id="cpNombre" value="${esc(c?.nombre || '')}" placeholder="Ej. Número de contrato"></div>
+    <div class="f2">
+      <div><label>Se mostrará en</label><select id="cpEntidad" disabled><option value="proyectos">Proyectos</option></select></div>
+      <div><label>Tipo de respuesta</label><select id="cpTipo" onchange="mostrarOpcionesCampo()">
+        ${[['texto','Texto'],['numero','Número'],['fecha','Fecha'],['seleccion','Selección'],['booleano','Sí / No']].map(([v,l]) => `<option value="${v}" ${(c?.tipo || 'texto') === v ? 'selected' : ''}>${l}</option>`).join('')}
+      </select></div>
+    </div>
+    <div><label>Ayuda o descripción (opcional)</label><input id="cpDesc" value="${esc(c?.descripcion || '')}" placeholder="Indica qué información debe registrarse"></div>
+    <div id="cpOpciones"><label>Opciones, una por línea</label><textarea id="cpOps" placeholder="Interno\nCliente\nProveedor">${esc((c?.opciones || []).join('\n'))}</textarea></div>
+    <div class="f-check"><label><input id="cpReq" type="checkbox" ${c?.obligatorio ? 'checked' : ''}> Obligatorio al guardar el proyecto</label></div>`,
+    `guardarCampoPersonalizado(${id ? `'${id}'` : 'null'})`, id ? 'Guardar cambios' : 'Crear campo'));
+  mostrarOpcionesCampo();
+}
+
+function mostrarOpcionesCampo(){
+  const box = $('#cpOpciones'); if(box) box.style.display = $('#cpTipo')?.value === 'seleccion' ? 'block' : 'none';
+}
+
+async function guardarCampoPersonalizado(id = null){
+  const nombre = $('#cpNombre').value.trim();
+  if(!nombre){ toast('Escribe el nombre del campo'); return; }
+  const tipo = $('#cpTipo').value;
+  const opciones = tipo === 'seleccion' ? $('#cpOps').value.split('\n').map(x => x.trim()).filter(Boolean) : [];
+  if(tipo === 'seleccion' && !opciones.length){ toast('Agrega al menos una opción'); return; }
+  const repetido = (S.campos_personalizados || []).some(c => c.id !== id && c.entidad === 'proyectos' && c.nombre.toLowerCase() === nombre.toLowerCase());
+  if(repetido){ toast('Ya existe un campo con ese nombre'); return; }
+  const fila = { nombre, entidad:'proyectos', tipo, descripcion:$('#cpDesc').value.trim(), opciones,
+    obligatorio:$('#cpReq').checked, activo:cActivo(id), orden:id ? ((S.campos_personalizados || []).find(c => c.id === id)?.orden || 0) : (S.campos_personalizados || []).length + 1 };
+  if(id) await db.update('campos_personalizados', id, fila); else await db.insert('campos_personalizados', fila);
+  closeModal(); repintarPanel(); toast(id ? 'Campo actualizado ✓' : 'Campo creado ✓');
+}
+
+function cActivo(id){ return id ? (S.campos_personalizados || []).find(c => c.id === id)?.activo !== false : true; }
+
+async function alternarCampoPersonalizado(id){
+  const c = S.campos_personalizados.find(x => x.id === id);
+  await db.update('campos_personalizados', id, { activo:c.activo === false }); repintarPanel();
+  toast(c.activo === false ? 'Campo activado' : 'Campo desactivado');
+}
+
+function eliminarCampoPersonalizado(id){
+  const c = S.campos_personalizados.find(x => x.id === id);
+  confirmarPeligro('¿Eliminar este campo?', `“${c.nombre}” dejará de mostrarse. Los valores antiguos guardados en proyectos no se borrarán.`, async()=>{
+    await db.remove('campos_personalizados', id); repintarPanel(); toast('Campo eliminado');
+  });
+}
 
 /* ---- Acciones sobre listas ------------------------------------------------ */
 
