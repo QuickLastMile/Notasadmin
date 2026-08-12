@@ -8,7 +8,8 @@
 const NEXA_KEY = () => `nexa_chat_v1_${usuario?.id || 'local'}`;
 let nexaAbierto = false;
 let nexaHistorial = [];
-let nexaEstadoActual = 'disponible';
+let nexaEstadoActual = 'pendiente';
+let nexaEstadoTexto = '🧪 IA lista para probar';
 
 function nexaCargarHistorial(){
   try { nexaHistorial = JSON.parse(localStorage.getItem(NEXA_KEY())) || []; }
@@ -31,7 +32,7 @@ function renderNexa(){
   caja.innerHTML = `
     <div class="nexa-chat-head" data-estado="${nexaEstadoActual}">
       <div class="nexa-head-mascota"><img src="assets/nexa-bot/nexa-mascota-flotante-v2.png" alt="NEXA"></div>
-      <div><strong>NEXA</strong><small>Tu asistente inteligente</small><span class="nexa-estado" id="nexaEstado">🟢 Disponible</span></div>
+      <div><strong>NEXA</strong><small>Tu asistente inteligente</small><span class="nexa-estado" id="nexaEstado">${nexaTextoSeguro(nexaEstadoTexto)}</span></div>
       <button class="nexa-cerrar" type="button" onclick="toggleNexa()" aria-label="Cerrar NEXA">×</button>
     </div>
     <div class="nexa-mensajes" id="nexaMensajes">
@@ -58,6 +59,7 @@ function toggleNexa(){
 function nexaBajar(){ const d = $('#nexaMensajes'); if(d) d.scrollTop = d.scrollHeight; }
 function nexaEstado(texto, estado = 'disponible'){
   nexaEstadoActual = estado;
+  nexaEstadoTexto = texto;
   const e = $('#nexaEstado'); if(e) e.textContent = texto;
   const h = document.querySelector('.nexa-chat-head'); if(h) h.dataset.estado = estado;
   const fab = $('#nexaFab'); if(fab) fab.dataset.estado = estado;
@@ -87,10 +89,19 @@ function nexaResponderLocal(mensaje){
 }
 
 async function nexaIA(mensaje){
-  if(!NUBE || !sb) return null;
+  if(!NUBE || !sb) throw new Error('La aplicación no está conectada a Supabase.');
   const { data, error } = await sb.functions.invoke(CFG.nexa.functionName, { body:{ mensaje } });
-  if(error) return null; // La interfaz sigue siendo útil antes del despliegue de la función.
-  return data?.respuesta || null;
+  if(error){
+    let detalle = error.message || 'La función no respondió.';
+    try {
+      const cuerpo = await error.context?.clone?.().json();
+      if(cuerpo?.error) detalle = cuerpo.error;
+    } catch {}
+    throw new Error(detalle);
+  }
+  if(data?.error) throw new Error(data.error);
+  if(!data?.respuesta) throw new Error('La IA respondió sin contenido.');
+  return data.respuesta;
 }
 
 async function nexaPreguntar(mensaje){
@@ -100,11 +111,16 @@ async function nexaPreguntar(mensaje){
   nexaEstado('💭 Analizando…', 'pensando');
   const local = nexaResponderLocal(mensaje);
   let respuesta = null;
-  try { respuesta = await nexaIA(mensaje); } catch { respuesta = null; }
-  nexaHistorial.push({rol:'bot', texto:respuesta || local});
+  let errorIA = '';
+  try { respuesta = await nexaIA(mensaje); }
+  catch(error) {
+    errorIA = error?.message || 'No fue posible conectar con la IA.';
+    console.error('NEXA IA:', error);
+  }
+  nexaHistorial.push({rol:'bot', texto:respuesta || `${local}\n\n⚠️ IA sin conexión: ${errorIA}`});
   nexaGuardarHistorial();
   renderNexa();
-  nexaEstado(respuesta ? '🟢 Disponible' : '💡 Consulta local', respuesta ? 'disponible' : 'completado');
+  nexaEstado(respuesta ? '🟢 IA conectada' : '🔴 IA sin conexión', respuesta ? 'disponible' : 'error');
 }
 
 function nexaEnviar(e){
