@@ -443,8 +443,9 @@ function controlCampoProyecto(c, valor){
     <option value="">— Seleccionar —</option>${(c.opciones || []).map(o => `<option value="${esc(o)}" ${valor === o ? 'selected' : ''}>${esc(o)}</option>`).join('')}</select></div>`;
   if(c.tipo === 'booleano') return `<div><label>${etiqueta}</label><select id="${id}" ${req}>
     <option value="">— Sin definir —</option><option value="si" ${valor === true ? 'selected' : ''}>Sí</option><option value="no" ${valor === false ? 'selected' : ''}>No</option></select></div>`;
-  const tipo = c.tipo === 'numero' ? 'number' : c.tipo === 'fecha' ? 'date' : c.tipo === 'url' ? 'url' : 'text';
-  return `<div><label>${etiqueta}</label><input id="${id}" type="${tipo}" value="${esc(valor ?? '')}" placeholder="${c.tipo === 'url' ? 'https://...' : esc(c.descripcion || '')}" ${req}></div>`;
+  const esUrl = c.tipo === 'url' || (c.opciones || []).includes('__nexa_url__') || (/url|enlace/i.test(c.nombre) && c.tipo === 'texto');
+  const tipo = c.tipo === 'numero' ? 'number' : c.tipo === 'fecha' ? 'date' : esUrl ? 'url' : 'text';
+  return `<div><label>${etiqueta}</label><input id="${id}" type="${tipo}" value="${esc(valor ?? '')}" placeholder="${esUrl ? 'https://...' : esc(c.descripcion || '')}" ${req}></div>`;
 }
 
 function pintarAvanceProyecto(){
@@ -466,7 +467,8 @@ async function guardarProyecto(id = null){
   for(const c of (S.campos_personalizados || []).filter(x => x.entidad === 'proyectos' && x.activo !== false)){
     const el = $(`#pc_${c.id}`); if(!el) continue;
     if(c.obligatorio && el.value === ''){ toast(`Completa: ${c.nombre}`); el.focus(); return; }
-    if(c.tipo === 'url' && el.value && !urlProyectoValida(el.value)){ toast(`${c.nombre}: usa una URL válida con http:// o https://`); el.focus(); return; }
+    const esUrl = c.tipo === 'url' || (c.opciones || []).includes('__nexa_url__') || (/url|enlace/i.test(c.nombre) && c.tipo === 'texto');
+    if(esUrl && el.value && !urlProyectoValida(el.value)){ toast(`${c.nombre}: usa una URL válida con http:// o https://`); el.focus(); return; }
     campos[c.id] = c.tipo === 'booleano' ? (el.value === '' ? null : el.value === 'si')
       : c.tipo === 'numero' && el.value !== '' ? +el.value : el.value;
   }

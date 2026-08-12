@@ -613,12 +613,13 @@ function abrirLista(tipo){ listaAbierta = listaAbierta === tipo ? null : tipo; r
 /* ---- Campos personalizados ---------------------------------------------- */
 function modalCampoPersonalizado(id = null){
   const c = id ? (S.campos_personalizados || []).find(x => x.id === id) : null;
+  const tipoVisible = c && (c.tipo === 'url' || (c.opciones || []).includes('__nexa_url__') || (/url|enlace/i.test(c.nombre) && c.tipo === 'texto')) ? 'url' : (c?.tipo || 'texto');
   openModal(formModal(id ? 'Editar campo personalizado' : 'Nuevo campo personalizado', `
     <div><label>Nombre del campo</label><input id="cpNombre" value="${esc(c?.nombre || '')}" placeholder="Ej. Número de contrato"></div>
     <div class="f2">
       <div><label>Se mostrará en</label><select id="cpEntidad">${[['proyectos','Proyectos'],['tareas','Tareas'],['novedades','Novedades'],['clientes','Clientes'],['caja','Caja menor']].map(([v,l]) => `<option value="${v}" ${(c?.entidad || 'proyectos') === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
       <div><label>Tipo de respuesta</label><select id="cpTipo" onchange="mostrarOpcionesCampo()">
-        ${[['texto','Texto'],['url','URL / enlace'],['numero','Número'],['fecha','Fecha'],['seleccion','Selección'],['booleano','Sí / No']].map(([v,l]) => `<option value="${v}" ${(c?.tipo || 'texto') === v ? 'selected' : ''}>${l}</option>`).join('')}
+        ${[['texto','Texto'],['url','URL / enlace'],['numero','Número'],['fecha','Fecha'],['seleccion','Selección'],['booleano','Sí / No']].map(([v,l]) => `<option value="${v}" ${tipoVisible === v ? 'selected' : ''}>${l}</option>`).join('')}
       </select></div>
     </div>
     <div><label>Ayuda o descripción (opcional)</label><input id="cpDesc" value="${esc(c?.descripcion || '')}" placeholder="Indica qué información debe registrarse"></div>
@@ -636,14 +637,17 @@ async function guardarCampoPersonalizado(id = null){
   const nombre = $('#cpNombre').value.trim();
   if(!nombre){ toast('Escribe el nombre del campo'); return; }
   const tipo = $('#cpTipo').value;
-  const opciones = tipo === 'seleccion' ? $('#cpOps').value.split('\n').map(x => x.trim()).filter(Boolean) : [];
+  const opciones = tipo === 'seleccion' ? $('#cpOps').value.split('\n').map(x => x.trim()).filter(Boolean) : tipo === 'url' ? ['__nexa_url__'] : [];
   if(tipo === 'seleccion' && !opciones.length){ toast('Agrega al menos una opción'); return; }
   const entidad = $('#cpEntidad').value;
   const repetido = (S.campos_personalizados || []).some(c => c.id !== id && c.entidad === entidad && c.nombre.toLowerCase() === nombre.toLowerCase());
   if(repetido){ toast('Ya existe un campo con ese nombre'); return; }
-  const fila = { nombre, entidad, tipo, descripcion:$('#cpDesc').value.trim(), opciones,
+  // Se guarda como texto + marcador para seguir funcionando antes de ejecutar
+  // la migración SQL que agrega formalmente el tipo "url" en Supabase.
+  const fila = { nombre, entidad, tipo:tipo === 'url' ? 'texto' : tipo, descripcion:$('#cpDesc').value.trim(), opciones,
     obligatorio:$('#cpReq').checked, activo:cActivo(id), orden:id ? ((S.campos_personalizados || []).find(c => c.id === id)?.orden || 0) : (S.campos_personalizados || []).length + 1 };
-  if(id) await db.update('campos_personalizados', id, fila); else await db.insert('campos_personalizados', fila);
+  const guardado = id ? await db.update('campos_personalizados', id, fila) : await db.insert('campos_personalizados', fila);
+  if(!guardado) return;
   closeModal(); repintarPanel(); toast(id ? 'Campo actualizado ✓' : 'Campo creado ✓');
 }
 

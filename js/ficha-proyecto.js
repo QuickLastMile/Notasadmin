@@ -47,13 +47,14 @@ function verProyecto(id){
 
       ${camposProyectoFicha(p)}
 
-      ${(p.repositorio_url || p.base_url || p.drive_folder_url || p.calendar_event_url) ? `
+      ${(p.repositorio_url || p.base_url || p.drive_folder_url || p.calendar_event_url || enlacesPersonalizadosProyecto(p).length) ? `
         <div class="tf-tit"><span>Recursos</span></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
           ${enlaceProyecto(p.repositorio_url, 'Repositorio', '⌘')}
           ${enlaceProyecto(p.base_url, 'Base de trabajo', '▦')}
           ${enlaceProyecto(p.drive_folder_url, 'Carpeta de Drive', '▰')}
           ${enlaceProyecto(p.calendar_event_url, 'Evento en Calendar', '▣')}
+          ${enlacesPersonalizadosProyecto(p).map(x => enlaceProyecto(x.url, x.nombre, '↗')).join('')}
         </div>` : ''}
 
       <div class="tf-tit"><span>Google Workspace</span></div>
@@ -106,9 +107,16 @@ function verProyecto(id){
 }
 
 function camposProyectoFicha(p){
-  const defs=(S.campos_personalizados||[]).filter(c=>c.entidad==='proyectos'&&c.activo!==false&&p.campos?.[c.id]!==''&&p.campos?.[c.id]!=null).sort((a,b)=>(a.orden||0)-(b.orden||0));
+  const urls = new Set(enlacesPersonalizadosProyecto(p).map(x=>x.id));
+  const defs=(S.campos_personalizados||[]).filter(c=>c.entidad==='proyectos'&&c.activo!==false&&!urls.has(c.id)&&p.campos?.[c.id]!==''&&p.campos?.[c.id]!=null).sort((a,b)=>(a.orden||0)-(b.orden||0));
   if(!defs.length)return '';
   return `<div class="tf-tit"><span>Información adicional</span></div><div class="ficha">${defs.map(c=>{const v=p.campos[c.id];const valor=c.tipo==='url'?`<a class="campo-url" href="${esc(v)}" target="_blank" rel="noopener noreferrer">${esc(v)} ↗</a>`:esc(c.tipo==='booleano'?(v?'Sí':'No'):v);return `<div class="ficha-fila"><span>${esc(c.nombre)}</span><strong>${valor}</strong></div>`;}).join('')}</div>`;
+}
+
+function enlacesPersonalizadosProyecto(p){
+  return (S.campos_personalizados||[]).filter(c=>c.entidad==='proyectos'&&c.activo!==false&&p.campos?.[c.id]&&(
+    c.tipo==='url'||(c.opciones||[]).includes('__nexa_url__')||/^https?:\/\//i.test(String(p.campos[c.id]))
+  )).sort((a,b)=>(a.orden||0)-(b.orden||0)).map(c=>({id:c.id,nombre:c.nombre,url:p.campos[c.id]}));
 }
 
 async function anotarSeguimientoProyecto(id){
