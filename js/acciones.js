@@ -83,6 +83,7 @@ function modalFecha(id){
 function modalTarea(id = null, proyectoPreset = null){
   const t = id ? S.tareas.find(x => x.id === id) : null;
   const pp = !t && proyectoPreset ? pro(proyectoPreset) : null;
+  const proyectoFijo = !!pp;
   const estado = t?.estado || 'pendiente';
 
   openModal(formModal(id ? 'Editar tarea' : 'Nueva tarea', `
@@ -133,8 +134,9 @@ function modalTarea(id = null, proyectoPreset = null){
     <div class="f2">
       <div><label>Cliente (opcional)</label><select id="mC" onchange="sincronizarCeco()">${optsCli(t?.cliente_id || pp?.cliente_id)}</select>
         <div id="mCecoInfo" style="font-size:11.5px;color:var(--text-2);margin-top:5px"></div></div>
-      <div><label>Proyecto</label><select id="mPr">
-        <option value="">— Ninguno —</option>${optsProy(t?.proyecto_id || pp?.id)}</select></div>
+      <div><label>Proyecto${proyectoFijo ? ' asignado' : ''}</label><select id="mPr" ${proyectoFijo ? 'disabled' : ''}>
+        <option value="">— Ninguno —</option>${optsProy(t?.proyecto_id || pp?.id)}</select>
+        ${proyectoFijo ? `<div style="font-size:11.5px;color:var(--ok);margin-top:5px">✓ Se asignará automáticamente a ${esc(pp.nombre)}</div>` : ''}</div>
     </div>
 
     <!-- Solo aparece cuando el estado es "En espera" -->

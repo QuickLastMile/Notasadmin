@@ -149,9 +149,9 @@ const optsCli = sel => `<option value="">— Sin cliente —</option>` + S.clien
   .map(c => `<option value="${c.id}" ${sel === c.id ? 'selected' : ''}>${esc(c.nombre)}</option>`)
   .join('');
 
-/** <option> de proyectos abiertos. */
-const optsProy = sel => S.proyectos.filter(p => p.estado !== 'hecho')
-  .map(p => `<option value="${p.id}" ${sel === p.id ? 'selected' : ''}>${esc(p.nombre)}</option>`)
+/** <option> de todos los proyectos; los entregados siguen siendo consultables. */
+const optsProy = sel => S.proyectos
+  .map(p => `<option value="${p.id}" ${sel === p.id ? 'selected' : ''}>${esc(p.nombre)}${p.estado === 'hecho' ? ' · Entregado' : ''}</option>`)
   .join('');
 
 /** Color semántico según criticidad/prioridad. */
