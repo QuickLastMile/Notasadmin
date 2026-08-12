@@ -62,11 +62,11 @@ function verProyecto(id){
           `<button class="btn" onclick="crearEventoGoogleCalendar('${p.id}')">＋ Agregar a Calendar</button>`}
       </div>
 
-      <div class="tf-tit"><span>Formularios públicos</span>
-        <button class="btn sm pri" onclick="closeModal();modalFormulario('${p.id}')">+ Formulario</button></div>
+      <div class="tf-tit"><span>Formularios públicos <span class="chip n">${formsProyecto(p.id).length}</span></span>
+        <button class="btn sm pri" onclick="closeModal();modalFormulario('${p.id}')">＋ Agregar formulario</button></div>
       <div class="tf-lista">
         ${formsProyecto(p.id).length ? formsProyecto(p.id).map(tarjetaFormularioProyecto).join('')
-          : '<div class="tf-vacio">Sin formularios. Crea uno para recopilar respuestas mediante un enlace público.</div>'}
+          : '<div class="tf-vacio">Sin formularios. Puedes crear varios formularios para este proyecto y compartir cada uno con un enlace diferente.</div>'}
       </div>
 
       <div class="tf-tit"><span>Tareas del proyecto</span>

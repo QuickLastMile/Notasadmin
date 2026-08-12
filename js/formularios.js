@@ -7,7 +7,7 @@ const urlFormulario = f => `${location.origin}${location.pathname}?form=${f.publ
 
 function modalFormulario(proyectoId, id = null){
   const f = id ? S.formularios.find(x => x.id === id) : null;
-  openModal(formModal(id ? 'Editar formulario' : 'Nuevo formulario', `
+  openModal(formModal(id ? 'Editar formulario' : `Nuevo formulario · ${esc(pro(proyectoId)?.nombre || 'Proyecto')}`, `
     <div><label>Nombre</label><input id="fmNombre" placeholder="Ej. Preoperacional diario" value="${esc(f?.nombre||'')}"></div>
     <div><label>Descripción e instrucciones</label><textarea id="fmDesc" placeholder="Explica quién debe responder y para qué">${esc(f?.descripcion||'')}</textarea></div>
     <div class="f2">
@@ -50,8 +50,12 @@ function verFormularioAdmin(id){
   const f=S.formularios.find(x=>x.id===id); if(!f)return;
   const qs=preguntasForm(id), rs=respuestasForm(id), docs=new Set(rs.map(r=>r.documento).filter(Boolean));
   const hoy=rs.filter(r=>(r.created_at||'').slice(0,10)===hoyISO()).length;
-  openModal(`<div class="modal-h"><h3 style="flex:1">${esc(f.nombre)}</h3>
-    <button class="btn sm" onclick="closeModal();modalFormulario('${f.proyecto_id}','${f.id}')">✎</button><button class="btn sm" onclick="closeModal()">✕</button></div>
+  openModal(`<div class="modal-h">
+    <button class="btn sm" onclick="closeModal();verProyecto('${f.proyecto_id}')" title="Volver al proyecto">←</button>
+    <h3 style="flex:1">${esc(f.nombre)}</h3>
+    <button class="btn sm pri" onclick="closeModal();modalFormulario('${f.proyecto_id}')">＋ Nuevo formulario</button>
+    <button class="btn sm" onclick="closeModal();modalFormulario('${f.proyecto_id}','${f.id}')" title="Editar formulario">✎</button>
+    <button class="btn sm" onclick="closeModal()">✕</button></div>
     <div class="modal-b" style="gap:14px">
       <div style="display:flex;gap:7px;flex-wrap:wrap"><span class="chip ${f.estado==='publicado'?'o':'w'}">${esc(f.estado)}</span>
         <span class="chip n">${qs.length} preguntas</span><span class="chip n">${rs.length} respuestas</span></div>
@@ -72,7 +76,7 @@ function verFormularioAdmin(id){
         ${f.google_sheet_url?`<a class="btn" href="${esc(f.google_sheet_url)}" target="_blank" rel="noopener">Abrir hoja ↗</a>`:''}</div></div>
       <div class="tf-lista">${rs.length?[...rs].sort((a,b)=>b.created_at.localeCompare(a.created_at)).slice(0,50).map(r=>`<div class="tf-paso"><button style="flex:1;text-align:left" onclick="verRespuesta('${r.id}')"><b>${esc(r.nombre||'Respuesta')}</b><small style="display:block">${esc(r.documento||'Sin documento')} · ${fechaHoraRespuesta(r.created_at)}</small></button>
         <button class="btn sm" onclick="verRespuesta('${r.id}')">Ver</button><button class="btn sm dgr" onclick="eliminarRespuesta('${r.id}')">✕</button></div>`).join(''):'<div class="tf-vacio">Aún no hay respuestas.</div>'}</div>
-    </div><div class="modal-f"><button class="btn peligro" onclick="eliminarFormulario('${f.id}')">Eliminar formulario</button><button class="btn" onclick="closeModal()">Cerrar</button></div>`,'modal-proyecto');
+    </div><div class="modal-f" style="justify-content:space-between"><button class="btn peligro" onclick="eliminarFormulario('${f.id}')">Eliminar formulario</button><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn pri" onclick="closeModal();modalFormulario('${f.proyecto_id}')">＋ Crear otro formulario</button><button class="btn" onclick="closeModal();verProyecto('${f.proyecto_id}')">Volver al proyecto</button></div></div>`,'modal-proyecto');
 }
 
 async function copiarLinkFormulario(id){const f=S.formularios.find(x=>x.id===id);await navigator.clipboard.writeText(urlFormulario(f));toast('Enlace copiado');}
