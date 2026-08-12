@@ -9,6 +9,7 @@ let cfgSeccion = 'preguntas';
 let cfgBuscar  = '';
 let cfgFiltro  = 'todas';
 let listaAbierta = null;
+let cfgMovilScroll = 0;
 
 const CFG_MENU = [
   { grupo:'Contenido' },
@@ -34,7 +35,17 @@ const CFG_MENU = [
   { id:'actividad',     ico:ICO.historial, lbl:'Registro de actividad' }
 ];
 
-function irConfig(id){ cfgSeccion = id; cfgBuscar = ''; cfgFiltro = 'todas'; render(); }
+function irConfig(id, boton = null){
+  const nav = boton?.closest?.('.cfg-movil') || document.querySelector('.cfg-movil');
+  if(nav) cfgMovilScroll = nav.scrollLeft;
+  const paginaY = window.scrollY;
+  cfgSeccion = id; cfgBuscar = ''; cfgFiltro = 'todas'; render();
+  requestAnimationFrame(() => {
+    const nuevoNav = document.querySelector('.cfg-movil');
+    if(nuevoNav) nuevoNav.scrollLeft = cfgMovilScroll;
+    window.scrollTo(0, paginaY);
+  });
+}
 
 /* ========================================================================== */
 function vConfig(){
@@ -56,7 +67,7 @@ function vConfig(){
     <section class="cfg-panel">
       <nav class="cfg-movil" aria-label="Secciones de configuración">
         ${CFG_MENU.filter(i => i.id).map(i =>
-          `<button class="${cfgSeccion === i.id ? 'active' : ''}" onclick="irConfig('${i.id}')">
+          `<button class="${cfgSeccion === i.id ? 'active' : ''}" onclick="irConfig('${i.id}',this)">
             <span>${i.ico}</span>${i.lbl}</button>`).join('')}
       </nav>
       ${(SECCIONES[cfgSeccion] || (() => cfgPendiente(actual)))()}
