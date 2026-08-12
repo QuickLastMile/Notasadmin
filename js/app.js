@@ -68,11 +68,11 @@ function renderTabbar(m){
 /* ---- Hoja inferior "Más" -------------------------------------------------- */
 function abrirMas(){
   const m = metricas();
-  const restantes = MENU.filter(i => i.id && !i.oculto && !TABBAR.includes(i.id));
+  const restantes = MENU.filter(i => i.id && !i.oculto);
 
   const item = i => {
     const b = i.badge ? i.badge(m) : 0;
-    return `<button class="sheet-item" onclick="go('${i.id}');cerrarSheet()">
+    return `<button class="sheet-item ${vista === i.id ? 'active' : ''}" onclick="go('${i.id}');cerrarSheet()">
       <span class="ico">${i.ico}</span>${i.lbl}
       ${b ? `<span class="badge">${b}</span>` : ''}
     </button>`;

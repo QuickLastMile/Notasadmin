@@ -998,7 +998,7 @@ tbody tr:hover{background:var(--surface-2)}
   aside{display:none}
 
   main{padding-bottom:0}
-  .wrap{padding:16px 15px calc(var(--tabbar-h) + 56px + env(safe-area-inset-bottom))}
+  .wrap{padding:16px 15px calc(108px + env(safe-area-inset-bottom))}
 
   h1{font-size:21px}
   .page-head{margin-bottom:16px;align-items:stretch;flex-direction:column;gap:12px}
@@ -1078,7 +1078,7 @@ tbody tr:hover{background:var(--surface-2)}
 
   /* Barra inferior de navegación */
   .tabbar{
-    display:flex;position:fixed;bottom:0;left:0;right:0;z-index:40;
+    display:none;position:fixed;bottom:0;left:0;right:0;z-index:40;
     background:color-mix(in srgb, var(--surface) 88%, transparent);
     backdrop-filter:blur(18px) saturate(160%);
     -webkit-backdrop-filter:blur(18px) saturate(160%);
@@ -1119,6 +1119,7 @@ tbody tr:hover{background:var(--surface-2)}
 .sheet-item{display:flex;align-items:center;gap:13px;width:100%;padding:13px 12px;
   border-radius:13px;font-size:15px;color:var(--text);font-weight:500;text-align:left}
 .sheet-item:active{background:var(--surface-2)}
+.sheet-item.active{background:var(--brand-soft);color:var(--brand);font-weight:700}
 .sheet-item .ico{width:22px;text-align:center;font-size:17px;color:var(--brand)}
 .sheet-item .badge{margin-left:auto;background:var(--danger);color:#fff;font-size:10px;
   font-weight:700;padding:1px 7px;border-radius:20px}
@@ -1177,10 +1178,10 @@ tbody tr:hover{background:var(--surface-2)}
 :root[data-theme="dark"] .nexa-form input::placeholder{color:#C9AA99;opacity:1}
 :root[data-theme="dark"] .nexa-enviar{background:#C98274;color:#21100C}
 @media(max-width:860px){
-  .nexa-fab{right:8px;bottom:calc(var(--tabbar-h) + 10px + env(safe-area-inset-bottom));width:76px;height:76px}
+  .nexa-fab{right:8px;bottom:calc(10px + env(safe-area-inset-bottom));width:76px;height:76px}
   .nexa-mascota-fab{width:74px;height:74px}.nexa-orbita-uno{width:64px}.nexa-orbita-dos{width:72px}
   .nexa-fab-dot{right:7px;top:5px;width:12px;height:12px}.nexa-saludo-fab{display:none}
-  .nexa-chat{inset:calc(env(safe-area-inset-top) + 8px) 8px calc(var(--tabbar-h) + 8px + env(safe-area-inset-bottom));width:auto;height:auto;max-height:none;border-radius:20px}
+  .nexa-chat{inset:calc(env(safe-area-inset-top) + 8px) 8px calc(8px + env(safe-area-inset-bottom));width:auto;height:auto;max-height:none;border-radius:20px}
   .nexa-chat.on + .nexa-fab{display:none}
   .nexa-chat-head{min-height:82px;padding:10px 14px}.nexa-head-mascota{width:60px;height:60px}
   .nexa-msg{max-width:91%}
