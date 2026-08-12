@@ -73,6 +73,20 @@ async function guardarArchivo(file){
   return ruta;
 }
 
+/** Guarda documentos de proyecto sin convertirlos: PDF, Word, Excel, ZIP, etc. */
+async function guardarDocumentoProyecto(file, proyectoId){
+  const max = NUBE ? 20 * 1024 * 1024 : 3 * 1024 * 1024;
+  if(file.size > max){ toast(`El archivo supera el límite de ${NUBE ? '20' : '3'} MB`); return null; }
+  if(!NUBE){
+    return await new Promise((resolve,reject)=>{const fr=new FileReader();fr.onload=()=>resolve(fr.result);fr.onerror=reject;fr.readAsDataURL(file);});
+  }
+  const limpio=(file.name||'archivo').replace(/[^a-zA-Z0-9._-]+/g,'_');
+  const ruta=`${usuario.id}/proyectos/${proyectoId}/${uid()}-${limpio}`;
+  const {error}=await sb.storage.from(BUCKET).upload(ruta,file,{contentType:file.type||'application/octet-stream',upsert:false});
+  if(error){toast('No se pudo subir: '+error.message.slice(0,60));return null;}
+  return ruta;
+}
+
 /** Convierte la referencia guardada en una URL que el navegador pueda mostrar. */
 async function urlVisible(ref){
   if(!ref) return null;
@@ -89,6 +103,7 @@ async function borrarArchivo(ref){
 }
 
 const esPDF = ref => !!ref && (ref.startsWith('data:application/pdf') || ref.endsWith('.pdf'));
+const esImagen = (ref,tipo='') => tipo.startsWith('image/') || /^data:image\//.test(ref||'') || /\.(png|jpe?g|gif|webp)$/i.test(ref||'');
 
 /* ---- Visor a pantalla completa -------------------------------------------- */
 
@@ -102,7 +117,8 @@ async function verArchivo(ref, titulo, nombreDescarga){
 
   const cuerpo = esPDF(ref)
     ? `<iframe src="${url}" class="visor-pdf" title="${esc(titulo)}"></iframe>`
-    : `<img src="${url}" alt="${esc(titulo)}" class="visor-img">`;
+    : esImagen(ref) ? `<img src="${url}" alt="${esc(titulo)}" class="visor-img">`
+    : `<div class="visor-descarga"><span>📎</span><strong>${esc(titulo)}</strong><p>Este tipo de archivo se abre o descarga con su aplicación correspondiente.</p><a class="btn pri" href="${url}" target="_blank" rel="noopener" download>Descargar archivo</a></div>`;
 
   const v = document.createElement('div');
   v.className = 'visor';
@@ -110,7 +126,7 @@ async function verArchivo(ref, titulo, nombreDescarga){
     <div class="visor-top">
       <strong>${esc(titulo)}</strong>
       <div style="display:flex;gap:8px">
-        <a class="btn sm" href="${url}" download="${nombre}.${esPDF(ref) ? 'pdf' : 'jpg'}"
+        <a class="btn sm" href="${url}" download="${esc(nombreDescarga || (nombre + (esPDF(ref) ? '.pdf' : esImagen(ref) ? '.jpg' : '')))}"
            target="_blank" rel="noopener">⬇ Descargar</a>
         <button class="btn sm" onclick="this.closest('.visor').remove()">✕ Cerrar</button>
       </div>

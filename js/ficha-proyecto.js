@@ -65,6 +65,8 @@ function verProyecto(id){
           `<button class="btn" onclick="crearEventoGoogleCalendar('${p.id}')">＋ Agregar a Calendar</button>`}
       </div>
 
+      ${archivoDocumentalProyecto(p)}
+
       <div class="tf-tit"><span>Formularios públicos <span class="chip n">${formsProyecto(p.id).length}</span></span>
         <button class="btn sm pri" onclick="closeModal();modalFormulario('${p.id}')">＋ Agregar formulario</button></div>
       <div class="tf-lista">
@@ -146,6 +148,7 @@ function eliminarProyecto(id){
     async () => {
       for(const t of S.tareas.filter(t => t.proyecto_id === id))
         await db.update('tareas', t.id, { proyecto_id:null });
+      for(const a of (docsProyecto(p).archivos || [])) await borrarArchivo(a.ref);
       await db.remove('proyectos', id);
       render(); toast('Proyecto eliminado');
     });

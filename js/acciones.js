@@ -463,7 +463,10 @@ async function guardarProyecto(id = null){
   if(!urlProyectoValida(repositorio_url) || !urlProyectoValida(base_url)){
     toast('Los enlaces deben comenzar por http:// o https://'); return;
   }
-  const campos = {};
+  // Conserva los metadatos internos (por ejemplo, el archivo documental)
+  // cuando se editan los datos generales del proyecto.
+  const anterior = id ? S.proyectos.find(x => x.id === id) : null;
+  const campos = Object.fromEntries(Object.entries(anterior?.campos || {}).filter(([k]) => k.startsWith('__')));
   for(const c of (S.campos_personalizados || []).filter(x => x.entidad === 'proyectos' && x.activo !== false)){
     const el = $(`#pc_${c.id}`); if(!el) continue;
     if(c.obligatorio && el.value === ''){ toast(`Completa: ${c.nombre}`); el.focus(); return; }
