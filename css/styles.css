@@ -387,7 +387,7 @@ tbody tr:hover{background:var(--surface-2)}
   padding:56px 18px;overflow-y:auto}
 .mask.on{display:flex}
 .modal{background:var(--surface);border-radius:20px;width:100%;max-width:480px;
-  box-shadow:var(--shadow-lg);border:1px solid var(--border)}
+  box-shadow:var(--shadow-lg);border:1px solid var(--border);min-width:0;overflow:hidden}
 .modal.modal-proyecto{width:min(960px,calc(100vw - 36px));max-width:960px}
 .modal-proyecto .modal-h{padding:20px 26px}
 .modal-proyecto .modal-b{padding:22px 26px}
@@ -420,11 +420,12 @@ tbody tr:hover{background:var(--surface-2)}
 .pub-enviado{text-align:center;padding:55px 30px}.pub-enviado span{display:grid;place-items:center;margin:0 auto 16px;width:58px;height:58px;border-radius:50%;background:var(--ok-soft);color:var(--ok);font-size:28px}.pub-enviado p{margin-top:9px;color:var(--text-2)}
 .pub-foot{text-align:center;color:var(--text-3);font-size:11px;margin-top:16px}
 .modal-h{padding:17px 20px;border-bottom:1px solid var(--border);
-  display:flex;justify-content:space-between;align-items:center}
+  display:flex;justify-content:space-between;align-items:center;gap:8px;min-width:0}
 .modal-h h3{font-size:16px;letter-spacing:-.2px}
-.modal-b{padding:18px 20px;display:grid;gap:13px}
+.modal-b{padding:18px 20px;display:grid;gap:13px;min-width:0;overflow-wrap:anywhere}
 .modal-f{padding:14px 20px;border-top:1px solid var(--border);
-  display:flex;justify-content:flex-end;gap:9px}
+  display:flex;justify-content:flex-end;gap:9px;min-width:0}
+.modal-b>*{min-width:0;max-width:100%}
 
 .f label{display:block;font-size:11.5px;font-weight:650;color:var(--text-2);margin-bottom:5px}
 .f input,.f select,.f textarea{width:100%;padding:11px 13px;border:1.5px solid var(--border);
@@ -849,7 +850,7 @@ tbody tr:hover{background:var(--surface-2)}
 .tf-paso:hover .btn{opacity:1}
 
 .tf-alta{display:flex;gap:8px;margin-top:9px}
-.tf-alta input{flex:1;padding:10px 13px;border:1.5px solid var(--border);
+.tf-alta input{flex:1;min-width:0;padding:10px 13px;border:1.5px solid var(--border);
   border-radius:11px;background:var(--bg);font-size:15px}
 .tf-alta input:focus{outline:none;border-color:var(--brand);
   background:var(--surface);box-shadow:0 0 0 3px var(--brand-soft)}
@@ -874,6 +875,26 @@ tbody tr:hover{background:var(--surface-2)}
 /* En táctil no hay hover: las acciones se ven siempre */
 @media(max-width:860px){
   .tf-paso .btn,.tf-nota-pie .btn{opacity:1}
+  .mask{padding:8px 8px calc(16px + env(safe-area-inset-bottom));align-items:flex-start;overflow-x:hidden}
+  .modal,.modal.modal-proyecto{width:100%;max-width:100%;min-width:0;margin:0;border-radius:18px}
+  .modal-h,.modal-b,.modal-f,
+  .modal-proyecto .modal-h,.modal-proyecto .modal-b,.modal-proyecto .modal-f{padding-left:14px;padding-right:14px}
+  .modal-h{position:sticky;top:0;z-index:3;background:var(--surface)}
+  .modal-h h3{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .modal-f{position:sticky;bottom:0;z-index:3;background:var(--surface);flex-wrap:wrap}
+  .modal-f>div{display:flex!important;gap:7px!important;flex-wrap:wrap;justify-content:flex-end;min-width:0}
+  .modal-f .btn{min-width:0;white-space:normal}
+  .tf-alta{align-items:stretch}
+  .tf-alta .btn{flex:none;padding-left:12px;padding-right:12px}
+  .tf-adj{min-width:0;padding:9px;gap:8px}
+  .tf-adj .btn{flex:none;padding-left:9px;padding-right:9px}
+  .tf-adj-txt strong{max-width:100%}
+  .ficha-fila{align-items:flex-start;flex-direction:column;gap:4px}
+  .ficha-fila span{flex-shrink:1}.ficha-fila strong{text-align:left;width:100%}
+  .proy-folder-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .proy-explorer{grid-template-columns:1fr!important}
+  .proy-preview img{object-fit:contain;background:#fff}
+  body:has(.mask.on) .nexa-fab{display:none}
 }
 
 /* ============================================================
@@ -1028,11 +1049,11 @@ tbody tr:hover{background:var(--surface-2)}
   .row-act,.row-rapida{opacity:1}   /* en táctil no hay hover */
   .tabla-solo{display:none}   /* en celular no hay tabla que ajustar */
 
-  .modal{max-width:100%;border-radius:22px}
+  .modal{width:100%;max-width:100%;min-width:0;border-radius:18px}
   .modal.modal-proyecto{width:100%;max-width:100%}
-  .modal-proyecto .modal-h,.modal-proyecto .modal-b,.modal-proyecto .modal-f{padding-left:18px;padding-right:18px}
+  .modal-proyecto .modal-h,.modal-proyecto .modal-b,.modal-proyecto .modal-f{padding-left:14px;padding-right:14px}
   .pub-page{padding:12px 10px 35px}.pub-head,.pub-pregunta{padding-left:18px;padding-right:18px}.pub-head h1{font-size:21px}.pub-card{border-radius:17px}
-  .mask{padding:20px 14px 40px;align-items:flex-end}
+  .mask{padding:8px 8px calc(16px + env(safe-area-inset-bottom));align-items:flex-start;overflow-x:hidden}
   .f2{grid-template-columns:1fr}
 
   /* Configuración: pestañas horizontales, siempre visibles en celular */
