@@ -54,15 +54,14 @@ function vConfig(){
 
     <!-- Contenido -->
     <section class="cfg-panel">
+      <nav class="cfg-movil" aria-label="Secciones de configuración">
+        ${CFG_MENU.filter(i => i.id).map(i =>
+          `<button class="${cfgSeccion === i.id ? 'active' : ''}" onclick="irConfig('${i.id}')">
+            <span>${i.ico}</span>${i.lbl}</button>`).join('')}
+      </nav>
       ${(SECCIONES[cfgSeccion] || (() => cfgPendiente(actual)))()}
     </section>
-  </div>
-
-  <!-- Selector de sección en celular -->
-  <select class="cfg-movil" onchange="irConfig(this.value)">
-    ${CFG_MENU.filter(i => i.id).map(i =>
-      `<option value="${i.id}" ${cfgSeccion === i.id ? 'selected' : ''}>${i.lbl}</option>`).join('')}
-  </select>`;
+  </div>`;
 }
 
 /* ---- Piezas compartidas --------------------------------------------------- */
