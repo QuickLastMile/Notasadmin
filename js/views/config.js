@@ -616,9 +616,9 @@ function modalCampoPersonalizado(id = null){
   openModal(formModal(id ? 'Editar campo personalizado' : 'Nuevo campo personalizado', `
     <div><label>Nombre del campo</label><input id="cpNombre" value="${esc(c?.nombre || '')}" placeholder="Ej. Número de contrato"></div>
     <div class="f2">
-      <div><label>Se mostrará en</label><select id="cpEntidad" disabled><option value="proyectos">Proyectos</option></select></div>
+      <div><label>Se mostrará en</label><select id="cpEntidad">${[['proyectos','Proyectos'],['tareas','Tareas'],['novedades','Novedades'],['clientes','Clientes'],['caja','Caja menor']].map(([v,l]) => `<option value="${v}" ${(c?.entidad || 'proyectos') === v ? 'selected' : ''}>${l}</option>`).join('')}</select></div>
       <div><label>Tipo de respuesta</label><select id="cpTipo" onchange="mostrarOpcionesCampo()">
-        ${[['texto','Texto'],['numero','Número'],['fecha','Fecha'],['seleccion','Selección'],['booleano','Sí / No']].map(([v,l]) => `<option value="${v}" ${(c?.tipo || 'texto') === v ? 'selected' : ''}>${l}</option>`).join('')}
+        ${[['texto','Texto'],['url','URL / enlace'],['numero','Número'],['fecha','Fecha'],['seleccion','Selección'],['booleano','Sí / No']].map(([v,l]) => `<option value="${v}" ${(c?.tipo || 'texto') === v ? 'selected' : ''}>${l}</option>`).join('')}
       </select></div>
     </div>
     <div><label>Ayuda o descripción (opcional)</label><input id="cpDesc" value="${esc(c?.descripcion || '')}" placeholder="Indica qué información debe registrarse"></div>
@@ -638,9 +638,10 @@ async function guardarCampoPersonalizado(id = null){
   const tipo = $('#cpTipo').value;
   const opciones = tipo === 'seleccion' ? $('#cpOps').value.split('\n').map(x => x.trim()).filter(Boolean) : [];
   if(tipo === 'seleccion' && !opciones.length){ toast('Agrega al menos una opción'); return; }
-  const repetido = (S.campos_personalizados || []).some(c => c.id !== id && c.entidad === 'proyectos' && c.nombre.toLowerCase() === nombre.toLowerCase());
+  const entidad = $('#cpEntidad').value;
+  const repetido = (S.campos_personalizados || []).some(c => c.id !== id && c.entidad === entidad && c.nombre.toLowerCase() === nombre.toLowerCase());
   if(repetido){ toast('Ya existe un campo con ese nombre'); return; }
-  const fila = { nombre, entidad:'proyectos', tipo, descripcion:$('#cpDesc').value.trim(), opciones,
+  const fila = { nombre, entidad, tipo, descripcion:$('#cpDesc').value.trim(), opciones,
     obligatorio:$('#cpReq').checked, activo:cActivo(id), orden:id ? ((S.campos_personalizados || []).find(c => c.id === id)?.orden || 0) : (S.campos_personalizados || []).length + 1 };
   if(id) await db.update('campos_personalizados', id, fila); else await db.insert('campos_personalizados', fila);
   closeModal(); repintarPanel(); toast(id ? 'Campo actualizado ✓' : 'Campo creado ✓');

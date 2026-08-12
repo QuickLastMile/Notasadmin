@@ -45,6 +45,8 @@ function verProyecto(id){
 
       ${p.notas ? `<div class="tf-tit"><span>Objetivo / resultado esperado</span></div><div class="tf-notas">${esc(p.notas)}</div>` : ''}
 
+      ${camposProyectoFicha(p)}
+
       ${(p.repositorio_url || p.base_url || p.drive_folder_url || p.calendar_event_url) ? `
         <div class="tf-tit"><span>Recursos</span></div>
         <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
@@ -101,6 +103,12 @@ function verProyecto(id){
         <button class="btn" onclick="closeModal()">Cerrar</button>
       </div>
     </div>`, 'modal-proyecto');
+}
+
+function camposProyectoFicha(p){
+  const defs=(S.campos_personalizados||[]).filter(c=>c.entidad==='proyectos'&&c.activo!==false&&p.campos?.[c.id]!==''&&p.campos?.[c.id]!=null).sort((a,b)=>(a.orden||0)-(b.orden||0));
+  if(!defs.length)return '';
+  return `<div class="tf-tit"><span>Información adicional</span></div><div class="ficha">${defs.map(c=>{const v=p.campos[c.id];const valor=c.tipo==='url'?`<a class="campo-url" href="${esc(v)}" target="_blank" rel="noopener noreferrer">${esc(v)} ↗</a>`:esc(c.tipo==='booleano'?(v?'Sí':'No'):v);return `<div class="ficha-fila"><span>${esc(c.nombre)}</span><strong>${valor}</strong></div>`;}).join('')}</div>`;
 }
 
 async function anotarSeguimientoProyecto(id){
