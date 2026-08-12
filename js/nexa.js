@@ -8,8 +8,8 @@
 const NEXA_KEY = () => `nexa_chat_v1_${usuario?.id || 'local'}`;
 let nexaAbierto = false;
 let nexaHistorial = [];
-let nexaEstadoActual = 'pendiente';
-let nexaEstadoTexto = '🧪 IA lista para probar';
+let nexaEstadoActual = 'disponible';
+let nexaEstadoTexto = '🔒 Análisis privado';
 
 function nexaCargarHistorial(){
   try { nexaHistorial = JSON.parse(localStorage.getItem(NEXA_KEY())) || []; }
@@ -39,7 +39,8 @@ function renderNexa(){
       ${nexaHistorial.map(m => `<div class="nexa-msg ${m.rol === 'user' ? 'user' : 'bot'}">${nexaTextoSeguro(m.texto)}</div>`).join('')}
     </div>
     <div class="nexa-sugerencias">
-      <button type="button" onclick="nexaPreguntar('¿Qué tareas están vencidas?')">Tareas vencidas</button>
+      <button type="button" onclick="nexaPreguntar('¿Qué debería priorizar hoy?')">Prioridades de hoy</button>
+      <button type="button" onclick="nexaPreguntar('Dame un resumen general')">Resumen general</button>
       <button type="button" onclick="nexaPreguntar('Resume la caja actual')">Resumen de caja</button>
       <button type="button" onclick="nexaPreguntar('¿Qué novedades requieren atención?')">Novedades</button>
     </div>
@@ -66,26 +67,45 @@ function nexaEstado(texto, estado = 'disponible'){
 }
 
 function nexaResponderLocal(mensaje){
-  const q = mensaje.toLowerCase();
+  const q = mensaje.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '');
   const m = metricas();
-  if(/vencid|atrasad/.test(q)){
+  const hay = patron => patron.test(q);
+  const lista = (filas, campo = 'titulo', max = 4) => filas.slice(0,max).map(x => `• ${x[campo] || 'Sin nombre'}`).join('\n');
+  const respuestas = [];
+
+  if(hay(/resumen|panorama|estado general|como va|como estoy|diagnostico/)){
+    const alertas = m.vencidas.length + m.novCriticas.length + m.proyRiesgo.length + m.esperaAtrasada.length;
+    respuestas.push(`🧠 Panorama general\nTienes ${m.pendientes.length} tareas pendientes, ${m.vencidas.length} vencidas, ${m.novAbiertas.length} novedades abiertas y ${m.proyRiesgo.length} proyectos en riesgo.\n\n${alertas ? `Detecté ${alertas} foco(s) que requieren atención.` : 'No detecté alertas críticas en este momento.'}`);
+  }
+  if(hay(/prioridad|priorizar|primero|por donde|que hago|plan.*hoy|organiza|urgente/)){
+    const focos = [
+      ...m.vencidas.map(x=>({x,p:4,motivo:'vencida'})),
+      ...m.altaPendiente.map(x=>({x,p:3,motivo:'prioridad alta'})),
+      ...m.hoy.map(x=>({x,p:2,motivo:'vence hoy'})),
+      ...m.esperaAtrasada.map(x=>({x,p:1,motivo:'seguimiento atrasado'}))
+    ].filter((v,i,a)=>a.findIndex(y=>y.x.id===v.x.id)===i).sort((a,b)=>b.p-a.p).slice(0,5);
+    respuestas.push(focos.length
+      ? `🎯 Orden sugerido\n${focos.map((f,i)=>`${i+1}. ${f.x.titulo} — ${f.motivo}`).join('\n')}\n\nEmpieza por la primera y evita abrir nuevas tareas hasta cerrarla o dejar un siguiente paso definido.`
+      : '🎯 No hay urgencias detectadas. Elige una tarea corta de la semana y ciérrala para ganar avance.');
+  }
+  if(hay(/vencid|atrasad|tareas? pendiente|mis tareas|tengo.*tarea/)){
     const titulos = m.vencidas.slice(0, 4).map(t => `• ${t.titulo}${t.vence ? ` (${fechaTxt(t.vence)})` : ''}`);
-    return m.vencidas.length ? `🚨 Hay ${m.vencidas.length} tarea(s) vencida(s).\n${titulos.join('\n')}${m.vencidas.length > 4 ? '\n• …' : ''}\n\nRecomendación: prioriza las de mayor impacto y reprograma las que dependan de terceros.` : '✅ No encontré tareas vencidas. Tienes ' + m.hoy.length + ' tarea(s) para hoy.';
+    respuestas.push(m.vencidas.length ? `🚨 Hay ${m.vencidas.length} tarea(s) vencida(s).\n${titulos.join('\n')}${m.vencidas.length > 4 ? '\n• …' : ''}\n\nAdemás: ${m.hoy.length} para hoy y ${m.semana.length} para los próximos 7 días.` : `✅ No encontré tareas vencidas. Tienes ${m.hoy.length} para hoy y ${m.semana.length} para esta semana.`);
   }
-  if(/caja|pago|factura|soporte|reembolso|legaliz/.test(q)){
-    if(!m.periodo) return 'No hay un período de caja abierto todavía. Puedes crearlo desde Caja menor.';
-    const a = m.arqueo;
-    return `💵 Caja: ${m.periodo.nombre}\nGastado: ${cop(a.gastado)} · Saldo: ${cop(a.saldo)}\nSin legalizar: ${a.sinLegalizar.length} · Sin soporte: ${a.sinSoporte.length}\nPendiente de reembolso: ${cop(a.pendiente)}${a.sinSoporte.length ? '\n\n⚠️ Conviene completar los soportes antes de legalizar.' : ''}`;
+  if(hay(/caja|pago|factura|soporte|reembolso|legaliz/)){
+    if(!m.periodo) respuestas.push('No hay un período de caja abierto todavía. Puedes crearlo desde Caja menor.');
+    else { const a = m.arqueo; respuestas.push(`💵 Caja: ${m.periodo.nombre}\nGastado: ${cop(a.gastado)} · Saldo: ${cop(a.saldo)}\nSin legalizar: ${a.sinLegalizar.length} · Sin soporte: ${a.sinSoporte.length}\nPendiente de reembolso: ${cop(a.pendiente)}${a.sinSoporte.length ? '\n\n⚠️ Completa primero los soportes faltantes.' : ''}`); }
   }
-  if(/novedad|incidente|alerta/.test(q)){
-    return `⚠️ Hay ${m.novAbiertas.length} novedad(es) abierta(s), de las cuales ${m.novCriticas.length} son críticas y ${m.novEstancadas.length} llevan más de 7 días sin cerrar.${m.novCriticas.length ? '\n\nRecomendación: revisa primero las críticas y asigna responsable o siguiente acción.' : ''}`;
+  if(hay(/novedad|incidente|alerta/)){
+    respuestas.push(`⚠️ Hay ${m.novAbiertas.length} novedad(es) abierta(s): ${m.novCriticas.length} críticas y ${m.novEstancadas.length} estancadas por más de 7 días.${m.novCriticas.length ? `\n${lista(m.novCriticas)}` : ''}`);
   }
-  if(/proyecto|avance|riesgo/.test(q)){
+  if(hay(/proyecto|avance|riesgo/)){
     const nombres = m.proyRiesgo.slice(0,3).map(p => `• ${p.nombre}`);
-    return `📁 Hay ${m.proyActivos.length} proyecto(s) activo(s) y ${m.proyRiesgo.length} en riesgo o cerca de vencerse.${nombres.length ? `\n${nombres.join('\n')}` : '\n✅ No detecté proyectos en riesgo por fecha.'}`;
+    respuestas.push(`📁 Hay ${m.proyActivos.length} proyecto(s) activo(s) y ${m.proyRiesgo.length} en riesgo o cerca de vencerse.${nombres.length ? `\n${nombres.join('\n')}` : '\n✅ No detecté proyectos en riesgo por fecha.'}`);
   }
-  if(/hola|buenas|qué puedes|que puedes|ayuda/.test(q)) return 'Puedo analizar la información que ya tienes cargada: tareas vencidas, caja menor, soportes, novedades abiertas y riesgos de proyectos. También puedo explicarte cada módulo.\n\nPrueba: “¿qué tareas están vencidas?”';
-  return 'Con los datos disponibles no puedo responder eso con certeza todavía. Puedo revisar tareas, caja, novedades y proyectos. Cuando actives la conexión de IA, también podré interpretar consultas más abiertas.';
+  if(respuestas.length) return respuestas.join('\n\n───\n\n');
+  if(hay(/hola|buenas|que puedes|ayuda/)) return 'Puedo analizar tus datos de forma privada: preparar un resumen general, sugerir prioridades, revisar tareas, caja, novedades y proyectos.\n\nPrueba: “¿Qué debería priorizar hoy?”';
+  return 'No identifiqué con certeza lo que necesitas. Puedo razonar sobre: resumen general, prioridades de hoy, tareas pendientes, caja, novedades o proyectos en riesgo.';
 }
 
 async function nexaIA(mensaje){
@@ -112,7 +132,7 @@ async function nexaPreguntar(mensaje){
   const local = nexaResponderLocal(mensaje);
   let respuesta = null;
   let errorIA = '';
-  try { respuesta = await nexaIA(mensaje); }
+  try { respuesta = CFG.nexa.remoteAI ? await nexaIA(mensaje) : local; }
   catch(error) {
     errorIA = error?.message || 'No fue posible conectar con la IA.';
     console.error('NEXA IA:', error);
@@ -120,7 +140,7 @@ async function nexaPreguntar(mensaje){
   nexaHistorial.push({rol:'bot', texto:respuesta || `${local}\n\n⚠️ IA sin conexión: ${errorIA}`});
   nexaGuardarHistorial();
   renderNexa();
-  nexaEstado(respuesta ? '🟢 IA conectada' : '🔴 IA sin conexión', respuesta ? 'disponible' : 'error');
+  nexaEstado(CFG.nexa.remoteAI ? (respuesta ? '🟢 IA conectada' : '🔴 IA sin conexión') : '🔒 Análisis privado', respuesta ? 'disponible' : 'error');
 }
 
 function nexaEnviar(e){

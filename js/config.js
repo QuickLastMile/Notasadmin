@@ -20,7 +20,7 @@ const CFG = {
 
   // NEXA usa esta Edge Function cuando está desplegada. La clave de OpenAI
   // vive exclusivamente como secreto de Supabase, nunca en este archivo.
-  nexa: { functionName: 'nexa-chat' }
+  nexa: { functionName: 'nexa-chat', remoteAI: false }
 };
 
 /* Abrir con ?local=1 fuerza el modo localStorage aunque haya credenciales.
