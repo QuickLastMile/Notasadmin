@@ -19,8 +19,9 @@ const TABS_CAJA = [
 const FILTROS_CAJA = {
   todos:         g => true,
   sinlegalizar:  g => g.tipo === 'gasto' && !g.legalizado && !g.perdida,
+  legalizados:   g => g.tipo === 'gasto' && !!g.legalizado && !g.perdida,
   sinsoporte:    g => g.tipo === 'gasto' && !g.perdida && (!g.tiene_comprobante || !g.tiene_factura),
-  porcobrar:     g => g.tipo === 'gasto' && !g.perdida && (g.monto - (g.reembolsado || 0)) > 0,
+  porcobrar:     g => g.tipo === 'gasto' && g.legalizado && !g.perdida && (g.monto - (g.reembolsado || 0)) > 0,
   perdidas:      g => g.tipo === 'gasto' && !!g.perdida
 };
 
@@ -159,6 +160,7 @@ function tarjetasArqueo(a){
 
 /* ---- Pestaña: movimientos ------------------------------------------------- */
 function tabMovimientos(a, p, pid){
+  const legalizados = a.gastos.filter(g => g.legalizado && !g.perdida);
   const movs = a.movs
     .filter(FILTROS_CAJA[filtroCaja])
     .filter(g => coincideBusqueda(g, buscarCaja))
@@ -167,6 +169,7 @@ function tabMovimientos(a, p, pid){
   const filtros = [
     ['todos',        `Todos (${a.movs.length})`],
     ['sinlegalizar', `Sin legalizar (${a.sinLegalizar.length})`],
+    ['legalizados',  `Legalizados (${legalizados.length})`],
     ['sinsoporte',   `Sin soporte (${a.sinSoporte.length})`],
     ['porcobrar',    `Por cobrar (${a.porCobrar.length})`],
     ['perdidas',     `Pérdidas (${a.perdidas.length})`]

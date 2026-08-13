@@ -284,6 +284,8 @@ function verPago(id){
     <div class="modal-f">
       <button class="btn dgr" onclick="closeModal();borrar('caja','${g.id}')">Eliminar</button>
       ${esIngreso ? '' : `
+        <button class="btn ${g.legalizado ? '' : 'pri'}" onclick="toggleLeg('${g.id}',true)">
+          ${g.legalizado ? '↺ Quitar legalización' : '✓ Marcar legalizado'}</button>
         <button class="btn" onclick="closeModal();modalPerdida('${g.id}')">
           ${g.perdida ? '↺ Ya no es pérdida' : '📉 Marcar pérdida'}</button>`}
       <button class="btn pri" onclick="closeModal();modalCaja('${g.tipo}','${g.id}')">✎ Editar</button>
@@ -291,7 +293,7 @@ function verPago(id){
 }
 
 /* ---- Legalización -------------------------------------------------------- */
-async function toggleLeg(id){
+async function toggleLeg(id, reabrir = false){
   const g = S.caja.find(x => x.id === id);
   const ahora = !g.legalizado;
 
@@ -303,6 +305,7 @@ async function toggleLeg(id){
 
   await db.update('caja', id, { legalizado: ahora, legalizado_el: ahora ? hoyISO() : null });
   render();
+  if(reabrir) verPago(id);
 }
 
 /* ---- Reembolso ----------------------------------------------------------- */
