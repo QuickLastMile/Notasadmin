@@ -491,6 +491,9 @@ async function guardarProyecto(id = null){
 /* ---- Clientes ------------------------------------------------------------ */
 function modalCliente(id = null){
   const c = id ? S.clientes.find(x => x.id === id) : null;
+  const contactos = c?.campos?.__contactos_cliente?.length
+    ? c.campos.__contactos_cliente
+    : (c?.contacto ? [{nombre:c.contacto,cargo:'',telefono:'',correo:''}] : [{}]);
   openModal(formModal(id ? 'Editar cliente' : 'Nuevo cliente', `
     <div><label>Nombre</label>
       <input id="cN" placeholder="Ej. Nueva Empresa S.A.S" value="${esc(c?.nombre || '')}"></div>
@@ -500,40 +503,64 @@ function modalCliente(id = null){
       <div><label>CECO</label>
         <input id="cCeco" placeholder="Ej. CAF-1001" value="${esc(c?.ceco || '')}"></div>
     </div>
+    <div>
+      <div class="contactos-form-titulo"><label>Contactos del cliente</label><button type="button" class="btn sm" onclick="agregarContactoCliente()">+ Otro contacto</button></div>
+      <div id="contactosClienteForm">${contactos.map(contactoClienteFormHTML).join('')}</div>
+      <button type="button" class="btn sm contacto-vacio-btn" onclick="agregarContactoCliente()">+ Agregar contacto</button>
+    </div>
     <div class="f2">
-      <div><label>Contacto</label>
-        <input id="cCo" placeholder="Nombre o cargo" value="${esc(c?.contacto || '')}"></div>
       <div><label>Color</label>
         <input type="color" id="cCol" value="${c?.color || '#800000'}" style="height:42px"></div>
+      <div><label>Estado</label><select id="cAct">
+        <option value="1" ${c?.activo !== false ? 'selected' : ''}>Activo</option>
+        <option value="0" ${c?.activo === false ? 'selected' : ''}>Inactivo</option>
+      </select></div>
     </div>
-    <div><label>Estado</label><select id="cAct">
-      <option value="1" ${c?.activo !== false ? 'selected' : ''}>Activo</option>
-      <option value="0" ${c?.activo === false ? 'selected' : ''}>Inactivo</option>
-    </select></div>
     <div><label>Notas</label>
       <textarea id="cNotas" placeholder="Acuerdos, particularidades…">${esc(c?.notas || '')}</textarea></div>`,
     `guardarCliente(${id ? `'${id}'` : 'null'})`, id ? 'Guardar cambios' : 'Crear'));
+}
+
+function contactoClienteFormHTML(x = {}){
+  return `<div class="contacto-cliente-form">
+    <div class="contacto-cliente-cab"><strong>Contacto</strong><button type="button" class="btn sm dgr" onclick="this.closest('.contacto-cliente-form').remove()">✕</button></div>
+    <div class="f2"><div><label>Nombre</label><input data-contacto="nombre" placeholder="Nombre completo" value="${esc(x.nombre||'')}"></div><div><label>Cargo</label><input data-contacto="cargo" placeholder="Ej. Coordinador" value="${esc(x.cargo||'')}"></div></div>
+    <div class="f2"><div><label>Teléfono</label><input data-contacto="telefono" inputmode="tel" placeholder="300 000 0000" value="${esc(x.telefono||'')}"></div><div><label>Correo</label><input data-contacto="correo" type="email" placeholder="nombre@empresa.com" value="${esc(x.correo||'')}"></div></div>
+  </div>`;
+}
+function agregarContactoCliente(){
+  const cont=$('#contactosClienteForm');if(!cont)return;
+  cont.insertAdjacentHTML('beforeend',contactoClienteFormHTML());
+  cont.lastElementChild?.querySelector('[data-contacto="nombre"]')?.focus();
 }
 
 async function guardarCliente(id = null){
   const nombre = $('#cN').value.trim();
   if(!nombre){ toast('Escribe el nombre'); return; }
 
+  const anterior=id?S.clientes.find(x=>x.id===id):null;
+  const contactos=[...document.querySelectorAll('.contacto-cliente-form')].map(f=>({
+    nombre:f.querySelector('[data-contacto="nombre"]').value.trim(),
+    cargo:f.querySelector('[data-contacto="cargo"]').value.trim(),
+    telefono:f.querySelector('[data-contacto="telefono"]').value.trim(),
+    correo:f.querySelector('[data-contacto="correo"]').value.trim()
+  })).filter(x=>x.nombre||x.cargo||x.telefono||x.correo);
   const fila = {
     nombre,
     nit:      $('#cNit').value.trim(),
     ceco:     $('#cCeco').value.trim(),
-    contacto: $('#cCo').value.trim(),
+    contacto: contactos[0]?.nombre || '',
     color:    $('#cCol').value,
     activo:   $('#cAct').value === '1',
-    notas:    $('#cNotas').value.trim()
+    notas:    $('#cNotas').value.trim(),
+    campos:   {...(anterior?.campos||{}),__contactos_cliente:contactos}
   };
 
   if(id) await db.update('clientes', id, fila);
   else    await db.insert('clientes', fila);
 
   closeModal(); render();
-  toast(id ? 'Novedad actualizada ✓' : 'Novedad registrada ✓');
+  toast(id ? 'Cliente actualizado ✓' : 'Cliente creado ✓');
 }
 
 /* ---- Colaboradores --------------------------------------------------------

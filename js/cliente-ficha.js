@@ -1,13 +1,8 @@
 /* FICHA AMPLIA DE CLIENTE — operación, equipo y archivo documental privado. */
 const CLIENTE_DOCS_KEY='__documentos_cliente';
-const CARPETAS_CLIENTE_BASE=[
-  {id:'contratos',nombre:'Contratos',icono:'📁'},
-  {id:'imagenes',nombre:'Imágenes y evidencias',icono:'🖼️'},
-  {id:'informes',nombre:'Informes y Excel',icono:'📊'},
-  {id:'otros',nombre:'Otros documentos',icono:'🗂️'}
-];
 const docsCliente=c=>c?.campos?.[CLIENTE_DOCS_KEY]||{carpetas:[],archivos:[]};
-const carpetasCliente=c=>[...CARPETAS_CLIENTE_BASE,...docsCliente(c).carpetas.filter(x=>!CARPETAS_CLIENTE_BASE.some(b=>b.id===x.id))];
+const carpetasCliente=c=>docsCliente(c).carpetas||[];
+const contactosCliente=c=>c?.campos?.__contactos_cliente||[];
 
 async function guardarDocsCliente(c,docs){
   await db.update('clientes',c.id,{campos:{...(c.campos||{}),[CLIENTE_DOCS_KEY]:docs}});
@@ -18,7 +13,7 @@ function verCliente(id){
   const tareas=S.tareas.filter(x=>x.cliente_id===id),pend=tareas.filter(x=>!['hecho','cancelada'].includes(x.estado));
   const proyectos=S.proyectos.filter(x=>x.cliente_id===id),novedades=S.novedades.filter(x=>x.cliente_id===id);
   const equipo=S.colaboradores.filter(x=>x.cliente_id===id),gastos=S.caja.filter(x=>x.cliente_id===id&&x.tipo==='gasto');
-  const d=docsCliente(c),dato=(k,v)=>v?`<div class="ficha-fila"><span>${k}</span><strong>${esc(v)}</strong></div>`:'';
+  const d=docsCliente(c),contactos=contactosCliente(c),dato=(k,v)=>v?`<div class="ficha-fila"><span>${k}</span><strong>${esc(v)}</strong></div>`:'';
   openModal(`
     <div class="modal-h"><div style="min-width:0;flex:1"><h3>${esc(c.nombre)}</h3><small style="color:var(--text-3)">Ficha integral del cliente</small></div>
       <button class="btn sm" onclick="closeModal();modalCliente('${c.id}')">✎ Editar</button><button class="btn sm" onclick="closeModal()">✕</button></div>
@@ -28,11 +23,14 @@ function verCliente(id){
       </div>
       <div class="cliente-dos-columnas">
         <section><div class="tf-tit"><span>Información importante</span></div><div class="ficha">
-          ${dato('NIT',c.nit)}${dato('CECO',c.ceco)}${dato('Contacto del cliente',c.contacto)}${dato('Estado',c.activo===false?'Inactivo':'Activo')}
+          ${dato('NIT',c.nit)}${dato('CECO',c.ceco)}${dato('Estado',c.activo===false?'Inactivo':'Activo')}
         </div>${c.notas?`<div class="tf-notas" style="margin-top:10px">${esc(c.notas)}</div>`:''}</section>
         <section><div class="tf-tit"><span>Equipo Quick asignado</span><button class="btn sm pri" onclick="closeModal();modalColaborador(null,'${c.id}')">+ Agregar</button></div>
           <div class="cliente-equipo">${equipo.length?equipo.map(x=>`<button onclick="closeModal();modalColaborador('${x.id}')"><strong>${esc(x.nombre)}</strong><small>${esc(x.cargo||'Sin cargo')} · ${esc(x.celular||x.correo||'Sin contacto')}</small></button>`).join(''):'<div class="tf-vacio">Sin personal Quick asignado</div>'}</div></section>
       </div>
+      <section><div class="tf-tit"><span>Contactos del cliente</span><span class="chip n">${contactos.length}</span></div>
+        <div class="cliente-contactos">${contactos.length?contactos.map(x=>`<div class="cliente-contacto-card"><strong>${esc(x.nombre||'Sin nombre')}</strong><span>${esc(x.cargo||'Sin cargo')}</span><div>${x.telefono?`<a href="tel:${esc(x.telefono)}">☎ ${esc(x.telefono)}</a>`:''}${x.correo?`<a href="mailto:${esc(x.correo)}">✉ ${esc(x.correo)}</a>`:''}</div></div>`).join(''):'<div class="tf-vacio">Aún no has agregado contactos del cliente.</div>'}</div>
+      </section>
       ${archivoDocumentalCliente(c)}
       <div class="cliente-dos-columnas">
         <section><div class="tf-tit"><span>Proyectos</span><span class="chip n">${proyectos.length}</span></div><div class="tf-lista">${proyectos.length?proyectos.slice(0,6).map(p=>`<button class="tf-paso" onclick="closeModal();verProyecto('${p.id}')"><span>${esc(p.nombre)}</span><span class="chip n">${p.avance||0}%</span></button>`).join(''):'<div class="tf-vacio">Sin proyectos</div>'}</div></section>
@@ -48,7 +46,7 @@ function archivoDocumentalCliente(c){
   const d=docsCliente(c);return `<section><div class="tf-tit"><span>Archivo documental</span><span class="chip n">${d.archivos.length} archivo${d.archivos.length===1?'':'s'}</span></div>
     <p class="cliente-ayuda">Organiza contratos, anexos, imágenes, informes, hojas de cálculo y demás información clave del cliente.</p>
     <div class="proy-doc-acciones"><button class="btn sm" onclick="modalCarpetaCliente('${c.id}')">＋ Nueva carpeta</button></div>
-    <div class="proy-folder-grid">${carpetasCliente(c).map(f=>{const n=d.archivos.filter(a=>a.carpeta_id===f.id).length;return `<div class="proy-folder-card"><button onclick="abrirCarpetaCliente('${c.id}','${f.id}')"><span class="proy-folder-icon">${f.icono||'📁'}</span><strong>${esc(f.nombre)}</strong><small>${n} archivo${n===1?'':'s'}</small></button>${CARPETAS_CLIENTE_BASE.some(x=>x.id===f.id)?'':`<button class="btn sm dgr" onclick="eliminarCarpetaCliente('${c.id}','${f.id}')">✕</button>`}</div>`}).join('')}</div></section>`;
+    <div class="proy-folder-grid">${carpetasCliente(c).length?carpetasCliente(c).map(f=>{const n=d.archivos.filter(a=>a.carpeta_id===f.id).length;return `<div class="proy-folder-card"><button onclick="abrirCarpetaCliente('${c.id}','${f.id}')"><span class="proy-folder-icon">${f.icono||'📁'}</span><strong>${esc(f.nombre)}</strong><small>${n} archivo${n===1?'':'s'}</small></button><button class="btn sm dgr" onclick="eliminarCarpetaCliente('${c.id}','${f.id}')">✕</button></div>`}).join(''):'<div class="tf-vacio">Sin carpetas. Crea la primera según la necesidad del cliente.</div>'}</div></section>`;
 }
 
 function modalCarpetaCliente(id){openModal(formModal('Nueva carpeta',`<div><label>Nombre</label><input id="clCarpetaNombre" placeholder="Ej. Actas o Pólizas"></div>`,`crearCarpetaCliente('${id}')`,'Crear carpeta'));}

@@ -1227,3 +1227,12 @@ tbody tr:hover{background:var(--surface-2)}
   .nexa-chat-head{min-height:82px;padding:10px 14px}.nexa-head-mascota{width:60px;height:60px}
   .nexa-msg{max-width:91%}
 }
+.contactos-form-titulo,.contacto-cliente-cab{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.contacto-cliente-form{padding:14px;margin:8px 0;border:1px solid var(--line);border-radius:16px;background:var(--surface-2)}
+.contacto-cliente-form .f2{margin-top:10px}
+.contacto-vacio-btn{margin-top:8px}
+.cliente-contactos{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:10px}
+.cliente-contacto-card{padding:14px;border:1px solid var(--line);border-radius:14px;background:var(--surface-2);display:flex;flex-direction:column;gap:5px}
+.cliente-contacto-card>span{color:var(--text-3)}
+.cliente-contacto-card>div{display:flex;flex-wrap:wrap;gap:8px 14px;margin-top:4px}
+.cliente-contacto-card a{color:var(--primary);text-decoration:none}
