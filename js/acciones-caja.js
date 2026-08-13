@@ -599,6 +599,7 @@ function modalPerdida(id){
       `Al recuperarlo vuelve a contar como pendiente por cobrar.`,
       async () => {
         await db.update('caja', id, { perdida:false, motivo_perdida:'' });
+        filtroCaja = g.legalizado ? 'porcobrar' : 'sinlegalizar';
         render(); toast('Vuelve a contar como cobrable');
       }, 'Recuperar');
     return;
@@ -628,7 +629,8 @@ async function guardarPerdida(id){
     motivo_perdida: det ? `${motivo} — ${det}` : motivo,
     estado: 'finalizado'
   });
-  closeModal(); render(); toast('Marcado como pérdida');
+  filtroCaja = 'perdidas';
+  closeModal(); render(); toast('Movido a Pérdidas');
 }
 
 /* ---- Períodos ------------------------------------------------------------ */
