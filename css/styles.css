@@ -390,6 +390,10 @@ tbody tr:hover{background:var(--surface-2)}
   box-shadow:var(--shadow-lg);border:1px solid var(--border);min-width:0;overflow:hidden}
 .modal.modal-proyecto{width:min(960px,calc(100vw - 36px));max-width:960px}
 .modal.modal-pago{width:min(620px,calc(100vw - 36px));max-width:620px}
+.modal.modal-novedad{width:min(850px,calc(100vw - 36px));max-width:850px}
+.modal-novedad .modal-b{padding:22px 26px}
+.modal-novedad .tf-notas{font-size:14.5px;line-height:1.72;padding:18px 20px}
+.modal-novedad .tf-nota-txt{font-size:14px;line-height:1.6}
 .modal-proyecto .modal-h{padding:20px 26px}
 .modal-proyecto .modal-b{padding:22px 26px}
 .modal-proyecto .modal-f{padding:16px 26px}
@@ -882,8 +886,10 @@ tbody tr:hover{background:var(--surface-2)}
   .tf-paso .btn,.tf-nota-pie .btn{opacity:1}
   .mask{padding:8px 8px calc(16px + env(safe-area-inset-bottom));align-items:flex-start;overflow-x:hidden}
   .modal,.modal.modal-proyecto{width:100%;max-width:100%;min-width:0;margin:0;border-radius:18px}
+  .modal.modal-novedad{width:100%;max-width:100%}
   .modal-h,.modal-b,.modal-f,
   .modal-proyecto .modal-h,.modal-proyecto .modal-b,.modal-proyecto .modal-f{padding-left:14px;padding-right:14px}
+  .modal-novedad .modal-b{padding-left:14px;padding-right:14px}
   .modal-h{position:sticky;top:0;z-index:3;background:var(--surface)}
   .modal-h h3{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   .modal-f{position:sticky;bottom:0;z-index:3;background:var(--surface);flex-wrap:wrap}

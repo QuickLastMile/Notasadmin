@@ -143,7 +143,7 @@ function verNovedad(id){
       ${cerrada
         ? `<button class="btn pri" onclick="reabrirNovedad('${n.id}')">↺ Reabrir</button>`
         : `<button class="btn pri" onclick="cerrarNovedadCon('${n.id}')">✓ Cerrar</button>`}
-    </div>`);
+    </div>`, 'modal-novedad');
 }
 
 /* ---- Seguimiento ---------------------------------------------------------- */
