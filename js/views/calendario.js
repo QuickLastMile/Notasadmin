@@ -9,6 +9,7 @@
 let calMes   = null;          // 'YYYY-MM'; null = mes actual
 let calVista = 'mes';         // mes | agenda
 let calDiaSel = null;         // día tocado en la cuadrícula
+let calClickTimer = null;
 
 const DIAS_SEMANA = ['Lun','Mar','Mié','Jue','Vie','Sáb','Dom'];
 
@@ -25,6 +26,13 @@ function moverMes(delta){
 function irHoy(){ calMes = null; calDiaSel = hoyISO(); render(); }
 function setCalVista(v){ calVista = v; render(); }
 function tocarDia(iso){ calDiaSel = calDiaSel === iso ? null : iso; render(); }
+function clickDiaCalendario(iso){
+  clearTimeout(calClickTimer);
+  calClickTimer=setTimeout(()=>{calClickTimer=null;tocarDia(iso);},230);
+}
+function crearEventoEnDia(iso){
+  clearTimeout(calClickTimer);calClickTimer=null;calDiaSel=iso;modalEvento(null,iso);
+}
 
 /** Todo lo que cae un día: tareas con vencimiento y eventos. */
 function delDia(iso){
@@ -136,7 +144,8 @@ function celdaDia(iso){
 
   return `
   <div class="cal-celda ${esHoy ? 'hoy' : ''} ${finde ? 'finde' : ''}
-       ${calDiaSel === iso ? 'sel' : ''}" onclick="tocarDia('${iso}')">
+       ${calDiaSel === iso ? 'sel' : ''}" onclick="clickDiaCalendario('${iso}')"
+       ondblclick="crearEventoEnDia('${iso}')" title="Doble clic para crear un evento">
     <div class="cal-num">${+iso.slice(8)}</div>
     <div class="cal-items">
       ${items.slice(0, 3).map(i => `

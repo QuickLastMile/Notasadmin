@@ -1010,6 +1010,7 @@ tbody tr:hover{background:var(--surface-2)}
 .cal-celda.vacia{background:var(--surface-2);opacity:.35;cursor:default}
 .cal-celda.finde{background:color-mix(in srgb, var(--surface-2) 45%, transparent)}
 .cal-celda.sel{background:var(--brand-soft);box-shadow:inset 0 0 0 2px var(--brand)}
+.cal-celda:not(.vacia){cursor:pointer}.cal-celda:not(.vacia):hover{box-shadow:inset 0 0 0 1px var(--brand-line);background:color-mix(in srgb,var(--brand-soft) 35%,var(--surface))}
 
 .cal-num{font-size:12.5px;font-weight:650;color:var(--text-2);
   width:24px;height:24px;display:grid;place-items:center;border-radius:50%;flex-shrink:0}
