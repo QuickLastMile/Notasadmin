@@ -50,6 +50,14 @@ function buscarCajaAhora(v){
 
 function setCajaTab(t){ cajaTab = t; buscarCaja = ''; render(); }
 function setPeriodoSel(id){ periodoSel = id; render(); }
+function verPeriodo(id){
+  periodoSel = id;
+  cajaTab = 'movimientos';
+  filtroCaja = 'todos';
+  buscarCaja = '';
+  render();
+  requestAnimationFrame(() => document.querySelector('.tabs')?.scrollIntoView({behavior:'smooth',block:'start'}));
+}
 function setFiltroCaja(f){ filtroCaja = f; render(); }
 
 /* ========================================================================== */
@@ -457,8 +465,14 @@ function tabPeriodos(){
   return `
   <div class="card">
     <div class="card-h">
-      <h2>Períodos de caja</h2>
+      <div><h2>Períodos de caja</h2><small style="color:var(--text-3)">Cada período agrupa la base y todos los movimientos de un rango de fechas.</small></div>
       <button class="btn pri sm" onclick="modalPeriodo()">+ Abrir período</button>
+    </div>
+    <div class="periodo-explicacion">
+      <div><strong>Base</strong><span>Dinero asignado para operar.</span></div>
+      <div><strong>Gastado</strong><span>Total de pagos y gastos registrados.</span></div>
+      <div><strong>Reembolsado</strong><span>Dinero que ya regresó a la caja.</span></div>
+      <div><strong>Pendiente</strong><span>Gastos recuperables aún sin reembolsar; las pérdidas no se incluyen.</span></div>
     </div>
     <div class="card-b flush scroll-x">
       <table>
@@ -482,7 +496,7 @@ function tabPeriodos(){
             <td><span class="chip ${p.estado === 'abierto' ? 'b' : 'n'}">
               ${p.estado === 'abierto' ? 'Abierto' : 'Cerrado ' + fechaCorta(p.cerrado_el)}</span></td>
             <td style="white-space:nowrap">
-              <button class="btn sm" onclick="setPeriodoSel('${p.id}')">Ver</button>
+              <button class="btn sm" onclick="verPeriodo('${p.id}')">Ver movimientos</button>
               ${p.estado === 'abierto'
                 ? `<button class="btn sm" onclick="cerrarPeriodo('${p.id}')">🔒 Cerrar</button>`
                 : `<button class="btn sm" onclick="reabrirPeriodo('${p.id}')">🔓 Reabrir</button>`}
