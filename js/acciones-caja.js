@@ -281,15 +281,17 @@ function verPago(id){
       <p style="font-size:13.5px;color:var(--text-2);padding:0 2px">${esc(g.observacion)}</p>` : ''}
     </div>
 
-    <div class="modal-f">
-      <button class="btn dgr" onclick="closeModal();borrar('caja','${g.id}')">Eliminar</button>
+    <div class="modal-f pago-acciones">
       ${esIngreso ? '' : `
-        <button class="btn ${g.legalizado ? '' : 'pri'}" onclick="toggleLeg('${g.id}',true)">
-          ${g.legalizado ? '↺ Quitar legalización' : '✓ Marcar legalizado'}</button>
-        <button class="btn" onclick="closeModal();modalPerdida('${g.id}')">
+        <button class="btn pago-legalizar ${g.legalizado ? '' : 'pri'}" onclick="toggleLeg('${g.id}',true)">
+          ${g.legalizado ? '↺ Quitar legalización' : '✓ Marcar legalizado'}</button>`}
+      <div class="pago-secundarias">
+        <button class="btn dgr" onclick="closeModal();borrar('caja','${g.id}')">Eliminar</button>
+        ${esIngreso ? '' : `<button class="btn" onclick="closeModal();modalPerdida('${g.id}')">
           ${g.perdida ? '↺ Ya no es pérdida' : '📉 Marcar pérdida'}</button>`}
-      <button class="btn pri" onclick="closeModal();modalCaja('${g.tipo}','${g.id}')">✎ Editar</button>
-    </div>`);
+        <button class="btn pri" onclick="closeModal();modalCaja('${g.tipo}','${g.id}')">✎ Editar</button>
+      </div>
+    </div>`, 'modal-pago');
 }
 
 /* ---- Legalización -------------------------------------------------------- */
