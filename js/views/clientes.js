@@ -62,7 +62,7 @@ function tarjetaCliente(c){
   return `
   <div class="card" style="${c.activo === false ? 'opacity:.6' : ''}">
     <button class="card-h" style="width:100%;text-align:left;background:none;cursor:pointer"
-            onclick="abrirCliente('${c.id}')">
+            onclick="verCliente('${c.id}')">
       <h2>
         <span class="dot" style="background:${c.color}"></span>${esc(c.nombre)}
         ${c.ceco ? `<span class="chip b">CECO ${esc(c.ceco)}</span>` : ''}
@@ -72,11 +72,11 @@ function tarjetaCliente(c){
       <div style="display:flex;gap:7px;align-items:center">
         ${ven ? `<span class="chip d">${ven} vencida${ven > 1 ? 's' : ''}</span>` : ''}
         ${esp ? `<span class="chip w">⏳ ${esp}</span>` : ''}
-        <span class="cfg-chevron">${abierto ? ICO.plegar : ICO.desplegar}</span>
+        <span class="cfg-chevron">${ICO.desplegar}</span>
       </div>
     </button>
 
-    <div class="card-b" style="padding-top:12px">
+    <div class="card-b" style="padding-top:12px;cursor:pointer" onclick="verCliente('${c.id}')">
       <div class="grid" style="grid-template-columns:repeat(5,1fr);gap:8px;text-align:center">
         ${mini(tks.length, 'Tareas')}
         ${mini(prs.length, 'Proyectos')}

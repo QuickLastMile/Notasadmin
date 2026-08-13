@@ -155,6 +155,20 @@ function iniciarNexa(){
   nexaCargarHistorial();
   const fab = $('#nexaFab');
   if(!fab) return;
+  const clavePos = 'nexa_fab_pos_v1';
+  const limitar = (n,min,max) => Math.max(min,Math.min(max,n));
+  const colocar = (x,y,guardar=false) => {
+    const r=fab.getBoundingClientRect(), margen=6;
+    x=limitar(x,margen,innerWidth-r.width-margen); y=limitar(y,margen,innerHeight-r.height-margen);
+    fab.style.left=x+'px'; fab.style.top=y+'px'; fab.style.right='auto'; fab.style.bottom='auto';
+    if(guardar) localStorage.setItem(clavePos,JSON.stringify({x:x/innerWidth,y:y/innerHeight}));
+  };
+  try{const p=JSON.parse(localStorage.getItem(clavePos));if(p)setTimeout(()=>colocar(p.x*innerWidth,p.y*innerHeight),0);}catch{}
+  let arrastre=null;
+  fab.addEventListener('pointerdown',e=>{const r=fab.getBoundingClientRect();arrastre={id:e.pointerId,dx:e.clientX-r.left,dy:e.clientY-r.top,sx:e.clientX,sy:e.clientY,movio:false};fab.setPointerCapture(e.pointerId);e.preventDefault();});
+  fab.addEventListener('pointermove',e=>{if(!arrastre||arrastre.id!==e.pointerId)return;if(!arrastre.movio&&Math.hypot(e.clientX-arrastre.sx,e.clientY-arrastre.sy)<5)return;arrastre.movio=true;fab.classList.add('arrastrando');colocar(e.clientX-arrastre.dx,e.clientY-arrastre.dy);});
+  fab.addEventListener('pointerup',e=>{if(!arrastre||arrastre.id!==e.pointerId)return;const movio=arrastre.movio;arrastre=null;fab.classList.remove('arrastrando');const r=fab.getBoundingClientRect();colocar(r.left,r.top,true);if(!movio)toggleNexa();});
+  addEventListener('resize',()=>{const r=fab.getBoundingClientRect();colocar(r.left,r.top);});
   fab.addEventListener('mouseenter', () => fab.classList.add('saluda'));
   fab.addEventListener('mouseleave', () => fab.classList.remove('saluda'));
   const frases = ['¿Qué revisamos?', 'Estoy lista para ayudarte', 'Revisemos tus pendientes'];

@@ -375,7 +375,7 @@ async function guardarNovedad(id = null){
   else    await db.insert('novedades', fila);
 
   closeModal(); render();
-  toast(id ? 'Novedad actualizada ✓' : 'Novedad registrada ✓');
+  toast(id ? 'Cliente actualizado ✓' : 'Cliente creado ✓');
 }
 
 /** Convierte una novedad en tarea para hoy: que no se quede en anécdota. */

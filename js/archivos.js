@@ -87,6 +87,20 @@ async function guardarDocumentoProyecto(file, proyectoId){
   return ruta;
 }
 
+/** Guarda documentos generales asociados a la ficha de un cliente. */
+async function guardarDocumentoCliente(file, clienteId){
+  const max = NUBE ? 20 * 1024 * 1024 : 3 * 1024 * 1024;
+  if(file.size > max){ toast(`El archivo supera el límite de ${NUBE ? '20' : '3'} MB`); return null; }
+  if(!NUBE){
+    return await new Promise((resolve,reject)=>{const fr=new FileReader();fr.onload=()=>resolve(fr.result);fr.onerror=reject;fr.readAsDataURL(file);});
+  }
+  const limpio=(file.name||'archivo').replace(/[^a-zA-Z0-9._-]+/g,'_');
+  const ruta=`${usuario.id}/clientes/${clienteId}/${uid()}-${limpio}`;
+  const {error}=await sb.storage.from(BUCKET).upload(ruta,file,{contentType:file.type||'application/octet-stream',upsert:false});
+  if(error){toast('No se pudo subir: '+error.message.slice(0,60));return null;}
+  return ruta;
+}
+
 /** Convierte la referencia guardada en una URL que el navegador pueda mostrar. */
 async function urlVisible(ref){
   if(!ref) return null;

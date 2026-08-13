@@ -391,6 +391,8 @@ tbody tr:hover{background:var(--surface-2)}
 .modal.modal-proyecto{width:min(960px,calc(100vw - 36px));max-width:960px}
 .modal.modal-pago{width:min(620px,calc(100vw - 36px));max-width:620px}
 .modal.modal-novedad{width:min(850px,calc(100vw - 36px));max-width:850px}
+.modal.modal-cliente{width:min(1080px,calc(100vw - 36px));max-width:1080px}
+.cliente-ficha-body{gap:20px}.cliente-resumen{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}.cliente-resumen>div{padding:13px;text-align:center;border:1px solid var(--border);border-radius:12px;background:var(--surface-2)}.cliente-resumen strong,.cliente-resumen span{display:block}.cliente-resumen strong{font-size:18px}.cliente-resumen span{font-size:10px;color:var(--text-3);text-transform:uppercase;font-weight:700;margin-top:3px}.cliente-dos-columnas{display:grid;grid-template-columns:1fr 1fr;gap:18px}.cliente-equipo{display:grid;gap:6px}.cliente-equipo button{padding:10px 12px;text-align:left;border:1px solid var(--border);border-radius:11px;background:var(--surface-2)}.cliente-equipo strong,.cliente-equipo small{display:block}.cliente-equipo small{color:var(--text-3);margin-top:2px}.cliente-ayuda{font-size:12.5px;color:var(--text-2);margin:-5px 0 12px}
 .modal-novedad .modal-b{padding:22px 26px}
 .modal-novedad .tf-notas{font-size:14.5px;line-height:1.72;padding:18px 20px}
 .modal-novedad .tf-nota-txt{font-size:14px;line-height:1.6}
@@ -887,6 +889,7 @@ tbody tr:hover{background:var(--surface-2)}
   .mask{padding:8px 8px calc(16px + env(safe-area-inset-bottom));align-items:flex-start;overflow-x:hidden}
   .modal,.modal.modal-proyecto{width:100%;max-width:100%;min-width:0;margin:0;border-radius:18px}
   .modal.modal-novedad{width:100%;max-width:100%}
+  .modal.modal-cliente{width:100%;max-width:100%}.cliente-resumen{grid-template-columns:repeat(2,1fr)}.cliente-resumen>div:last-child:nth-child(odd){grid-column:1/-1}.cliente-dos-columnas{grid-template-columns:1fr}
   .modal-h,.modal-b,.modal-f,
   .modal-proyecto .modal-h,.modal-proyecto .modal-b,.modal-proyecto .modal-f{padding-left:14px;padding-right:14px}
   .modal-novedad .modal-b{padding-left:14px;padding-right:14px}
@@ -1186,7 +1189,8 @@ tbody tr:hover{background:var(--surface-2)}
 
 /* ---- NEXA: mascota flotante y chat ------------------------------------- */
 .nexa-fab{position:fixed;right:18px;bottom:18px;z-index:160;width:122px;height:122px;padding:0;
-  display:grid;place-items:center;background:transparent;overflow:visible;isolation:isolate}
+  display:grid;place-items:center;background:transparent;overflow:visible;isolation:isolate;touch-action:none;cursor:grab;user-select:none}
+.nexa-fab.arrastrando{cursor:grabbing}.nexa-fab.arrastrando .nexa-mascota-fab{animation:none;transform:scale(1.05)}
 .nexa-mascota-fab{position:relative;z-index:2;width:118px;height:118px;object-fit:contain;filter:drop-shadow(0 13px 14px rgba(44,3,13,.3));
   animation:nexaFlotar 3.6s ease-in-out infinite;transition:transform .24s ease,filter .24s ease}
 .nexa-fab:hover .nexa-mascota-fab,.nexa-fab.saluda .nexa-mascota-fab{transform:scale(1.09) rotate(-4deg);filter:drop-shadow(0 17px 17px rgba(44,3,13,.38))}
