@@ -176,6 +176,7 @@ create table if not exists dashboards (
   nombre      text not null,
   url         text not null,
   cliente_id  uuid references clientes(id) on delete set null,
+  detalles    jsonb not null default '{"observaciones":"","enlaces":[]}'::jsonb,
   created_at  timestamptz default now()
 );
 

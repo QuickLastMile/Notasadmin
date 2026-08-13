@@ -1241,3 +1241,12 @@ tbody tr:hover{background:var(--surface-2)}
 .periodo-explicacion strong{font-size:12px;text-transform:uppercase;letter-spacing:.04em;color:var(--text-2)}
 .periodo-explicacion span{font-size:12px;color:var(--text-3);line-height:1.4}
 @media(max-width:720px){.periodo-explicacion{grid-template-columns:1fr 1fr}.periodo-explicacion>div{padding:11px}}
+.vista-enlaces-toggle{display:flex;gap:6px}.vista-enlaces-toggle .active{background:var(--primary);color:#fff;border-color:var(--primary)}
+.enlace-item{cursor:pointer}.enlace-item:hover{background:var(--surface-2)}
+.enlaces-vista-cuadricula{grid-template-columns:repeat(auto-fill,minmax(250px,1fr))!important;align-items:start}
+.enlaces-vista-cuadricula .card-b{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px;padding:12px!important}
+.enlaces-vista-cuadricula .enlace-item{border:1px solid var(--line);border-radius:14px;padding:14px;display:grid;grid-template-columns:1fr auto;min-height:115px}
+.enlaces-vista-cuadricula .enlace-item .row-main{grid-column:1/-1}.enlaces-vista-cuadricula .enlace-item .btn.pri,.enlaces-vista-cuadricula .enlace-item>div:last-child{align-self:end}
+.url-extra-form{display:grid;grid-template-columns:minmax(130px,.7fr) minmax(180px,1.3fr) auto;gap:8px;margin-top:8px}.campo-ayuda{font-size:11.5px;color:var(--text-3);margin:3px 0 8px}
+.enlace-detalle{display:grid;gap:22px}.enlace-principal,.enlaces-adicionales a{display:flex;align-items:center;justify-content:space-between;gap:15px;padding:15px;border:1px solid var(--line);border-radius:14px;background:var(--surface-2);color:inherit;text-decoration:none}.enlace-principal span,.enlaces-adicionales a span{display:flex;min-width:0;flex-direction:column;gap:4px}.enlace-principal small,.enlaces-adicionales small{color:var(--text-3);word-break:break-all}.enlaces-adicionales{display:grid;gap:8px}.texto-pre{white-space:pre-wrap}
+@media(max-width:620px){.vista-enlaces-toggle .btn{padding-inline:10px}.url-extra-form{grid-template-columns:1fr auto}.url-extra-form input:first-child{grid-column:1/-1}.enlaces-vista-cuadricula{grid-template-columns:1fr!important}}
