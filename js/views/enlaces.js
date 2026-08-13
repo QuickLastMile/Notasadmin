@@ -1,13 +1,26 @@
 /* ACCESOS RÁPIDOS — enlace principal visible y ficha con información adicional. */
 let vistaEnlaces=localStorage.getItem('nexa_vista_enlaces')||'lista';
+let filtroEnlaces='todos';
 const detalleEnlace=d=>d?.detalles||{observaciones:'',enlaces:[]};
 function setVistaEnlaces(v){vistaEnlaces=v;localStorage.setItem('nexa_vista_enlaces',v);render();}
+function setFiltroEnlaces(v){filtroEnlaces=v;render();}
+
+function tarjetaEnlace(d){
+  const c=d.cliente_id?cli(d.cliente_id):{nombre:'Sin cliente',color:'#9B8570'},det=detalleEnlace(d);
+  const extras=(det.enlaces||[]).length;
+  return `<article class="card enlace-card enlace-item" onclick="verEnlace('${d.id}')" role="button" tabindex="0" onkeydown="if(event.key==='Enter')verEnlace('${d.id}')">
+    <div class="enlace-card-cab"><span class="dot" style="background:${c.color}"></span><span>${esc(c.nombre)}</span>${extras?`<span class="chip n">+${extras}</span>`:''}</div>
+    <div class="enlace-card-cuerpo"><div class="row-main"><div class="row-t">${esc(d.nombre)}</div><div class="row-s"><span class="enlace-dominio">${esc(dominio(d.url))}</span></div></div>
+      <div class="enlace-card-acciones"><a class="btn sm pri" href="${esc(d.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Abrir ↗</a><button class="btn sm" onclick="event.stopPropagation();copiarEnlace('${d.id}')" title="Copiar">⧉</button><button class="btn sm" onclick="event.stopPropagation();modalEnlace('${d.id}')" title="Editar">✎</button><button class="btn sm dgr" onclick="event.stopPropagation();eliminarEnlace('${d.id}')" title="Eliminar">✕</button></div>
+    </div></article>`;
+}
 
 function vEnlaces(){
   if(!S.dashboards.length)return `${pageHead('Accesos rápidos','Guarda aquí los enlaces que abres todos los días para tenerlos a un clic.','')}<div class="card" style="max-width:620px"><div class="card-b" style="padding:30px 26px"><div style="font-size:34px;opacity:.4;margin-bottom:12px">${ICO.enlaces}</div><h2 style="font-size:17px;margin-bottom:8px">¿Para qué sirve esta sección?</h2><p style="color:var(--text-2);font-size:13.5px;line-height:1.65;margin-bottom:20px">Es tu agenda de enlaces. Guarda el acceso principal y, si lo necesitas, añade observaciones y enlaces relacionados dentro de su ficha.</p><button class="btn pri" onclick="modalEnlace()">+ Guardar mi primer enlace</button></div></div>`;
-  const porCliente={};S.dashboards.forEach(d=>(porCliente[d.cliente_id||'sin']||=[]).push(d));
-  return `${pageHead('Accesos rápidos','Los enlaces que abres a diario, agrupados por cliente.',`<div class="vista-enlaces-toggle"><button class="btn ${vistaEnlaces==='lista'?'active':''}" onclick="setVistaEnlaces('lista')">☰ Lista</button><button class="btn ${vistaEnlaces==='cuadricula'?'active':''}" onclick="setVistaEnlaces('cuadricula')">▦ Cuadrícula</button></div><button class="btn pri" onclick="modalEnlace()">+ Nuevo enlace</button>`)}
-  <div class="grid enlaces-vista-${vistaEnlaces}" style="gap:14px">${Object.entries(porCliente).map(([cid,enlaces])=>{const c=cid==='sin'?{nombre:'Sin cliente',color:'#9B8570'}:cli(cid);return `<div class="card"><div class="card-h"><h2><span class="dot" style="background:${c.color}"></span>${esc(c.nombre)}</h2><span class="chip n">${enlaces.length}</span></div><div class="card-b flush">${enlaces.map(d=>`<div class="row enlace-item" onclick="verEnlace('${d.id}')" role="button" tabindex="0" onkeydown="if(event.key==='Enter')verEnlace('${d.id}')"><div class="row-main"><div class="row-t">${esc(d.nombre)}</div><div class="row-s"><span style="font-family:var(--mono);font-size:11px;word-break:break-all">${esc(dominio(d.url))}</span></div></div><a class="btn sm pri" href="${esc(d.url)}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Abrir ↗</a><div style="display:flex;gap:6px"><button class="btn sm" onclick="event.stopPropagation();copiarEnlace('${d.id}')" title="Copiar">⧉</button><button class="btn sm" onclick="event.stopPropagation();modalEnlace('${d.id}')" title="Editar">✎</button><button class="btn sm dgr" onclick="event.stopPropagation();eliminarEnlace('${d.id}')" title="Eliminar">✕</button></div></div>`).join('')}</div></div>`;}).join('')}</div><p style="font-size:12px;color:var(--text-3);margin-top:16px">Atajo: en la barra de captura escribe <code>l: https://… Nombre</code> y se guarda solo.</p>`;
+  const ids=[...new Set(S.dashboards.map(d=>d.cliente_id||'sin'))],visibles=filtroEnlaces==='todos'?S.dashboards:S.dashboards.filter(d=>(d.cliente_id||'sin')===filtroEnlaces);
+  return `${pageHead('Accesos rápidos','Cada acceso está separado. Filtra por cliente o elige el tamaño que prefieras.',`<div class="vista-enlaces-toggle"><button class="btn ${vistaEnlaces==='lista'?'active':''}" onclick="setVistaEnlaces('lista')">☰ Lista</button><button class="btn ${vistaEnlaces==='cuadricula'?'active':''}" onclick="setVistaEnlaces('cuadricula')">▦ Cuadrícula</button></div><button class="btn pri" onclick="modalEnlace()">+ Nuevo enlace</button>`)}
+  <div class="filtros-enlaces"><button class="chip ${filtroEnlaces==='todos'?'activo':''}" onclick="setFiltroEnlaces('todos')">Todos <b>${S.dashboards.length}</b></button>${ids.map(id=>{const c=id==='sin'?{nombre:'Sin cliente',color:'#9B8570'}:cli(id),n=S.dashboards.filter(d=>(d.cliente_id||'sin')===id).length;return `<button class="chip ${filtroEnlaces===id?'activo':''}" onclick="setFiltroEnlaces('${id}')"><span class="dot" style="background:${c.color}"></span>${esc(c.nombre)} <b>${n}</b></button>`;}).join('')}</div>
+  <div class="enlaces-separados enlaces-vista-${vistaEnlaces}">${visibles.map(tarjetaEnlace).join('')}</div>${!visibles.length?'<div class="tf-vacio">No hay accesos en este filtro.</div>':''}<p style="font-size:12px;color:var(--text-3);margin-top:16px">Atajo: en la barra de captura escribe <code>l: https://… Nombre</code> y se guarda solo.</p>`;
 }
 
 function dominio(url){try{return new URL(url).hostname.replace(/^www\./,'');}catch{return url;}}
