@@ -76,10 +76,10 @@ function verNovedad(id){
       ${(persona || mensajero || n.reportado_por) ? `
         <div class="tf-tit"><span>Quiénes</span></div>
         <div class="ficha">
-          ${dato('La reportó', esc(n.reportado_por))}
-          ${dato('Persona del cliente', persona
+          ${dato('Contacto del cliente que reportó', esc(n.reportado_por))}
+          ${dato('Colaborador Quick asignado', persona
             ? esc(persona.nombre) + (persona.cargo ? ` · ${esc(persona.cargo)}` : '') : '')}
-          ${dato('Mensajero involucrado', mensajero ? esc(mensajero.nombre) : '')}
+          ${dato('Quicker involucrado', mensajero ? esc(mensajero.nombre) : '')}
         </div>` : ''}
 
       <!-- Evidencia: la foto es lo que sostiene el reclamo después -->

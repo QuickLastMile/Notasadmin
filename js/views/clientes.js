@@ -1,10 +1,7 @@
 /* ============================================================================
    VISTA: CLIENTES — fuente de información
    ----------------------------------------------------------------------------
-   Estructura: CLIENTE → CECO → COLABORADORES → TAREAS.
-   Los colaboradores NO son usuarios de la app: son los contactos con los que
-   se trabaja (el coordinador, el jefe, el del parqueadero), con su ficha y
-   el estado de las tareas que les corresponden.
+   Estructura: CLIENTE → CECO → EQUIPO QUICK ASIGNADO → TAREAS.
    ========================================================================== */
 
 let clienteAbierto = null;
@@ -18,9 +15,9 @@ function abrirCliente(id){
 
 function vClientes(){
   if(!S.clientes.length) return `
-    ${pageHead('Clientes', 'Ficha por cliente: CECO, colaboradores y todo lo que le debes.', '')}
+    ${pageHead('Clientes', 'Ficha por cliente: CECO, equipo Quick asignado y operación.', '')}
     ${vacioCTA('◍', 'Empieza por tus clientes',
-      'Todo lo demás —tareas, pagos, novedades, colaboradores— se cuelga de un cliente.',
+      'Todo lo demás —tareas, pagos, novedades y equipo Quick— se relaciona con un cliente.',
       '+ Nuevo cliente', 'modalCliente()')}`;
 
   // Los colaboradores sin cliente también deben verse: nada se pierde
@@ -28,15 +25,15 @@ function vClientes(){
 
   return `
   ${pageHead('Clientes',
-    'Ficha por cliente: CECO, colaboradores y todo lo que le debes.',
-    `<button class="btn" onclick="modalColaborador()">+ Colaborador</button>
+    'Ficha por cliente: CECO, equipo Quick asignado y operación.',
+    `<button class="btn" onclick="modalColaborador()">+ Colaborador Quick</button>
      <button class="btn pri" onclick="modalCliente()">+ Nuevo cliente</button>`)}
 
   <div class="grid" style="gap:13px">
     ${S.clientes.map(tarjetaCliente).join('')}
     ${sueltos.length ? `
       <div class="card">
-        <div class="card-h"><h2>Colaboradores sin cliente</h2>
+        <div class="card-h"><h2>Equipo Quick sin cliente asignado</h2>
           <span class="chip n">${sueltos.length}</span></div>
         <div class="card-b flush">${sueltos.map(filaColaborador).join('')}</div>
       </div>` : ''}
@@ -84,7 +81,7 @@ function tarjetaCliente(c){
         ${mini(tks.length, 'Tareas')}
         ${mini(prs.length, 'Proyectos')}
         ${mini(nov, 'Novedades', nov ? 'var(--danger)' : 'inherit')}
-        ${mini(cols.length, 'Personas')}
+        ${mini(cols.length, 'Equipo Quick')}
         <div>
           <div style="font-size:13px;font-weight:700;padding-top:3px">${cop(gas)}</div>
           <div style="font-size:10px;color:var(--text-3);text-transform:uppercase;
@@ -97,14 +94,14 @@ function tarjetaCliente(c){
     ${abierto ? `
     <div style="border-top:1px solid var(--border);background:var(--surface-2)">
       <div class="card-h" style="border-bottom:1px solid var(--border)">
-        <h2>Colaboradores</h2>
+        <h2>Equipo Quick asignado</h2>
         <div style="display:flex;gap:6px">
           <button class="btn sm" onclick="modalCliente('${c.id}')">✎ Editar cliente</button>
-          <button class="btn sm pri" onclick="modalColaborador(null,'${c.id}')">+ Colaborador</button>
+          <button class="btn sm pri" onclick="modalColaborador(null,'${c.id}')">+ Colaborador Quick</button>
         </div>
       </div>
       ${cols.length ? cols.map(filaColaborador).join('')
-        : vacio('👤', 'Sin colaboradores registrados para este cliente')}
+        : vacio('👤', 'Sin personal Quick asignado a este cliente')}
     </div>` : ''}
   </div>`;
 }

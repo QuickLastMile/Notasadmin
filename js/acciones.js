@@ -317,24 +317,24 @@ function modalNovedad(id = null){
       </select></div>
     </div>
 
-    <div><label>Cliente (opcional)</label>
+    <div><label>Cliente afectado (opcional)</label>
       <select id="nC">${optsCli(n?.cliente_id)}</select></div>
 
     <div class="f2">
-      <div><label>Persona del cliente</label>
+      <div><label>Colaborador Quick asignado</label>
         <select id="nPersona"><option value="">— Ninguna —</option>
           ${S.colaboradores.filter(c => c.activo !== false).map(c =>
-            `<option value="${c.id}" ${n?.persona_id === c.id ? 'selected' : ''}>${esc(c.nombre)}</option>`).join('')}
-        </select></div>
-      <div><label>Mensajero involucrado</label>
+            `<option value="${c.id}" ${n?.persona_id === c.id ? 'selected' : ''}>${esc(c.nombre)}${c.cargo ? ' · ' + esc(c.cargo) : ''}</option>`).join('')}
+        </select><small style="display:block;margin-top:5px;color:var(--text-3)">Persona de Quick que presta el servicio o gestiona el caso.</small></div>
+      <div><label>Quicker involucrado</label>
         <select id="nBen"><option value="">— Ninguno —</option>
           ${S.beneficiarios.filter(b => b.activo).map(b =>
             `<option value="${b.id}" ${n?.beneficiario_id === b.id ? 'selected' : ''}>${esc(b.nombre)}</option>`).join('')}
         </select></div>
     </div>
 
-    <div><label>¿Quién la reportó?</label>
-      <input id="nRep" placeholder="Ej. El coordinador de zona, o yo misma"
+    <div><label>Contacto o encargado del cliente que reporta</label>
+      <input id="nRep" placeholder="Ej. Lorena Cetina · Encargada de Pendientes"
              value="${esc(n?.reportado_por || '')}"></div>
 
     <div><label>Acción a tomar</label>
@@ -533,16 +533,16 @@ async function guardarCliente(id = null){
   else    await db.insert('clientes', fila);
 
   closeModal(); render();
-  toast(id ? 'Cliente actualizado ✓' : 'Cliente creado ✓');
+  toast(id ? 'Novedad actualizada ✓' : 'Novedad registrada ✓');
 }
 
 /* ---- Colaboradores --------------------------------------------------------
-   Contactos de la operación (jefes, coordinadores, el señor del parqueadero).
-   NO son usuarios de la app: son la agenda de con quién se trabaja.
+   Personal de Quick asignado a la operación del cliente.
+   NO son usuarios de la app: son coordinadores, auxiliares y equipo operativo.
    -------------------------------------------------------------------------- */
 function modalColaborador(id = null, clientePreset = null){
   const c = id ? colab(id) : null;
-  openModal(formModal(id ? 'Editar colaborador' : 'Nuevo colaborador', `
+  openModal(formModal(id ? 'Editar colaborador Quick' : 'Nuevo colaborador Quick', `
     <div><label>Nombre completo</label>
       <input id="coN" placeholder="Ej. Carlos Pérez" value="${esc(c?.nombre || '')}"></div>
     <div class="f2">
@@ -566,7 +566,7 @@ function modalColaborador(id = null, clientePreset = null){
         <input id="coCiudad" placeholder="Bogotá" value="${esc(c?.ciudad || '')}"></div>
     </div>
     <div class="f2">
-      <div><label>Cliente</label><select id="coCli">${optsCli(c?.cliente_id ?? clientePreset)}</select></div>
+      <div><label>Cliente al que presta servicio</label><select id="coCli">${optsCli(c?.cliente_id ?? clientePreset)}</select></div>
       <div><label>Estado</label><select id="coAct">
         <option value="1" ${c?.activo !== false ? 'selected' : ''}>Activo</option>
         <option value="0" ${c?.activo === false ? 'selected' : ''}>Inactivo</option>
