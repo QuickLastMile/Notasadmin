@@ -12,6 +12,10 @@ create table if not exists clientes (
   user_id     uuid not null references auth.users(id) on delete cascade default auth.uid(),
   nombre      text not null,
   contacto    text,
+  nit         text default '',
+  ceco        text default '',
+  notas       text default '',
+  campos      jsonb not null default '{}'::jsonb,
   color       text default '#2563eb',
   activo      boolean default true,
   created_at  timestamptz default now()

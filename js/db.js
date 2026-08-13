@@ -25,6 +25,8 @@ function _error(accion, error){
   console.error(`${accion}:`, error);
   const m = error.message || '';
   if(m.includes('ux_periodo_abierto'))         toast('Ya tienes un período abierto');
+  else if(/campos.*clientes|clientes.*campos|schema cache/i.test(m) && /campos/i.test(m))
+                                                toast('Falta actualizar la tabla clientes en Supabase');
   else if(m.includes('reembolso_no_supera'))   toast('El reembolso no puede superar el monto');
   else if(m.includes('duplicate key'))         toast('Ese registro ya existe');
   else if(m.includes('JWT') || m.includes('session')) toast('Tu sesión expiró — vuelve a entrar');

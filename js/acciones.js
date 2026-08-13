@@ -556,8 +556,11 @@ async function guardarCliente(id = null){
     campos:   {...(anterior?.campos||{}),__contactos_cliente:contactos}
   };
 
-  if(id) await db.update('clientes', id, fila);
-  else    await db.insert('clientes', fila);
+  const guardado=id?await db.update('clientes',id,fila):await db.insert('clientes',fila);
+  if(!guardado){
+    toast('No se guardó el cliente. Ejecuta la actualización SQL de contactos.');
+    return;
+  }
 
   closeModal(); render();
   toast(id ? 'Cliente actualizado ✓' : 'Cliente creado ✓');
