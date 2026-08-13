@@ -323,8 +323,10 @@ async function toggleLeg(id, reabrir = false){
  */
 function modalReembolso(periodoId){
   const a = arqueo(periodoId);
+  const heredados=pendientesAnteriores(periodoId).filter(g=>metaCaja(g).periodo_envio_id===periodoId&&g.legalizado);
+  const candidatos=[...a.porCobrar,...heredados.filter(g=>!a.porCobrar.some(x=>x.id===g.id))];
 
-  if(!a.porCobrar.length){
+  if(!candidatos.length){
     openModal(formModal('Registrar reembolso', `
       <div class="alert ${a.trabado > 0 ? 'w' : 'o'}">
         <span>${a.trabado > 0 ? '🔒' : '✅'}</span>
@@ -338,7 +340,7 @@ function modalReembolso(periodoId){
     return;
   }
 
-  const filas = a.porCobrar
+  const filas = candidatos
     .sort((x, y) => x.fecha < y.fecha ? -1 : 1)
     .map(g => {
       const falta = g.monto - (g.reembolsado || 0);
@@ -347,7 +349,7 @@ function modalReembolso(periodoId){
       <div class="reem-fila" data-id="${g.id}" data-monto="${falta}" data-estado="">
         <span class="reem-txt">
           <strong>${esc(g.concepto)}</strong>
-          <small>${fechaCorta(g.fecha)} · ${esc(g.categoria)}${b ? ' · ' + esc(b.nombre) : ''}</small>
+          <small>${fechaCorta(g.fecha)} · ${esc(g.categoria)}${b ? ' · ' + esc(b.nombre) : ''}${g.periodo_id!==periodoId?' · Arrastre de '+esc(per(g.periodo_id)?.nombre||'período anterior'):''}</small>
         </span>
         <span class="reem-monto">${cop(falta)}</span>
         <span class="reem-voto">
@@ -371,7 +373,7 @@ function modalReembolso(periodoId){
       <button type="button" class="btn sm" onclick="votarTodos('ok')">✓ Todos aprobados</button>
       <button type="button" class="btn sm" onclick="votarTodos('')">Limpiar</button>
       <span style="margin-left:auto;font-size:12px;color:var(--text-3)">
-        ${a.porCobrar.length} pasados · ${cop(a.cobrable)}</span>
+        ${candidatos.length} gastos · ${cop(suma(candidatos,g=>g.monto-(g.reembolsado||0)))}</span>
     </div>
 
     <div class="reem-lista" id="reemLista">${filas}</div>
@@ -445,14 +447,16 @@ async function aplicarReembolso(periodoId){
         reembolsado: g.monto,               // aprobado = saldado por completo
         estado: 'finalizado',
         observacion: [g.observacion, `Consignado ${fechaCorta(fecha)}${obs ? ': ' + obs : ''}`]
-          .filter(Boolean).join(' · ')
+          .filter(Boolean).join(' · '),
+        campos:{...metaCaja(g),periodo_reembolso_id:periodoId,reembolsado_en:fecha}
       });
     } else {
       totalNo += falta; nNo++;
       await db.update('caja', g.id, {
         perdida: true,
         motivo_perdida: 'Rechazado en la revisión' + (obs ? ` — ${obs}` : ''),
-        estado: 'finalizado'
+        estado: 'finalizado',
+        campos:{...metaCaja(g),periodo_resolucion_id:periodoId}
       });
     }
   }

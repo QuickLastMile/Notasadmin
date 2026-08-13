@@ -89,6 +89,7 @@ create table if not exists caja (
   reembolsado   numeric(14,2) default 0 check (reembolsado >= 0),
 
   observacion text,
+  campos      jsonb not null default '{}'::jsonb,
   created_at  timestamptz default now(),
   updated_at  timestamptz default now(),
 

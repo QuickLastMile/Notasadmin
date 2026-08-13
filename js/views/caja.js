@@ -11,6 +11,7 @@ let buscarCaja = '';
 
 const TABS_CAJA = [
   ['movimientos',  'Movimientos'],
+  ['pendientes',   'Pendientes anteriores'],
   ['beneficiarios','Mensajeros'],
   ['presupuesto',  'Presupuesto'],
   ['periodos',     'Períodos']
@@ -59,6 +60,12 @@ function verPeriodo(id){
   requestAnimationFrame(() => document.querySelector('.tabs')?.scrollIntoView({behavior:'smooth',block:'start'}));
 }
 function setFiltroCaja(f){ filtroCaja = f; render(); }
+const metaCaja=g=>g?.campos||{};
+function pendientesAnteriores(pid){
+  const actual=per(pid);if(!actual)return [];
+  const anteriores=new Set(S.periodos.filter(p=>p.id!==pid&&p.inicio<actual.inicio).map(p=>p.id));
+  return S.caja.filter(g=>anteriores.has(g.periodo_id)&&g.tipo==='gasto'&&!g.perdida&&(g.monto-(g.reembolsado||0))>0).sort((a,b)=>a.fecha>b.fecha?1:-1);
+}
 
 /* ========================================================================== */
 function vCaja(){
@@ -100,6 +107,7 @@ function vCaja(){
 
   const cuerpo = {
     movimientos:   () => tabMovimientos(a, p, pid),
+    pendientes:    () => tabPendientesAnteriores(pid),
     beneficiarios: () => tabBeneficiarios(),
     presupuesto:   () => tabPresupuesto(pid),
     periodos:      () => tabPeriodos()
@@ -121,12 +129,21 @@ function vCaja(){
 
   <div class="tabs">
     ${TABS_CAJA.map(([k, l]) =>
-      `<button class="tab ${cajaTab === k ? 'active' : ''}" onclick="setCajaTab('${k}')">${l}</button>`
+      `<button class="tab ${cajaTab === k ? 'active' : ''}" onclick="setCajaTab('${k}')">${l}${k==='pendientes'&&pendientesAnteriores(pid).length?` (${pendientesAnteriores(pid).length})`:''}</button>`
     ).join('')}
   </div>
 
   ${cuerpo}`;
 }
+
+function tabPendientesAnteriores(pid){
+  const lista=pendientesAnteriores(pid),incluidos=lista.filter(g=>metaCaja(g).periodo_envio_id===pid);
+  return `<div class="card"><div class="card-h"><div><h2>Pendientes de períodos anteriores</h2><small style="color:var(--text-3)">El gasto conserva su período original; aquí eliges qué incluir en el envío actual.</small></div><span class="chip ${lista.length?'w':'o'}">${lista.length}</span></div>
+    <div class="arrastre-resumen"><div><span>Pendiente histórico</span><strong>${cop(suma(lista,g=>g.monto-(g.reembolsado||0)))}</strong></div><div><span>Incluido en este envío</span><strong>${cop(suma(incluidos,g=>g.monto-(g.reembolsado||0)))}</strong></div><button class="btn pri" onclick="modalReembolso('${pid}')">💰 Registrar consignación</button></div>
+    <div class="arrastre-lista">${lista.length?lista.map(g=>{const origen=per(g.periodo_id),incluido=metaCaja(g).periodo_envio_id===pid;return `<div class="arrastre-fila"><button class="arrastre-info" onclick="verPago('${g.id}')"><strong>${esc(g.concepto)}</strong><small>${esc(origen?.nombre||'Período anterior')} · ${fechaCorta(g.fecha)} · ${g.legalizado?'Legalizado':'Falta legalizar'}</small></button><strong class="num">${cop(g.monto-(g.reembolsado||0))}</strong><button class="btn sm ${incluido?'pri':''}" onclick="toggleArrastreCaja('${g.id}','${pid}')">${incluido?'✓ Incluido':'Incluir en este envío'}</button></div>`;}).join(''):vacio('✅','No hay movimientos pendientes de períodos anteriores')}</div></div>`;
+}
+
+async function toggleArrastreCaja(id,pid){const g=S.caja.find(x=>x.id===id);if(!g)return;const m=metaCaja(g),incluido=m.periodo_envio_id===pid;const r=await db.update('caja',id,{campos:{...m,periodo_envio_id:incluido?null:pid,incluido_envio_el:incluido?null:hoyISO()}});if(r)render();}
 
 /* ---- KPIs del arqueo ------------------------------------------------------ */
 function tarjetasArqueo(a){
@@ -484,6 +501,7 @@ function tabPeriodos(){
         <tbody>
         ${S.periodos.map(p => {
           const a = arqueo(p.id);
+          const cerradoPendiente=p.estado!=='abierto'&&a.pendiente>0;
           return `
           <tr>
             <td style="font-weight:500">${esc(p.nombre)}</td>
@@ -494,7 +512,7 @@ function tabPeriodos(){
             <td class="num" style="color:var(--ok)">${cop(a.reembolsado)}</td>
             <td class="num" style="color:${a.pendiente > 0 ? 'var(--warn)' : 'var(--text-3)'}">${cop(a.pendiente)}</td>
             <td><span class="chip ${p.estado === 'abierto' ? 'b' : 'n'}">
-              ${p.estado === 'abierto' ? 'Abierto' : 'Cerrado ' + fechaCorta(p.cerrado_el)}</span></td>
+              ${p.estado === 'abierto' ? 'Abierto' : (cerradoPendiente?'Cerrado con pendientes':'Cerrado') + ' ' + fechaCorta(p.cerrado_el)}</span></td>
             <td style="white-space:nowrap">
               <button class="btn sm" onclick="verPeriodo('${p.id}')">Ver movimientos</button>
               ${p.estado === 'abierto'
