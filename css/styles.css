@@ -231,10 +231,10 @@ main{flex:1;min-width:0;display:flex;flex-direction:column}
 @media(max-width:720px){:root[data-wallpaper] main{background-attachment:scroll}.fondos-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
 
 /* Contraste definitivo sobre fondos: el contenido hereda una paleta según el vidrio. */
-:root[data-theme="light"][data-wallpaper] .wrap{--text:#21120D;--text-2:#493229;--text-3:#654A3D;--border:rgba(255,255,255,.68)}
+:root[data-theme="light"][data-wallpaper] .wrap{--text:#100906;--text-2:#1C100C;--text-3:#2B1912;--border:rgba(255,255,255,.68)}
 :root[data-theme="dark"][data-wallpaper] .wrap{--text:#FFF9F4;--text-2:#F0DED3;--text-3:#D2B9AC;--border:rgba(255,255,255,.38)}
 :root[data-wallpaper] .wrap .page-head,:root[data-wallpaper] .wrap .page-head p,:root[data-wallpaper] .wrap .cfg-head,:root[data-wallpaper] .wrap .cfg-head p,:root[data-wallpaper] .wrap .cfg-nav,:root[data-wallpaper] .wrap .cfg-grupo,:root[data-wallpaper] .wrap .cliente-ayuda,:root[data-wallpaper] .wrap .cfg-tit-sec{color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.82)}
-:root[data-theme="light"][data-wallpaper] .wrap .card,:root[data-theme="light"][data-wallpaper] .wrap .kpi,:root[data-theme="light"][data-wallpaper] .wrap .cfg-lista,:root[data-theme="light"][data-wallpaper] .wrap .proy-card,:root[data-theme="light"][data-wallpaper] .wrap .enlace-card{--text:#1D100C;--text-2:#3F2A22;--text-3:#5B4035;color:var(--text)}
+:root[data-theme="light"][data-wallpaper] .wrap .card,:root[data-theme="light"][data-wallpaper] .wrap .kpi,:root[data-theme="light"][data-wallpaper] .wrap .cfg-lista,:root[data-theme="light"][data-wallpaper] .wrap .proy-card,:root[data-theme="light"][data-wallpaper] .wrap .enlace-card{--text:#0C0705;--text-2:#18100C;--text-3:#281A14;color:var(--text)}
 :root[data-theme="dark"][data-wallpaper] .wrap .card,:root[data-theme="dark"][data-wallpaper] .wrap .kpi,:root[data-theme="dark"][data-wallpaper] .wrap .cfg-lista,:root[data-theme="dark"][data-wallpaper] .wrap .proy-card,:root[data-theme="dark"][data-wallpaper] .wrap .enlace-card{--text:#FFF;--text-2:#F2E4DC;--text-3:#D8C1B5;color:var(--text)}
 :root[data-wallpaper] .wrap .card-h,:root[data-wallpaper] .wrap .row,:root[data-wallpaper] .wrap th,:root[data-wallpaper] .wrap td,:root[data-wallpaper] .wrap .cfg-fila,:root[data-wallpaper] .wrap .enlace-card-cab{border-color:rgba(255,255,255,.58)}
 :root[data-wallpaper] .wrap .chk,:root[data-wallpaper] .wrap input[type="checkbox"]{border-color:rgba(255,255,255,.78);outline-color:rgba(255,255,255,.78)}
@@ -247,8 +247,9 @@ main{flex:1;min-width:0;display:flex;flex-direction:column}
 :root[data-theme="light"] #side .nav-item,:root[data-theme="light"] #side .side-foot button{color:#3A2117}
 :root[data-theme="light"] #side .nav-lbl{color:#684A3B}
 :root[data-theme="dark"] #side .nav-item:not(.active),:root[data-theme="dark"] #side .nav-lbl,:root[data-theme="dark"] #side .side-foot button{color:#FFF}
-:root[data-theme="dark"] #side .nav-item.active{color:#17100D}
-:root[data-theme="dark"] #side .nav-item.active .ico{color:#17100D}
+:root #side .nav-item.active{background:#4A5D4E;color:#FFF;--on-brand:#FFF}
+:root #side .nav-item.active .ico,:root #side .nav-item.active .lbl{color:#FFF}
+:root #side .nav-item.active svg{color:#FFF;stroke:currentColor}
 .wrap{padding:24px 26px 60px;max-width:1220px;width:100%}
 .page-head{margin-bottom:20px;display:flex;align-items:flex-end;justify-content:space-between;
   gap:16px;flex-wrap:wrap}
