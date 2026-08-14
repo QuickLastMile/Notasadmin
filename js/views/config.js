@@ -444,6 +444,10 @@ apariencia(){
                  onclick="toggleBarra();repintarPanel()" aria-label="Contraer barra"></button>`)}
     </div>
 
+    <div class="cfg-tit-sec">Fondo del área de trabajo</div>
+    <p class="cliente-ayuda">Solo cambia el espacio detrás de la información. Las barras superior y lateral conservan sus colores.</p>
+    ${galeriaFondos()}
+
     <div class="cfg-nota">
       <p>Estas preferencias se guardan <strong>en este dispositivo</strong>, no en tu cuenta.
       Si entras desde el celular, allá las ajustas aparte.</p>
@@ -822,6 +826,14 @@ function fijarDensidad(d){
   document.documentElement.setAttribute('data-densidad', d);
   repintarPanel();
 }
+
+function galeriaFondos(){
+  const actual=localStorage.getItem('hub_fondo')||'ninguno',personal=localStorage.getItem('hub_fondo_personal'),opciones=[['ninguno','Sin fondo',''],...FONDOS_APP];
+  return `<div class="fondos-grid">${opciones.map(([id,nombre,url])=>`<button class="fondo-opcion ${actual===id?'on':''}" onclick="fijarFondo('${id}')" style="${url?`--mini-fondo:url('${url}')`:''}"><span class="fondo-mini ${url?'':'sin-fondo'}"></span><strong>${esc(nombre)}</strong>${actual===id?'<b>✓</b>':''}</button>`).join('')}${personal?`<button class="fondo-opcion ${actual==='personal'?'on':''}" onclick="fijarFondo('personal')" style="--mini-fondo:url('${personal}')"><span class="fondo-mini"></span><strong>Mi fondo</strong>${actual==='personal'?'<b>✓</b>':''}</button>`:''}</div><div class="fondo-subir"><label class="btn"><input type="file" accept="image/*" hidden onchange="subirFondoPersonal(this)">＋ Agregar mi fondo</label>${personal?'<button class="btn dgr" onclick="eliminarFondoPersonal()">Eliminar fondo personal</button>':''}</div>`;
+}
+function fijarFondo(id){localStorage.setItem('hub_fondo',id);aplicarFondo();repintarPanel();}
+function subirFondoPersonal(input){const file=input.files?.[0];if(!file)return;const reader=new FileReader();reader.onload=()=>{const img=new Image();img.onload=()=>{const max=1920,scale=Math.min(1,max/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);c.getContext('2d').drawImage(img,0,0,c.width,c.height);try{localStorage.setItem('hub_fondo_personal',c.toDataURL('image/jpeg',.82));localStorage.setItem('hub_fondo','personal');aplicarFondo();repintarPanel();toast('Fondo agregado ✓');}catch{toast('La imagen es demasiado pesada');}};img.src=reader.result;};reader.readAsDataURL(file);input.value='';}
+function eliminarFondoPersonal(){localStorage.removeItem('hub_fondo_personal');if(localStorage.getItem('hub_fondo')==='personal')localStorage.setItem('hub_fondo','ninguno');aplicarFondo();repintarPanel();}
 
 async function fijarTope(v){
   CFG.topeAlertaCaja = +v;
