@@ -229,6 +229,26 @@ main{flex:1;min-width:0;display:flex;flex-direction:column}
 .fondos-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(145px,1fr));gap:12px;margin-top:14px}.fondo-opcion{position:relative;padding:7px;border:1px solid var(--border);border-radius:14px;background:var(--surface);text-align:left;display:grid;gap:7px}.fondo-opcion.on{border:2px solid var(--brand);padding:6px}.fondo-opcion>b{position:absolute;right:12px;top:12px;width:24px;height:24px;border-radius:50%;background:var(--brand);color:var(--on-brand);display:grid;place-items:center}.fondo-mini{display:block;height:90px;border-radius:10px;background-image:var(--mini-fondo);background-size:cover;background-position:center}.fondo-mini.sin-fondo{background:linear-gradient(135deg,var(--surface-2),var(--surface));border:1px dashed var(--border)}.fondo-opcion strong{padding:0 4px 3px;font-size:12px}.fondo-subir{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .fondos-grid-manual{grid-template-columns:repeat(2,minmax(145px,210px))}
 @media(max-width:720px){:root[data-wallpaper] main{background-attachment:scroll}.fondos-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Contraste definitivo sobre fondos: el contenido hereda una paleta según el vidrio. */
+:root[data-theme="light"][data-wallpaper] .wrap{--text:#21120D;--text-2:#493229;--text-3:#654A3D;--border:rgba(255,255,255,.68)}
+:root[data-theme="dark"][data-wallpaper] .wrap{--text:#FFF9F4;--text-2:#F0DED3;--text-3:#D2B9AC;--border:rgba(255,255,255,.38)}
+:root[data-wallpaper] .wrap .page-head,:root[data-wallpaper] .wrap .page-head p,:root[data-wallpaper] .wrap .cfg-head,:root[data-wallpaper] .wrap .cfg-head p,:root[data-wallpaper] .wrap .cfg-nav,:root[data-wallpaper] .wrap .cfg-grupo,:root[data-wallpaper] .wrap .cliente-ayuda,:root[data-wallpaper] .wrap .cfg-tit-sec{color:#fff;text-shadow:0 2px 10px rgba(0,0,0,.82)}
+:root[data-theme="light"][data-wallpaper] .wrap .card,:root[data-theme="light"][data-wallpaper] .wrap .kpi,:root[data-theme="light"][data-wallpaper] .wrap .cfg-lista,:root[data-theme="light"][data-wallpaper] .wrap .proy-card,:root[data-theme="light"][data-wallpaper] .wrap .enlace-card{--text:#1D100C;--text-2:#3F2A22;--text-3:#5B4035;color:var(--text)}
+:root[data-theme="dark"][data-wallpaper] .wrap .card,:root[data-theme="dark"][data-wallpaper] .wrap .kpi,:root[data-theme="dark"][data-wallpaper] .wrap .cfg-lista,:root[data-theme="dark"][data-wallpaper] .wrap .proy-card,:root[data-theme="dark"][data-wallpaper] .wrap .enlace-card{--text:#FFF;--text-2:#F2E4DC;--text-3:#D8C1B5;color:var(--text)}
+:root[data-wallpaper] .wrap .card-h,:root[data-wallpaper] .wrap .row,:root[data-wallpaper] .wrap th,:root[data-wallpaper] .wrap td,:root[data-wallpaper] .wrap .cfg-fila,:root[data-wallpaper] .wrap .enlace-card-cab{border-color:rgba(255,255,255,.58)}
+:root[data-wallpaper] .wrap .chk,:root[data-wallpaper] .wrap input[type="checkbox"]{border-color:rgba(255,255,255,.78);outline-color:rgba(255,255,255,.78)}
+:root[data-theme="light"][data-wallpaper] .wrap .chip.n,:root[data-theme="light"][data-wallpaper] .wrap .btn:not(.pri):not(.dgr){color:#21120D}
+:root[data-theme="dark"][data-wallpaper] .wrap .chip.n{background:rgba(255,248,238,.90);color:#21120D}
+:root[data-wallpaper] .wrap .filtros-enlaces .chip{background:rgba(255,255,255,.88);color:#21120D;text-shadow:none}
+:root[data-wallpaper] .wrap .filtros-enlaces .chip.activo{background:var(--brand);color:var(--on-brand)}
+
+/* La navegación sólida conserva su fondo, pero gana contraste en ambos temas. */
+:root[data-theme="light"] #side .nav-item,:root[data-theme="light"] #side .side-foot button{color:#3A2117}
+:root[data-theme="light"] #side .nav-lbl{color:#684A3B}
+:root[data-theme="dark"] #side .nav-item:not(.active),:root[data-theme="dark"] #side .nav-lbl,:root[data-theme="dark"] #side .side-foot button{color:#FFF}
+:root[data-theme="dark"] #side .nav-item.active{color:#17100D}
+:root[data-theme="dark"] #side .nav-item.active .ico{color:#17100D}
 .wrap{padding:24px 26px 60px;max-width:1220px;width:100%}
 .page-head{margin-bottom:20px;display:flex;align-items:flex-end;justify-content:space-between;
   gap:16px;flex-wrap:wrap}
