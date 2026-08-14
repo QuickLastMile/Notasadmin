@@ -141,10 +141,7 @@ function initTema(){
   aplicarFondo();
 }
 
-const FONDOS_APP=[
-  ['flores-tierra','Flores tierra','assets/fondos/flores-tierra.jpeg'],['citricos-vino','Cítricos vino','assets/fondos/citricos-vino.jpeg'],['jardin-citrico','Jardín cítrico','assets/fondos/jardin-citrico.jpeg'],['montana-rosa','Montaña rosa','assets/fondos/montana-rosa.jpeg'],['montana-roja','Montaña roja','assets/fondos/montana-roja.jpeg'],['bosque-dorado','Bosque dorado','assets/fondos/bosque-dorado.jpeg'],['casa-bosque','Casa en el bosque','assets/fondos/casa-bosque.jpeg']
-];
-function aplicarFondo(){const id=localStorage.getItem('hub_fondo')||'ninguno',personal=localStorage.getItem('hub_fondo_personal'),url=id==='personal'?personal:FONDOS_APP.find(x=>x[0]===id)?.[2];if(url){document.documentElement.dataset.wallpaper=id;document.documentElement.style.setProperty('--app-wallpaper',`url("${url}")`);}else{delete document.documentElement.dataset.wallpaper;document.documentElement.style.removeProperty('--app-wallpaper');}}
+function aplicarFondo(){const id=localStorage.getItem('hub_fondo')||'ninguno',url=id==='personal'?localStorage.getItem('hub_fondo_personal'):null;if(url){document.documentElement.dataset.wallpaper='personal';document.documentElement.style.setProperty('--app-wallpaper',`url("${url}")`);}else{localStorage.setItem('hub_fondo','ninguno');delete document.documentElement.dataset.wallpaper;document.documentElement.style.removeProperty('--app-wallpaper');}}
 
 /**
  * El color de acento se sobrescribe encima de los tokens del tema.
