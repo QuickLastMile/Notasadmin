@@ -383,6 +383,12 @@ function modalReembolso(periodoId){
       <div><span>Rechazado (pérdida)</span><strong id="reemNo" style="color:var(--danger)">$ 0</strong></div>
     </div>
 
+    <div><label>Valor exacto recibido en el banco</label>
+      <input id="rMonto" type="number" min="0" placeholder="Ej. 459000"
+             oninput="this.dataset.manual='1'">
+      <small style="color:var(--text-2)">Puede ser menor que las facturas aprobadas. El resto continuará pendiente.</small>
+    </div>
+
     <div class="f2">
       <div><label>Fecha de la consignación</label>
         <input type="date" id="rF" value="${hoyISO()}"></div>
@@ -390,14 +396,8 @@ function modalReembolso(periodoId){
         <input id="rO" placeholder="Ej. Aprobado por el bot"></div>
     </div>
 
-    <div class="f-check">
-      <label><input type="checkbox" id="rRepone" checked>
-        Esta consignación repone mi base para seguir gastando</label>
-    </div>
-    <p style="font-size:11.5px;color:var(--text-2);margin-top:-4px">
-      Se registrará como ingreso, así el saldo disponible vuelve a subir.
-      Desmárcalo si la plata no entró a la caja.
-    </p>`,
+    <div class="alert o"><span>ℹ️</span><div class="a-txt"><b>No aumenta tu base</b>
+      <small>La consignación recupera saldo gastado; no es una nueva asignación de caja.</small></div></div>`,
     `aplicarReembolso('${periodoId}')`, 'Registrar'));
 
   sumarSeleccion();
@@ -425,6 +425,8 @@ function sumarSeleccion(){
   });
   if($('#reemOk')) $('#reemOk').textContent = cop(ok);
   if($('#reemNo')) $('#reemNo').textContent = cop(no);
+  const monto = $('#rMonto');
+  if(monto && monto.dataset.manual !== '1') monto.value = ok || '';
 }
 
 async function aplicarReembolso(periodoId){
@@ -433,8 +435,12 @@ async function aplicarReembolso(periodoId){
 
   const obs    = $('#rO').value.trim();
   const fecha  = $('#rF').value;
-  const repone = $('#rRepone').checked;
+  const totalRecibido = +$('#rMonto').value || 0;
+  const totalAprobado = suma(filas.filter(f => f.dataset.estado === 'ok'), f => +f.dataset.monto || 0);
+  if(totalRecibido <= 0 && totalAprobado > 0){ toast('Escribe el valor exacto que recibiste'); return; }
+  if(totalRecibido > totalAprobado){ toast('El valor recibido no puede superar los gastos aprobados'); return; }
   let totalOk = 0, totalNo = 0, nOk = 0, nNo = 0;
+  let porAplicar = totalRecibido;
 
   for(const f of filas){
     const g = S.caja.find(x => x.id === f.dataset.id);
@@ -442,11 +448,15 @@ async function aplicarReembolso(periodoId){
     const falta = g.monto - (g.reembolsado || 0);
 
     if(f.dataset.estado === 'ok'){
-      totalOk += falta; nOk++;
+      const aplicado = Math.min(falta, porAplicar);
+      porAplicar -= aplicado;
+      if(aplicado <= 0) continue;
+      totalOk += aplicado; nOk++;
+      const nuevoReembolso = (g.reembolsado || 0) + aplicado;
       await db.update('caja', g.id, {
-        reembolsado: g.monto,               // aprobado = saldado por completo
-        estado: 'finalizado',
-        observacion: [g.observacion, `Consignado ${fechaCorta(fecha)}${obs ? ': ' + obs : ''}`]
+        reembolsado: nuevoReembolso,
+        estado: nuevoReembolso >= g.monto ? 'finalizado' : g.estado,
+        observacion: [g.observacion, `Consignado ${cop(aplicado)} el ${fechaCorta(fecha)}${obs ? ': ' + obs : ''}`]
           .filter(Boolean).join(' · '),
         campos:{...metaCaja(g),periodo_reembolso_id:periodoId,reembolsado_en:fecha}
       });
@@ -459,23 +469,6 @@ async function aplicarReembolso(periodoId){
         campos:{...metaCaja(g),periodo_resolucion_id:periodoId}
       });
     }
-  }
-
-  /* La consignación repone la base: es una sola transferencia que salda lo
-     que te debían Y te devuelve saldo para seguir gastando. Sin este ingreso
-     el saldo disponible se quedaría corto y parecería que no tienes plata. */
-  if(repone && totalOk > 0){
-    await db.insert('caja', {
-      tipo:'ingreso', monto: totalOk,
-      concepto:'Reposición de base — consignación recibida',
-      categoria:'Base', cliente_id:null, periodo_id: periodoId, fecha,
-      beneficiario_id:null, metodo_pago:'Transferencia',
-      comprobante_pago:'', factura_num:'', comprobante_url:'', factura_url:'',
-      tiene_comprobante:true, tiene_factura:true,
-      estado:'finalizado', legalizado:true, legalizado_el:fecha,
-      reembolsado:0, perdida:false, motivo_perdida:'',
-      observacion: obs || `Cubre ${nOk} gasto${nOk > 1 ? 's' : ''} aprobado${nOk > 1 ? 's' : ''}`
-    });
   }
 
   const p = per(periodoId);

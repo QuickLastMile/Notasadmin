@@ -102,7 +102,6 @@ function vCaja(){
             title="Abrir el bot de WhatsApp y ver qué falta pasar">
       💬 Bot${a.sinLegalizar.length ? ` <span class="chip d" style="padding:0 6px">${a.sinLegalizar.length}</span>` : ''}</button>
     <button class="btn" onclick="modalReembolso('${pid}')">💰 Consignación</button>
-    <button class="btn" onclick="modalCaja('ingreso')">+ Ingreso</button>
     <button class="btn pri" onclick="modalCaja('gasto')">+ Pago / gasto</button>`;
 
   const cuerpo = {
@@ -152,11 +151,11 @@ function tarjetasArqueo(a){
   return `
   <div class="grid g4" style="margin-bottom:14px">
     ${kpi('Base recibida', cop(a.base),
-          'Asignación inicial más reposiciones', 'o')}
+          'Asignación real del período', 'o')}
     ${kpi('Gastado', cop(a.gastado), `${a.gastos.length} movimientos`, 'd')}
     ${kpi('Saldo en caja', cop(a.saldo), `${Math.round((1 - a.pctUsado) * 100)}% de la base`,
           a.saldo < a.base * .25 ? 'w' : 'p')}
-    ${kpi('Te reembolsaron', cop(a.reembolsado), 'Lo que realmente te pagaron', 'o')}
+    ${kpi('Te reembolsaron', cop(a.reembolsado), 'Consignaciones realmente recibidas', 'o')}
     ${kpi('Pendiente por cobrar', cop(a.pendiente),
           `${cop(a.cobrable)} ya cobrable · ${cop(a.trabado)} trabado`,
           a.pendiente > 0 ? 'w' : 'o')}

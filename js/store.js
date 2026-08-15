@@ -79,12 +79,20 @@ function avanceProyecto(p){
 function arqueo(periodoId){
   const movs   = S.caja.filter(g => g.periodo_id === periodoId);
   const gastos = movs.filter(g => g.tipo === 'gasto');
+  const periodo = per(periodoId);
 
-  const base    = suma(movs.filter(g => g.tipo === 'ingreso'), g => g.monto);
+  /* La base pertenece al período y no cambia cuando contabilidad devuelve
+     gastos. Los reembolsos antiguos pueden seguir visibles en el histórico,
+     pero nunca vuelven a inflar la asignación de caja. */
+  const ingresosBase = movs.filter(g => g.tipo === 'ingreso'
+    && !/reposici[oó]n de base|consignaci[oó]n recibida/i.test(g.concepto || ''));
+  const baseAsignada = +(periodo?.base_asignada || 0);
+  const base    = baseAsignada || suma(ingresosBase, g => g.monto);
   const gastado = suma(gastos, g => g.monto);
-  const saldo   = base - gastado;
 
   const reembolsado = suma(gastos, g => g.reembolsado || 0);
+  const saldo   = base - gastado + reembolsado;
+  const consumoNeto = Math.max(0, gastado - reembolsado);
 
   /* Pérdidas: gastos que ya diste por no recuperables — rechazados, sin
      soporte, o plata que sencillamente no apareció. Se separan del resto
@@ -108,7 +116,7 @@ function arqueo(periodoId){
   // Lo que está trabado por falta de legalización
   const trabado   = suma(sinLegalizar, g => g.monto - (g.reembolsado || 0));
 
-  return { movs, gastos, base, gastado, saldo, pctUsado: pct(gastado, base),
+  return { movs, gastos, base, gastado, saldo, consumoNeto, pctUsado: pct(consumoNeto, base),
            reembolsado, pendiente, cobrable, trabado, porCobrar,
            perdidas, montoPerdido, pctPerdido: pct(montoPerdido, gastado),
            sinLegalizar, montoSinLeg, sinSoporte };
