@@ -171,6 +171,7 @@ Settings → Pages → Branch `main` / carpeta `/ (root)` → Save.
 |---|---|
 | Arranque en blanco | ✅ La app inicia vacía, con primeros pasos guiados |
 | Caja menor | ✅ Completo: beneficiarios, cuentas, soportes, legalización, reembolso, períodos, topes, export |
+| Notas | ✅ Editor enriquecido, imágenes, checklist, carpetas, etiquetas, búsqueda, recordatorios y exportación |
 | Captura rápida | ✅ Funcionando |
 | Inicio (alertas, foco, rutina) | ✅ Funcionando |
 | Tareas | 🔧 Por revisar con el usuario |

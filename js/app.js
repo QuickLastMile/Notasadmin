@@ -20,6 +20,7 @@ const MENU = [
   { id:'proyectos', ico:ICO.proyectos, lbl:'Proyectos',   vista:m => vProyectos(m) },
   { id:'clientes',  ico:ICO.clientes,  lbl:'Clientes',    vista:m => vClientes(m) },
   { sec:'Recursos' },
+  { id:'notas',     ico:ICO.notas,     lbl:'Notas', vista:m => vNotas(m) },
   { id:'enlaces',   ico:ICO.enlaces,   lbl:'Accesos rápidos', lblCorto:'Accesos',
     vista:m => vEnlaces(m) },
   { id:'config',    ico:ICO.config,    lbl:'Configuración', vista:m => vConfig(m) }

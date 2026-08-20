@@ -18,6 +18,7 @@ const ICO = {
   proyectos: svg('<path d="M3 7.5A2 2 0 0 1 5 5.5h3.7a2 2 0 0 1 1.6.8l1 1.4H19a2 2 0 0 1 2 2v7.8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>'),
   clientes:  svg('<circle cx="9" cy="8" r="3.4"/><path d="M2.8 20a6.2 6.2 0 0 1 12.4 0"/><path d="M16.2 5.2a3.4 3.4 0 0 1 0 5.6"/><path d="M17.6 14.4A6.2 6.2 0 0 1 21.2 20"/>'),
   enlaces:   svg('<rect x="3" y="3.5" width="7.5" height="7.5" rx="1.8"/><rect x="13.5" y="3.5" width="7.5" height="7.5" rx="1.8"/><rect x="3" y="13.5" width="7.5" height="7.5" rx="1.8"/><rect x="13.5" y="13.5" width="7.5" height="7.5" rx="1.8"/>'),
+  notas:     svg('<path d="M5 3.5h10.5L20 8v12.5H5z"/><path d="M15.5 3.5V8H20M8.5 12h8M8.5 15.5h8M8.5 19h5"/>'),
   config:    svg('<path d="M4 6.5h6M14 6.5h6M4 12h10M18 12h2M4 17.5h4M12 17.5h8"/><circle cx="12" cy="6.5" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="10" cy="17.5" r="2"/>'),
   calendario: svg('<rect x="3" y="5" width="18" height="16" rx="2.4"/><path d="M3 10h18M8 3v4M16 3v4"/><circle cx="8.5" cy="14.5" r="1.1" fill="currentColor" stroke="none"/><circle cx="12" cy="14.5" r="1.1" fill="currentColor" stroke="none"/>'),
   mas:       svg('<circle cx="5" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="19" cy="12" r="1.4" fill="currentColor" stroke="none"/>'),

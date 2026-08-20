@@ -300,9 +300,14 @@ async function cargarNube(){
 
   // Si faltan tablas es que no se corrió sql/supabase-schema.sql.
   // Mejor decirlo que mostrar una app vacía sin explicación.
+  const opcionales = new Set(['notas','notas_carpetas']);
+  window.TABLAS_OPCIONALES_FALTANTES = resultados
+    .map((r, i) => (r.error?.code === 'PGRST205' || /does not exist|schema cache/i.test(r.error?.message || ''))
+                    && opcionales.has(COLECCIONES[i]) ? COLECCIONES[i] : null)
+    .filter(Boolean);
   const faltantes = resultados
     .map((r, i) => (r.error?.code === 'PGRST205' || /does not exist|schema cache/i.test(r.error?.message || ''))
-                    ? COLECCIONES[i] : null)
+                    && !opcionales.has(COLECCIONES[i]) ? COLECCIONES[i] : null)
     .filter(Boolean);
   if(faltantes.length){ mostrarFaltaEsquema(faltantes); return false; }
 
@@ -359,7 +364,7 @@ function mostrarFaltaEsquema(faltantes){
 /** Borra todo lo del usuario en la nube (lo llama vaciarTodo en modo nube). */
 async function vaciarNube(){
   // En orden inverso a las dependencias, para no chocar con las llaves foráneas
-  const orden = ['respuestas','caja','tareas','eventos','novedades','dashboards','rutina','presupuestos',
+  const orden = ['notas','notas_carpetas','respuestas','caja','tareas','eventos','novedades','dashboards','rutina','presupuestos',
                  'listas','preguntas','formularios','campos_personalizados','periodos','proyectos','colaboradores','beneficiarios','clientes'];
   for(const t of orden){
     const { error } = await sb.from(t).delete().neq('id', '00000000-0000-0000-0000-000000000000');
